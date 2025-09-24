@@ -80,7 +80,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
 
   return (
     <div className="overflow-auto">
-      <div className={`grid ${gridCols} gap-1 min-w-fit`}>
+      <div className={`grid ${gridCols} gap-1 min-w-fit`} style={{ gridTemplateColumns: '280px repeat(7, minmax(80px, 1fr))' }}>
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
           Funcionário
@@ -101,15 +101,15 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         {/* Employee rows */}
         {filteredEmployees.map(employee => (
           <Fragment key={employee.id}>
-            <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+            <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10 w-[280px] min-w-[280px]">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">
                   {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <div className="font-medium text-sm">{employee.name}</div>
-                <div className="text-xs text-muted-foreground">{employee.position}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate">{employee.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{employee.position}</div>
               </div>
             </div>
             
