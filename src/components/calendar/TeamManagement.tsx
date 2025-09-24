@@ -70,7 +70,7 @@ export function TeamManagement() {
     return matchesSearch;
   });
   return (
-    <div className="calendar-container">
+    <div className="calendar-container lg:pl-4">
       {/* Mobile-first sticky header */}
       <header className="calendar-header">
         <div className="p-4 space-y-4">
