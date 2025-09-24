@@ -64,6 +64,13 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Schedule colors */
+    --schedule-diurno: 246 196 83; /* #F6C453 */
+    --schedule-vespertino: 108 169 247; /* #6CA9F7 */
+    --schedule-noturno: 247 166 182; /* #F7A6B6 */
+    --today: 34 197 94; /* destaque para hoje */
+    --past-day: 156 163 175; /* dias passados */
   }
 
   .dark {
