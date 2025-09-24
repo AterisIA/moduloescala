@@ -168,8 +168,7 @@ All colors MUST be HSL.
   }
 
   .calendar-grid {
-    @apply grid overflow-x-auto;
-    height: var(--row-h);
+    @apply grid overflow-x-auto min-h-0;
     grid-template-columns: var(--col-fixed) repeat(var(--cols), minmax(var(--col-day), 1fr));
   }
 
@@ -198,7 +197,7 @@ All colors MUST be HSL.
 
   .calendar-cell {
     @apply border-r border-border flex items-center justify-center;
-    height: var(--row-h);
+    min-height: var(--row-h);
   }
 
   .calendar-cell-fixed {

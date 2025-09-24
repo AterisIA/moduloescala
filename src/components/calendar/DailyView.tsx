@@ -61,9 +61,17 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
 
   return (
     <div className="h-full overflow-auto">
-      <div className="calendar-grid calendar-grid-daily">
+      <div 
+        className="grid overflow-x-auto min-h-0" 
+        style={{ 
+          gridTemplateColumns: 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
+          '--col-fixed': 'minmax(160px, 280px)',
+          '--cols': '24',
+          '--col-day': 'minmax(56px, 1fr)'
+        } as React.CSSProperties}
+      >
         {/* Header with hours */}
-        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold">
+        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
           <div className="p-2">
             <div className="hidden md:block">Funcionário</div>
             <div className="md:hidden">Func.</div>
@@ -74,7 +82,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
         </div>
         
         {hours.map(hour => (
-          <div key={hour} className="calendar-cell bg-muted text-xs font-medium">
+          <div key={hour} className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
             <div className="text-center">
               <span className="hidden sm:inline">{String(hour).padStart(2, '0')}:00</span>
               <span className="sm:hidden">{hour}</span>
@@ -88,7 +96,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
           
           return (
             <Fragment key={employee.id}>
-              <div className="calendar-cell calendar-cell-fixed bg-background">
+              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
                 <div className="flex items-center gap-2 p-2 w-full min-w-0">
                   <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                     <AvatarFallback className="text-xs">
@@ -111,7 +119,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 return (
                   <div 
                     key={`${employee.id}-${hour}`}
-                    className={`calendar-cell transition-colors ${
+                    className={`calendar-cell border-b transition-colors ${
                       isWorking 
                         ? `${getScheduleColor(schedule)}`
                         : 'hover:bg-muted/50'

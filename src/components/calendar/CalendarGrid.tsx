@@ -80,9 +80,19 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
 
   return (
     <div className="h-full overflow-auto">
-      <div className={`calendar-grid ${viewType === 'weekly' ? 'calendar-grid-weekly' : ''}`}>
+      <div 
+        className="grid overflow-x-auto min-h-0" 
+        style={{ 
+          gridTemplateColumns: viewType === 'weekly' 
+            ? 'minmax(160px, 280px) repeat(7, minmax(80px, 1fr))'
+            : 'minmax(160px, 280px) repeat(auto-fit, minmax(32px, 1fr))',
+          '--col-fixed': 'minmax(160px, 280px)',
+          '--cols': viewType === 'weekly' ? '7' : dates.length.toString(),
+          '--col-day': viewType === 'weekly' ? 'minmax(80px, 1fr)' : 'minmax(32px, 1fr)'
+        } as React.CSSProperties}
+      >
         {/* Header with dates */}
-        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold">
+        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
           <div className="p-2">
             <span className="hidden md:inline">Funcionário</span>
             <span className="md:hidden">Func.</span>
@@ -91,7 +101,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         {dates.map(date => (
           <div 
             key={date.toISOString()} 
-            className={`calendar-cell bg-muted text-xs font-medium ${
+            className={`calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b ${
               isToday(date) ? 'bg-[hsl(var(--today))] text-white' : 
               isPastDay(date) ? 'text-[hsl(var(--past-day))]' : 'text-foreground'
             }`}
@@ -106,7 +116,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         {/* Employee rows */}
         {filteredEmployees.map(employee => (
           <Fragment key={employee.id}>
-            <div className="calendar-cell calendar-cell-fixed bg-background">
+            <div className="calendar-cell calendar-cell-fixed bg-background border-b">
               <div className="flex items-center gap-2 p-2 w-full min-w-0">
                 <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                   <AvatarFallback className="text-xs">
@@ -126,7 +136,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
               return (
                 <div 
                   key={`${employee.id}-${date.toISOString()}`}
-                  className={`calendar-cell cursor-pointer transition-colors ${
+                  className={`calendar-cell border-b cursor-pointer transition-colors ${
                     isPastDay(date) ? 'opacity-60' : 'hover:bg-muted/50'
                   }`}
                 >
