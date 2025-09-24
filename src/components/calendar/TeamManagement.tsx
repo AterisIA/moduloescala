@@ -13,16 +13,13 @@ import { CalendarGrid } from "./CalendarGrid";
 import { MonthlyView } from "./MonthlyView";
 import { YearlyView } from "./YearlyView";
 import { mockEmployees, mockSchedules } from "@/data/mockData";
-
 export function TeamManagement() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
-
   const departments = ["TI", "RH", "Vendas", "Marketing"];
-
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -46,7 +43,6 @@ export function TeamManagement() {
       return newDate;
     });
   };
-
   const handleDepartmentFilter = (department: string) => {
     if (department === "all") {
       setSelectedDepartments([]);
@@ -58,35 +54,20 @@ export function TeamManagement() {
       setFilterDepartment("all");
     }
   };
-
   const handleRemoveDepartment = (department: string) => {
     setSelectedDepartments(prev => prev.filter(d => d !== department));
   };
-
   const handleClearAllFilters = () => {
     setSelectedDepartments([]);
     setFilterDepartment("all");
   };
-
   const filteredEmployees = mockEmployees.filter(emp => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.position.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
-
-  return (
-    <div className="p-8 space-y-6">
+  return <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Gestão de Equipe</h1>
-          <p className="text-muted-foreground mt-1">Sistema completo de calendário de equipe</p>
-          <Badge variant="outline" className="mt-2">Responsável: Fernando</Badge>
-        </div>
-        <Badge variant="secondary" className="text-xs">
-          Sistema Avançado
-        </Badge>
-      </div>
+      
 
       <Card>
         <CardHeader>
@@ -100,12 +81,7 @@ export function TeamManagement() {
           <div className="flex items-center gap-4 mb-4">
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar funcionários..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar funcionários..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <Select value={filterDepartment} onValueChange={handleDepartmentFilter}>
               <SelectTrigger className="w-40">
@@ -114,59 +90,24 @@ export function TeamManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os departamentos</SelectItem>
-                {departments.map(dept => (
-                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                ))}
+                {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
           {/* Selected Chips */}
-          <SelectedChipsBar 
-            selectedDepartments={selectedDepartments}
-            onRemoveDepartment={handleRemoveDepartment}
-            onClearAll={handleClearAllFilters}
-          />
+          <SelectedChipsBar selectedDepartments={selectedDepartments} onRemoveDepartment={handleRemoveDepartment} onClearAll={handleClearAllFilters} />
         </CardHeader>
         
         <CardContent>
           {/* Calendar Views */}
-          {viewType === 'daily' && (
-            <DailyView 
-              currentDate={currentDate}
-              employees={filteredEmployees}
-              schedules={mockSchedules}
-              selectedDepartments={selectedDepartments}
-            />
-          )}
+          {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={mockSchedules} selectedDepartments={selectedDepartments} />}
           
-          {viewType === 'weekly' && (
-            <CalendarGrid 
-              currentDate={currentDate}
-              employees={filteredEmployees}
-              schedules={mockSchedules}
-              selectedDepartments={selectedDepartments}
-              viewType={viewType}
-            />
-          )}
+          {viewType === 'weekly' && <CalendarGrid currentDate={currentDate} employees={filteredEmployees} schedules={mockSchedules} selectedDepartments={selectedDepartments} viewType={viewType} />}
           
-          {viewType === 'monthly' && (
-            <MonthlyView
-              currentDate={currentDate}
-              employees={filteredEmployees}
-              schedules={mockSchedules}
-              selectedDepartments={selectedDepartments}
-            />
-          )}
+          {viewType === 'monthly' && <MonthlyView currentDate={currentDate} employees={filteredEmployees} schedules={mockSchedules} selectedDepartments={selectedDepartments} />}
           
-          {viewType === 'yearly' && (
-            <YearlyView
-              currentDate={currentDate}
-              employees={filteredEmployees}
-              schedules={mockSchedules}
-              selectedDepartments={selectedDepartments}
-            />
-          )}
+          {viewType === 'yearly' && <YearlyView currentDate={currentDate} employees={filteredEmployees} schedules={mockSchedules} selectedDepartments={selectedDepartments} />}
         </CardContent>
       </Card>
 
@@ -198,6 +139,5 @@ export function TeamManagement() {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
