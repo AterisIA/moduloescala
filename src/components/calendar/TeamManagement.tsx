@@ -24,18 +24,22 @@ export function TeamManagement() {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
       if (direction === 'prev') {
-        if (viewType === 'daily' || viewType === 'monthly') {
-          newDate.setMonth(prev.getMonth() - 1);
+        if (viewType === 'daily') {
+          newDate.setDate(prev.getDate() - 1);
         } else if (viewType === 'weekly') {
           newDate.setDate(prev.getDate() - 7);
+        } else if (viewType === 'monthly') {
+          newDate.setMonth(prev.getMonth() - 1);
         } else {
           newDate.setFullYear(prev.getFullYear() - 1);
         }
       } else {
-        if (viewType === 'daily' || viewType === 'monthly') {
-          newDate.setMonth(prev.getMonth() + 1);
+        if (viewType === 'daily') {
+          newDate.setDate(prev.getDate() + 1);
         } else if (viewType === 'weekly') {
           newDate.setDate(prev.getDate() + 7);
+        } else if (viewType === 'monthly') {
+          newDate.setMonth(prev.getMonth() + 1);
         } else {
           newDate.setFullYear(prev.getFullYear() + 1);
         }
