@@ -99,12 +99,12 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
         
         {monthNames.map((monthName) => (
           <Fragment key={monthName}>
-            <div className="bg-[hsl(var(--beige-100))] border-b border-r sticky top-0 z-10">
+            <div className="bg-muted border-b border-r sticky top-0 z-10">
               <div className="p-2 text-center font-bold border-b text-sm">{monthName}</div>
               <div className="p-2 text-center text-xs">Total</div>
             </div>
             {weeksByMonth[monthName].map((week, weekIndex) => (
-              <div key={weekIndex} className="bg-[hsl(var(--beige-100))] border-b border-r sticky top-0 z-10">
+              <div key={weekIndex} className="bg-muted border-b border-r sticky top-0 z-10">
                 <div className="p-1 text-center font-bold border-b text-xs">
                   S{yearWeeks.indexOf(week) + 1}
                 </div>
