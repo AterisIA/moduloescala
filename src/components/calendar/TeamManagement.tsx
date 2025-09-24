@@ -19,7 +19,7 @@ export function TeamManagement() {
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
-  const departments = ["TI", "RH", "Vendas", "Marketing"];
+  const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
