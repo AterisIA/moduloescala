@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { Employee, Schedule, ViewType } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format, addDays, startOfWeek, startOfMonth, endOfWeek, endOfMonth, isSameDay } from "date-fns";
@@ -100,7 +100,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
 
         {/* Employee rows */}
         {filteredEmployees.map(employee => (
-          <React.Fragment key={employee.id}>
+          <Fragment key={employee.id}>
             <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">
@@ -148,7 +148,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                 </div>
               );
             })}
-          </React.Fragment>
+          </Fragment>
         ))}
       </div>
     </div>

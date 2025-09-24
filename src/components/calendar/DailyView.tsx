@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { Employee, Schedule } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format, getDaysInMonth, startOfMonth } from "date-fns";
@@ -104,7 +104,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
 
         {/* Employee rows */}
         {filteredEmployees.map(employee => (
-          <React.Fragment key={employee.id}>
+          <Fragment key={employee.id}>
             <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">
@@ -156,7 +156,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 </div>
               );
             })}
-          </React.Fragment>
+          </Fragment>
         ))}
       </div>
     </div>
