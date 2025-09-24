@@ -60,25 +60,25 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   };
 
   return (
-    <div className="overflow-auto">
-      <div 
-        className="grid gap-1 min-w-fit"
-        style={{ gridTemplateColumns: `280px repeat(24, minmax(50px, 1fr))` }}
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
-          <div>Funcionário</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
+    <div className="h-full overflow-auto">
+      <div className="calendar-grid calendar-grid-daily">
+        {/* Header with hours */}
+        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold">
+          <div className="p-2">
+            <div className="hidden md:block">Funcionário</div>
+            <div className="md:hidden">Func.</div>
+            <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
+              {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
+            </div>
           </div>
         </div>
         
         {hours.map(hour => (
-          <div 
-            key={hour} 
-            className="p-2 text-center text-sm font-medium border-b sticky top-0 bg-background z-10"
-          >
-            <div>{String(hour).padStart(2, '0')}h</div>
+          <div key={hour} className="calendar-cell bg-muted text-xs font-medium">
+            <div className="text-center">
+              <span className="hidden sm:inline">{String(hour).padStart(2, '0')}:00</span>
+              <span className="sm:hidden">{hour}</span>
+            </div>
           </div>
         ))}
 
@@ -88,17 +88,19 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
           
           return (
             <Fragment key={employee.id}>
-              <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs">
-                    {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{employee.name}</div>
-                  <div className="text-xs text-muted-foreground">{employee.position}</div>
-                  <div className="text-xs text-primary">
-                    {schedule ? getScheduleDisplay(schedule) : 'Sem escala'}
+              <div className="calendar-cell calendar-cell-fixed bg-background">
+                <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                    <AvatarFallback className="text-xs">
+                      {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 hidden md:block">
+                    <div className="font-medium text-xs truncate">{employee.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{employee.position}</div>
+                    <div className="text-xs text-primary truncate">
+                      {schedule ? getScheduleDisplay(schedule) : 'Sem escala'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -109,25 +111,26 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 return (
                   <div 
                     key={`${employee.id}-${hour}`}
-                    className={`min-h-16 p-1 border-b border-r transition-colors ${
+                    className={`calendar-cell transition-colors ${
                       isWorking 
-                        ? `${getScheduleColor(schedule)} opacity-80`
+                        ? `${getScheduleColor(schedule)}`
                         : 'hover:bg-muted/50'
                     }`}
                   >
                     {isWorking ? (
-                      <div className="w-full h-full rounded p-1 text-xs">
-                        <div className="text-center font-medium">
+                      <div className="text-center text-xs font-medium">
+                        <div className="hidden sm:block">
                           {hour === parseInt(schedule.startTime.split(':')[0]) && schedule.startTime}
                           {hour === parseInt(schedule.endTime.split(':')[0]) - 1 && schedule.endTime}
                         </div>
+                        <div className="sm:hidden">●</div>
                       </div>
                     ) : schedule && (schedule.type === 'rest' || schedule.type === 'vacation') ? (
-                      <div className={`w-full h-full rounded p-1 text-xs text-center ${getScheduleColor(schedule)}`}>
+                      <div className={`text-center text-xs ${getScheduleColor(schedule)}`}>
                         {getScheduleDisplay(schedule)}
                       </div>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 rounded cursor-pointer">
+                      <div className="text-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
                         +
                       </div>
                     )}

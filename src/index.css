@@ -75,6 +75,33 @@ All colors MUST be HSL.
     --today: 142 60% 45%; /* destaque para hoje */
     --today-bg: 142 60% 45%; /* today background */
     --past-day: 215 16% 47%; /* dias passados */
+
+    /* Responsive calendar variables */
+    --row-h: 48px; /* mobile default */
+    --col-fixed: 0px; /* mobile default - no fixed column */
+    --cols: 24; /* default for daily view */
+    --col-day: 56px; /* minimum day column width */
+  }
+
+  /* Responsive calendar heights */
+  @media (min-width: 768px) {
+    :root {
+      --row-h: 52px; /* tablet */
+      --col-fixed: 192px; /* tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --row-h: 56px; /* desktop */
+      --col-fixed: 224px; /* desktop */
+    }
+  }
+
+  @media (min-width: 1280px) {
+    :root {
+      --col-fixed: 264px; /* large desktop */
+    }
   }
 
   .dark {
@@ -123,5 +150,74 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile-first calendar utilities */
+@layer utilities {
+  .calendar-container {
+    @apply flex flex-col min-h-[100dvh] bg-background;
+  }
+
+  .calendar-header {
+    @apply sticky top-0 z-30 bg-background/90 backdrop-blur-sm border-b pt-[env(safe-area-inset-top)];
+  }
+
+  .calendar-main {
+    @apply flex-1 min-h-0 overflow-hidden;
+  }
+
+  .calendar-grid {
+    @apply grid overflow-x-auto;
+    height: var(--row-h);
+    grid-template-columns: var(--col-fixed) repeat(var(--cols), minmax(var(--col-day), 1fr));
+  }
+
+  .calendar-grid-daily {
+    --cols: 24;
+    --col-day: clamp(56px, 12vw, 80px);
+  }
+
+  .calendar-grid-weekly {
+    --cols: 7;
+    --col-day: 1fr;
+  }
+
+  .calendar-grid-monthly {
+    --col-day: clamp(26px, calc((100vw - var(--col-fixed) - 24px) / var(--cols)), 44px);
+  }
+
+  .calendar-grid-yearly {
+    --cols: 12;
+    --col-day: clamp(80px, 15vw, 120px);
+  }
+
+  .calendar-row {
+    @apply contents;
+  }
+
+  .calendar-cell {
+    @apply border-r border-border flex items-center justify-center;
+    height: var(--row-h);
+  }
+
+  .calendar-cell-fixed {
+    @apply sticky left-0 bg-background border-r-2 z-10;
+  }
+
+  .calendar-tabs {
+    @apply overflow-x-auto snap-x snap-mandatory;
+  }
+
+  .calendar-tab {
+    @apply h-10 px-3 snap-start whitespace-nowrap;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  .safe-bottom {
+    @apply pb-[env(safe-area-inset-bottom)];
   }
 }

@@ -79,37 +79,44 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   const gridCols = viewType === 'weekly' ? 'grid-cols-8' : 'grid-cols-8';
 
   return (
-    <div className="overflow-auto">
-      <div className={`grid ${gridCols} gap-1 min-w-fit`} style={{ gridTemplateColumns: '280px repeat(7, minmax(80px, 1fr))' }}>
-        {/* Header */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
-          Funcionário
+    <div className="h-full overflow-auto">
+      <div className={`calendar-grid ${viewType === 'weekly' ? 'calendar-grid-weekly' : ''}`}>
+        {/* Header with dates */}
+        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold">
+          <div className="p-2">
+            <span className="hidden md:inline">Funcionário</span>
+            <span className="md:hidden">Func.</span>
+          </div>
         </div>
         {dates.map(date => (
           <div 
             key={date.toISOString()} 
-            className={`p-2 text-center text-sm font-medium border-b sticky top-0 bg-background z-10 ${
+            className={`calendar-cell bg-muted text-xs font-medium ${
               isToday(date) ? 'bg-[hsl(var(--today))] text-white' : 
               isPastDay(date) ? 'text-[hsl(var(--past-day))]' : 'text-foreground'
             }`}
           >
-            <div>{format(date, 'dd')}</div>
-            <div className="text-xs">{format(date, 'EEE', { locale: ptBR })}</div>
+            <div className="text-center p-1">
+              <div className="font-bold">{format(date, 'dd')}</div>
+              <div className="text-xs hidden sm:block">{format(date, 'EEE', { locale: ptBR })}</div>
+            </div>
           </div>
         ))}
 
         {/* Employee rows */}
         {filteredEmployees.map(employee => (
           <Fragment key={employee.id}>
-            <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10 w-[280px] min-w-[280px]">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs">
-                  {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{employee.name}</div>
-                <div className="text-xs text-muted-foreground truncate">{employee.position}</div>
+            <div className="calendar-cell calendar-cell-fixed bg-background">
+              <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                  <AvatarFallback className="text-xs">
+                    {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 hidden md:block">
+                  <div className="font-medium text-xs truncate">{employee.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{employee.position}</div>
+                </div>
               </div>
             </div>
             
@@ -119,7 +126,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
               return (
                 <div 
                   key={`${employee.id}-${date.toISOString()}`}
-                  className={`min-h-16 p-1 border-b border-r transition-colors ${
+                  className={`calendar-cell cursor-pointer transition-colors ${
                     isPastDay(date) ? 'opacity-60' : 'hover:bg-muted/50'
                   }`}
                 >
@@ -127,11 +134,12 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <div 
-                          className={`w-full h-full rounded p-1 text-xs cursor-pointer ${getScheduleColor(schedule)}`}
+                          className={`w-full h-full flex items-center justify-center text-xs cursor-pointer ${getScheduleColor(schedule)}`}
                           title={`${employee.name} - ${format(date, 'dd/MM')}`}
                         >
                           <div className="text-center font-medium">
-                            {getScheduleDisplay(schedule)}
+                            <span className="hidden sm:inline">{getScheduleDisplay(schedule)}</span>
+                            <span className="sm:hidden">●</span>
                           </div>
                         </div>
                       </DropdownMenuTrigger>
@@ -141,7 +149,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 rounded cursor-pointer">
+                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
                       +
                     </div>
                   )}

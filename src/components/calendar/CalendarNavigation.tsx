@@ -27,15 +27,29 @@ export function CalendarNavigation({ currentDate, onNavigate, viewType }: Calend
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => onNavigate("prev")}>
+    <div className="flex items-center gap-2 w-full">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => onNavigate("prev")}
+        className="touch-target flex-shrink-0"
+      >
         <ChevronLeft className="h-4 w-4" />
+        <span className="sr-only">Anterior</span>
       </Button>
-      <h2 className="text-lg font-semibold min-w-48 text-center">
+      
+      <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-center flex-1 px-2">
         {getDateFormat()}
       </h2>
-      <Button variant="outline" size="sm" onClick={() => onNavigate("next")}>
+      
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => onNavigate("next")}
+        className="touch-target flex-shrink-0"
+      >
         <ChevronRight className="h-4 w-4" />
+        <span className="sr-only">Próximo</span>
       </Button>
     </div>
   );

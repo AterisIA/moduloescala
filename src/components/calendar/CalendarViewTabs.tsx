@@ -9,11 +9,11 @@ interface CalendarViewTabsProps {
 export function CalendarViewTabs({ viewType, onViewChange }: CalendarViewTabsProps) {
   return (
     <Tabs value={viewType} onValueChange={(value) => onViewChange(value as ViewType)}>
-      <TabsList>
-        <TabsTrigger value="daily">Dia</TabsTrigger>
-        <TabsTrigger value="weekly">Semana</TabsTrigger>
-        <TabsTrigger value="monthly">Mês</TabsTrigger>
-        <TabsTrigger value="yearly">Ano</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-4 h-10">
+        <TabsTrigger value="daily" className="calendar-tab">Dia</TabsTrigger>
+        <TabsTrigger value="weekly" className="calendar-tab">Semana</TabsTrigger>
+        <TabsTrigger value="monthly" className="calendar-tab">Mês</TabsTrigger>
+        <TabsTrigger value="yearly" className="calendar-tab">Ano</TabsTrigger>
       </TabsList>
     </Tabs>
   );
