@@ -66,11 +66,16 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Schedule colors */
-    --schedule-diurno: 246 196 83; /* #F6C453 */
-    --schedule-vespertino: 108 169 247; /* #6CA9F7 */
-    --schedule-noturno: 247 166 182; /* #F7A6B6 */
-    --today: 34 197 94; /* destaque para hoje */
-    --past-day: 156 163 175; /* dias passados */
+  --schedule-diurno: 246 196 83; /* #F6C453 */
+  --schedule-vespertino: 108 169 247; /* #6CA9F7 */
+  --schedule-noturno: 247 166 182; /* #F7A6B6 */
+  --schedule-red: 239 68 68; /* work indicator */
+  --schedule-gray: 156 163 175; /* rest indicator */
+  --schedule-blue: 59 130 246; /* vacation indicator */
+  --today: 34 197 94; /* destaque para hoje */
+  --today-bg: 34 197 94; /* today background */
+  --past-day: 156 163 175; /* dias passados */
+  --beige-100: 245 245 220; /* beige background */
   }
 
   .dark {

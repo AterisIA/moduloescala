@@ -10,6 +10,8 @@ import { CalendarViewTabs } from "./CalendarViewTabs";
 import { SelectedChipsBar } from "./SelectedChipsBar";
 import { DailyView } from "./DailyView";
 import { CalendarGrid } from "./CalendarGrid";
+import { MonthlyView } from "./MonthlyView";
+import { YearlyView } from "./YearlyView";
 import { mockEmployees, mockSchedules } from "@/data/mockData";
 
 export function TeamManagement() {
@@ -129,20 +131,40 @@ export function TeamManagement() {
         
         <CardContent>
           {/* Calendar Views */}
-          {viewType === 'daily' ? (
+          {viewType === 'daily' && (
             <DailyView 
               currentDate={currentDate}
               employees={filteredEmployees}
               schedules={mockSchedules}
               selectedDepartments={selectedDepartments}
             />
-          ) : (
+          )}
+          
+          {viewType === 'weekly' && (
             <CalendarGrid 
               currentDate={currentDate}
               employees={filteredEmployees}
               schedules={mockSchedules}
               selectedDepartments={selectedDepartments}
               viewType={viewType}
+            />
+          )}
+          
+          {viewType === 'monthly' && (
+            <MonthlyView
+              currentDate={currentDate}
+              employees={filteredEmployees}
+              schedules={mockSchedules}
+              selectedDepartments={selectedDepartments}
+            />
+          )}
+          
+          {viewType === 'yearly' && (
+            <YearlyView
+              currentDate={currentDate}
+              employees={filteredEmployees}
+              schedules={mockSchedules}
+              selectedDepartments={selectedDepartments}
             />
           )}
         </CardContent>
