@@ -104,12 +104,12 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-xs truncate">
-                      <span className="hidden md:inline">{employee.name}</span>
-                      <span className="md:hidden">{employee.name.split(' ')[0]}</span>
+                    <div className="font-medium text-xs md:text-sm truncate">
+                      <span className="hidden lg:inline">{employee.name}</span>
+                      <span className="lg:hidden">{employee.name.split(' ')[0]} {employee.name.split(' ')[1] ? employee.name.split(' ')[1][0] + '.' : ''}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground truncate hidden md:block">{employee.position}</div>
-                    <div className="text-xs text-primary truncate hidden md:block">
+                    <div className="text-xs text-muted-foreground truncate hidden sm:block">{employee.position}</div>
+                    <div className="text-xs text-primary truncate hidden lg:block">
                       {schedule ? getScheduleDisplay(schedule) : 'Sem escala'}
                     </div>
                   </div>
