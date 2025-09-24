@@ -74,7 +74,7 @@ export function AppSidebar() {
       className={`transition-all duration-300 ${
         state === "collapsed" 
           ? "w-16" 
-          : "w-64 md:w-72 lg:w-80"
+          : "w-64"
       }`}
       side="left"
       collapsible="icon"
