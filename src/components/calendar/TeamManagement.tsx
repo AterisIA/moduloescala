@@ -77,7 +77,7 @@ export function TeamManagement() {
         <CardHeader>
           {/* Navigation and View Controls */}
           <div className="flex items-center justify-between mb-4">
-            <CalendarNavigation currentDate={currentDate} onNavigate={handleNavigate} />
+            <CalendarNavigation currentDate={currentDate} onNavigate={handleNavigate} viewType={viewType} />
             <CalendarViewTabs viewType={viewType} onViewChange={setViewType} />
           </div>
 
