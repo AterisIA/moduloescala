@@ -60,9 +60,9 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
     const start = parseInt(schedule.startTime.split(':')[0]);
     const end = parseInt(schedule.endTime.split(':')[0]);
     
-    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-gray-800';
+    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-white';
     if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
-    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-gray-800';
+    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-white';
     
     return 'bg-gray-200 text-gray-800';
   };
