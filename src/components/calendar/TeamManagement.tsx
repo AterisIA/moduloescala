@@ -113,31 +113,7 @@ export function TeamManagement() {
 
       {/* Legend */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-6 flex-wrap">
-            <h3 className="text-sm font-medium">Legenda:</h3>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-diurno))]" />
-              <span className="text-sm">Diurno (08h-18h)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-vespertino))]" />
-              <span className="text-sm">Vespertino (13h-20h)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-noturno))]" />
-              <span className="text-sm">Noturno (20h-06h)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">💤</span>
-              <span className="text-sm">Folga</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🏖️</span>
-              <span className="text-sm">Férias</span>
-            </div>
-          </div>
-        </CardContent>
+        
       </Card>
     </div>;
 }
