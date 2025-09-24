@@ -123,9 +123,12 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                     {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0 hidden md:block">
-                  <div className="font-medium text-xs truncate">{employee.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{employee.position}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-xs truncate">
+                    <span className="hidden md:inline">{employee.name}</span>
+                    <span className="md:hidden">{employee.name.split(' ')[0]}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate hidden md:block">{employee.position}</div>
                 </div>
               </div>
             </div>
