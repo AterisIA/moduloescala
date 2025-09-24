@@ -71,8 +71,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`transition-all duration-300 ${state === "collapsed" ? "w-16" : "w-80"}`}
+      className={`transition-all duration-300 ${
+        state === "collapsed" 
+          ? "w-16" 
+          : "w-64 md:w-72 lg:w-80"
+      }`}
       side="left"
+      collapsible="icon"
     >
       <SidebarHeader>
         <div className="flex items-center gap-2 p-4">
