@@ -383,18 +383,21 @@ export type Database = {
       escala: {
         Row: {
           dataescala: string
+          finalescala: string | null
           idescala: number
           nomepessoaescala: string
           telefone: string | null
         }
         Insert: {
           dataescala: string
+          finalescala?: string | null
           idescala?: number
           nomepessoaescala: string
           telefone?: string | null
         }
         Update: {
           dataescala?: string
+          finalescala?: string | null
           idescala?: number
           nomepessoaescala?: string
           telefone?: string | null
