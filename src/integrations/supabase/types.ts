@@ -574,6 +574,7 @@ export type Database = {
           idescala: number
           idresposta: number
           status: string | null
+          telefone: number | null
         }
         Insert: {
           dtcomunicacao?: string | null
@@ -583,6 +584,7 @@ export type Database = {
           idescala: number
           idresposta?: number
           status?: string | null
+          telefone?: number | null
         }
         Update: {
           dtcomunicacao?: string | null
@@ -592,6 +594,7 @@ export type Database = {
           idescala?: number
           idresposta?: number
           status?: string | null
+          telefone?: number | null
         }
         Relationships: [
           {
