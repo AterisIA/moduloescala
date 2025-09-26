@@ -11,6 +11,9 @@ import { Search, Filter, MoreHorizontal, Edit, Calendar, Clock, Users, Plus } fr
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import '../components/ui/phone-input.css';
 
 interface Escala {
   idescala: number;
@@ -117,6 +120,10 @@ export default function Escalas() {
     setIsDialogOpen(true);
   };
 
+  const cleanPhoneNumber = (phone: string) => {
+    return phone.replace(/\D/g, '');
+  };
+
   const handleSubmitEscala = async () => {
     if (!formData.nomepessoaescala || !formData.dataescala) {
       toast({
@@ -132,7 +139,7 @@ export default function Escalas() {
         nomepessoaescala: formData.nomepessoaescala,
         dataescala: formData.dataescala,
         finalescala: formData.finalescala || null,
-        telefone: formData.telefone || null
+        telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null
       };
 
       const { error } = await supabase
@@ -290,10 +297,13 @@ export default function Escalas() {
               </div>
               <div>
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
+                <PhoneInput
+                  international
+                  countryCallingCodeEditable={false}
+                  defaultCountry="BR"
                   value={formData.telefone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                  onChange={(value) => setFormData(prev => ({ ...prev, telefone: value || "" }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="Digite o telefone"
                 />
               </div>

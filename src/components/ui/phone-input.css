@@ -1,0 +1,61 @@
+/* Estilos customizados para o PhoneInput */
+.PhoneInput {
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputCountryIcon {
+  margin-right: 8px;
+}
+
+.PhoneInputCountrySelect {
+  background: transparent;
+  border: none;
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.PhoneInputCountrySelect:focus {
+  outline: none;
+}
+
+.PhoneInputInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+}
+
+.PhoneInputInput::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Dropdown do país */
+.PhoneInputCountrySelectDropdown {
+  position: absolute;
+  z-index: 1000;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.PhoneInputCountrySelectDropdown .PhoneInputCountrySelectOption {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.PhoneInputCountrySelectDropdown .PhoneInputCountrySelectOption:hover {
+  background: hsl(var(--accent));
+}
+
+.PhoneInputCountrySelectDropdown .PhoneInputCountrySelectOption--selected {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
