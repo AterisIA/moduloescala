@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,97 +8,131 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter, Clock, User, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
 interface PresenceEntry {
-  id: string;
-  person: string;
-  role: string;
-  checkIn?: Date;
-  checkOut?: Date;
-  status: "presente" | "ausente" | "atrasado" | "saiu_cedo";
-  location: string;
-  notes?: string;
+  idresposta: number;
+  idescala: number;
+  idcomunicacao: number;
+  nomepessoaescala: string;
+  telefone?: number;
+  status?: string;
+  dtcomunicacao?: string;
+  dtresposta?: string;
+  horaresposta?: string;
+  dataescala?: string;
 }
-const mockEntries: PresenceEntry[] = [{
-  id: "1",
-  person: "Maria Silva",
-  role: "Limpeza",
-  checkIn: new Date("2024-01-15T08:00:00"),
-  checkOut: new Date("2024-01-15T12:00:00"),
-  status: "presente",
-  location: "Prédio A",
-  notes: "Turno completo"
-}, {
-  id: "2",
-  person: "João Santos",
-  role: "Recepção",
-  checkIn: new Date("2024-01-15T08:15:00"),
-  status: "atrasado",
-  location: "Recepção Principal",
-  notes: "Chegou 15 min atrasado"
-}, {
-  id: "3",
-  person: "Ana Costa",
-  role: "Limpeza",
-  status: "ausente",
-  location: "Prédio B",
-  notes: "Não compareceu"
-}];
+
 export default function Presenca() {
-  const [entries, setEntries] = useState<PresenceEntry[]>(mockEntries);
+  const [entries, setEntries] = useState<PresenceEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPresenceData();
+  }, []);
+
+  const fetchPresenceData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get resposta_comunicacao data
+      const { data: respostaData, error: respostaError } = await supabase
+        .from('resposta_comunicacao')
+        .select('*')
+        .order('dtcomunicacao', { ascending: false });
+      
+      if (respostaError) {
+        console.error('Error fetching presence data:', respostaError);
+        return;
+      }
+
+      // Get escala data separately
+      const { data: escalaData, error: escalaError } = await supabase
+        .from('escala')
+        .select('*');
+
+      if (escalaError) {
+        console.error('Error fetching escala data:', escalaError);
+        return;
+      }
+
+      // Create a map for quick lookup
+      const escalaMap = new Map(escalaData?.map(e => [e.idescala, e]) || []);
+
+      const formattedData: PresenceEntry[] = respostaData?.map((item: any) => {
+        const escala = escalaMap.get(item.idescala);
+        return {
+          idresposta: item.idresposta,
+          idescala: item.idescala,
+          idcomunicacao: item.idcomunicacao,
+          nomepessoaescala: escala?.nomepessoaescala || 'Nome não encontrado',
+          telefone: item.telefone || undefined,
+          status: item.status || undefined,
+          dtcomunicacao: item.dtcomunicacao || undefined,
+          dtresposta: item.dtresposta || undefined,
+          horaresposta: item.horaresposta || undefined,
+          dataescala: escala?.dataescala
+        };
+      }) || [];
+
+      setEntries(formattedData);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.person.toLowerCase().includes(searchTerm.toLowerCase()) || entry.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = entry.nomepessoaescala.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || entry.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "presente":
+
+  const getStatusColor = (status?: string) => {
+    if (!status) return "secondary";
+    switch (status.toLowerCase()) {
+      case "aguardando":
+        return "secondary";
+      case "respondido":
         return "default";
       case "ausente":
         return "destructive";
-      case "atrasado":
-        return "secondary";
-      case "saiu_cedo":
+      default:
         return "outline";
-      default:
-        return "secondary";
     }
   };
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "presente":
-        return "Presente";
-      case "ausente":
-        return "Ausente";
-      case "atrasado":
-        return "Atrasado";
-      case "saiu_cedo":
-        return "Saiu Cedo";
-      default:
-        return status;
-    }
+
+  const getStatusText = (status?: string) => {
+    if (!status) return "Sem status";
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
-  const formatTime = (date?: Date) => {
-    if (!date) return "-";
-    return date.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+
+  const formatTime = (timeString?: string) => {
+    if (!timeString) return "-";
+    return timeString;
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
+
   const handleCreateEntry = () => {
     setIsDialogOpen(true);
   };
-  return <div className="p-8 space-y-6">
+
+  return (
+    <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Detalhe Presença</h1>
           <p className="text-muted-foreground mt-1">Visualização micro para coordenadoras</p>
           <Badge variant="outline" className="mt-2">Responsável: Fernando</Badge>
         </div>
-        
       </div>
 
       <Card>
@@ -106,7 +140,12 @@ export default function Presenca() {
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Buscar registros..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+              <Input 
+                placeholder="Buscar registros..." 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                className="pl-10" 
+              />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-40">
@@ -115,50 +154,69 @@ export default function Presenca() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="presente">Presente</SelectItem>
+                <SelectItem value="Aguardando">Aguardando</SelectItem>
+                <SelectItem value="respondido">Respondido</SelectItem>
                 <SelectItem value="ausente">Ausente</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
-                <SelectItem value="saiu_cedo">Saiu Cedo</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredEntries.map(entry => <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{entry.person}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {entry.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Entrada: {formatTime(entry.checkIn)}
-                      </span>
-                      {entry.checkOut && <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          Saída: {formatTime(entry.checkOut)}
-                        </span>}
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="text-muted-foreground">Carregando dados...</div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredEntries.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  Nenhum registro encontrado
+                </div>
+              ) : (
+                filteredEntries.map(entry => (
+                  <div key={entry.idresposta} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">{entry.nomepessoaescala}</h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Escala: {entry.idescala}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Comunicação: {formatDate(entry.dtcomunicacao)}
+                          </span>
+                          {entry.horaresposta && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Resposta: {formatTime(entry.horaresposta)}
+                            </span>
+                          )}
+                        </div>
+                        {entry.telefone && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Telefone: {entry.telefone}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    {entry.notes && <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        ID: {entry.idcomunicacao}
+                      </Badge>
+                      <Badge variant={getStatusColor(entry.status) as any}>
+                        {getStatusText(entry.status)}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={entry.role === "Limpeza" ? "default" : "secondary"}>
-                    {entry.role}
-                  </Badge>
-                  <Badge variant={getStatusColor(entry.status) as any}>
-                    {getStatusText(entry.status)}
-                  </Badge>
-                </div>
-              </div>)}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -224,5 +282,6 @@ export default function Presenca() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }
