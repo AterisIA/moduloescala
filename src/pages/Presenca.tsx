@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Filter, Clock, User, MapPin } from "lucide-react";
-
 interface PresenceEntry {
   id: string;
   person: string;
@@ -19,94 +18,87 @@ interface PresenceEntry {
   location: string;
   notes?: string;
 }
-
-const mockEntries: PresenceEntry[] = [
-  {
-    id: "1",
-    person: "Maria Silva",
-    role: "Limpeza",
-    checkIn: new Date("2024-01-15T08:00:00"),
-    checkOut: new Date("2024-01-15T12:00:00"),
-    status: "presente",
-    location: "Prédio A",
-    notes: "Turno completo"
-  },
-  {
-    id: "2", 
-    person: "João Santos",
-    role: "Recepção",
-    checkIn: new Date("2024-01-15T08:15:00"),
-    status: "atrasado",
-    location: "Recepção Principal",
-    notes: "Chegou 15 min atrasado"
-  },
-  {
-    id: "3",
-    person: "Ana Costa",
-    role: "Limpeza",
-    status: "ausente",
-    location: "Prédio B",
-    notes: "Não compareceu"
-  }
-];
-
+const mockEntries: PresenceEntry[] = [{
+  id: "1",
+  person: "Maria Silva",
+  role: "Limpeza",
+  checkIn: new Date("2024-01-15T08:00:00"),
+  checkOut: new Date("2024-01-15T12:00:00"),
+  status: "presente",
+  location: "Prédio A",
+  notes: "Turno completo"
+}, {
+  id: "2",
+  person: "João Santos",
+  role: "Recepção",
+  checkIn: new Date("2024-01-15T08:15:00"),
+  status: "atrasado",
+  location: "Recepção Principal",
+  notes: "Chegou 15 min atrasado"
+}, {
+  id: "3",
+  person: "Ana Costa",
+  role: "Limpeza",
+  status: "ausente",
+  location: "Prédio B",
+  notes: "Não compareceu"
+}];
 export default function Presenca() {
   const [entries, setEntries] = useState<PresenceEntry[]>(mockEntries);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
   const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.person.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = entry.person.toLowerCase().includes(searchTerm.toLowerCase()) || entry.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || entry.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "presente": return "default";
-      case "ausente": return "destructive";
-      case "atrasado": return "secondary";
-      case "saiu_cedo": return "outline";
-      default: return "secondary";
+      case "presente":
+        return "default";
+      case "ausente":
+        return "destructive";
+      case "atrasado":
+        return "secondary";
+      case "saiu_cedo":
+        return "outline";
+      default:
+        return "secondary";
     }
   };
-
   const getStatusText = (status: string) => {
     switch (status) {
-      case "presente": return "Presente";
-      case "ausente": return "Ausente";
-      case "atrasado": return "Atrasado";
-      case "saiu_cedo": return "Saiu Cedo";
-      default: return status;
+      case "presente":
+        return "Presente";
+      case "ausente":
+        return "Ausente";
+      case "atrasado":
+        return "Atrasado";
+      case "saiu_cedo":
+        return "Saiu Cedo";
+      default:
+        return status;
     }
   };
-
   const formatTime = (date?: Date) => {
     if (!date) return "-";
-    return date.toLocaleTimeString("pt-BR", { 
-      hour: "2-digit", 
-      minute: "2-digit" 
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
-
   const handleCreateEntry = () => {
     setIsDialogOpen(true);
   };
-
-  return (
-    <div className="p-8 space-y-6">
+  return <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Detalhe Presença</h1>
           <p className="text-muted-foreground mt-1">Visualização micro para coordenadoras</p>
           <Badge variant="outline" className="mt-2">Responsável: Fernando</Badge>
         </div>
-        <Button onClick={handleCreateEntry} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Entrada
-        </Button>
+        
       </div>
 
       <Card>
@@ -114,12 +106,7 @@ export default function Presenca() {
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar registros..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar registros..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-40">
@@ -138,8 +125,7 @@ export default function Presenca() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredEntries.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+            {filteredEntries.map(entry => <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-5 w-5 text-primary" />
@@ -155,16 +141,12 @@ export default function Presenca() {
                         <Clock className="h-3 w-3" />
                         Entrada: {formatTime(entry.checkIn)}
                       </span>
-                      {entry.checkOut && (
-                        <span className="flex items-center gap-1">
+                      {entry.checkOut && <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           Saída: {formatTime(entry.checkOut)}
-                        </span>
-                      )}
+                        </span>}
                     </div>
-                    {entry.notes && (
-                      <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>
-                    )}
+                    {entry.notes && <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -175,8 +157,7 @@ export default function Presenca() {
                     {getStatusText(entry.status)}
                   </Badge>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
@@ -243,6 +224,5 @@ export default function Presenca() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
