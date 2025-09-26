@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import '../components/ui/phone-input.css';
-
 interface Escala {
   idescala: number;
   nomepessoaescala: string;
@@ -22,8 +21,6 @@ interface Escala {
   finalescala?: string;
   telefone?: string;
 }
-
-
 export default function Escalas() {
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,46 +34,44 @@ export default function Escalas() {
     finalescala: "",
     telefone: ""
   });
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     fetchEscalas();
   }, []);
-
   const fetchEscalas = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('escala')
-        .select('*')
-        .order('dataescala', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('escala').select('*').order('dataescala', {
+        ascending: false
+      });
       if (error) {
         toast({
           title: "Erro ao carregar escalas",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       setEscalas(data || []);
     } catch (error) {
       toast({
         title: "Erro ao carregar escalas",
         description: "Erro inesperado ao buscar dados.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const filteredEscalas = escalas.filter(escala => {
     const matchesSearch = escala.nomepessoaescala.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -86,28 +81,22 @@ export default function Escalas() {
       minute: '2-digit'
     });
   };
-
   const formatDuration = (start: string, end?: string) => {
     const startDate = new Date(start);
     const endDate = end ? new Date(end) : null;
-    
     if (!endDate) {
       return `${formatDate(start)} - Em andamento`;
     }
-    
     const duration = endDate.getTime() - startDate.getTime();
     const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-    
+    const minutes = Math.floor(duration % (1000 * 60 * 60) / (1000 * 60));
     return `${formatDate(start)} - ${formatDate(end)} (${hours}h${minutes > 0 ? `${minutes}min` : ''})`;
   };
-
   const handleEditEscala = (escala: Escala) => {
     setEditingEscala(escala);
     setIsCreating(false);
     setIsDialogOpen(true);
   };
-
   const handleCreateEscala = () => {
     setFormData({
       nomepessoaescala: "",
@@ -119,21 +108,18 @@ export default function Escalas() {
     setIsCreating(true);
     setIsDialogOpen(true);
   };
-
   const cleanPhoneNumber = (phone: string) => {
     return phone.replace(/\D/g, '');
   };
-
   const handleSubmitEscala = async () => {
     if (!formData.nomepessoaescala || !formData.dataescala) {
       toast({
         title: "Erro",
         description: "Nome da pessoa e data inicial são obrigatórios.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       // Remover o idescala do insert já que é gerado automaticamente
       const escalaData = {
@@ -142,43 +128,37 @@ export default function Escalas() {
         finalescala: formData.finalescala || null,
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null
       };
-
-      const { error } = await supabase
-        .from('escala')
-        .insert(escalaData);
-
+      const {
+        error
+      } = await supabase.from('escala').insert(escalaData);
       if (error) {
         toast({
           title: "Erro ao criar escala",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       toast({
         title: "Sucesso",
-        description: "Escala criada com sucesso!",
+        description: "Escala criada com sucesso!"
       });
-
       setIsDialogOpen(false);
       fetchEscalas(); // Recarregar lista
     } catch (error) {
       toast({
         title: "Erro ao criar escala",
         description: "Erro inesperado ao criar escala.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
-  return (
-    <div className="p-8 space-y-6">
+  return <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Escalas</h1>
           <p className="text-muted-foreground mt-1">Escalas ativas do sistema</p>
-          <Badge variant="outline" className="mt-2">Responsável: Davi</Badge>
+          
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={handleCreateEscala} className="gap-2">
@@ -193,29 +173,17 @@ export default function Escalas() {
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar por nome da pessoa..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar por nome da pessoa..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-8">
+          {loading ? <div className="text-center py-8">
               <p className="text-muted-foreground">Carregando escalas...</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredEscalas.length === 0 ? (
-                <div className="text-center py-8">
+            </div> : <div className="space-y-4">
+              {filteredEscalas.length === 0 ? <div className="text-center py-8">
                   <p className="text-muted-foreground">Nenhuma escala encontrada.</p>
-                </div>
-              ) : (
-                filteredEscalas.map((escala) => (
-                  <div key={escala.idescala} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                </div> : filteredEscalas.map(escala => <div key={escala.idescala} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <Users className="h-5 w-5 text-primary" />
@@ -227,11 +195,9 @@ export default function Escalas() {
                             <Clock className="h-3 w-3" />
                             {formatDuration(escala.dataescala, escala.finalescala)}
                           </div>
-                          {escala.telefone && (
-                            <div className="text-xs">
+                          {escala.telefone && <div className="text-xs">
                               📞 {escala.telefone}
-                            </div>
-                          )}
+                            </div>}
                         </div>
                       </div>
                     </div>
@@ -253,11 +219,8 @@ export default function Escalas() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                  </div>)}
+            </div>}
         </CardContent>
       </Card>
 
@@ -267,46 +230,34 @@ export default function Escalas() {
             <DialogTitle>{isCreating ? "Criar Nova Escala" : "Detalhes da Escala"}</DialogTitle>
           </DialogHeader>
           
-          {isCreating ? (
-            <div className="space-y-4">
+          {isCreating ? <div className="space-y-4">
               <div>
                 <Label htmlFor="nomepessoaescala">Nome da Pessoa *</Label>
-                <Input
-                  id="nomepessoaescala"
-                  value={formData.nomepessoaescala}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nomepessoaescala: e.target.value }))}
-                  placeholder="Digite o nome da pessoa"
-                />
+                <Input id="nomepessoaescala" value={formData.nomepessoaescala} onChange={e => setFormData(prev => ({
+              ...prev,
+              nomepessoaescala: e.target.value
+            }))} placeholder="Digite o nome da pessoa" />
               </div>
               <div>
                 <Label htmlFor="dataescala">Data/Hora de Início *</Label>
-                <Input
-                  id="dataescala"
-                  type="datetime-local"
-                  value={formData.dataescala}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dataescala: e.target.value }))}
-                />
+                <Input id="dataescala" type="datetime-local" value={formData.dataescala} onChange={e => setFormData(prev => ({
+              ...prev,
+              dataescala: e.target.value
+            }))} />
               </div>
               <div>
                 <Label htmlFor="finalescala">Data/Hora de Término</Label>
-                <Input
-                  id="finalescala"
-                  type="datetime-local"
-                  value={formData.finalescala}
-                  onChange={(e) => setFormData(prev => ({ ...prev, finalescala: e.target.value }))}
-                />
+                <Input id="finalescala" type="datetime-local" value={formData.finalescala} onChange={e => setFormData(prev => ({
+              ...prev,
+              finalescala: e.target.value
+            }))} />
               </div>
               <div>
                 <Label htmlFor="telefone">Telefone</Label>
-                <PhoneInput
-                  international
-                  countryCallingCodeEditable={false}
-                  defaultCountry="BR"
-                  value={formData.telefone}
-                  onChange={(value) => setFormData(prev => ({ ...prev, telefone: value || "" }))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Digite o telefone"
-                />
+                <PhoneInput international countryCallingCodeEditable={false} defaultCountry="BR" value={formData.telefone} onChange={value => setFormData(prev => ({
+              ...prev,
+              telefone: value || ""
+            }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Digite o telefone" />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -316,9 +267,7 @@ export default function Escalas() {
                   Criar Escala
                 </Button>
               </div>
-            </div>
-          ) : editingEscala && (
-            <div className="space-y-4">
+            </div> : editingEscala && <div className="space-y-4">
               <div>
                 <Label>ID da Escala</Label>
                 <p className="text-sm text-muted-foreground">{editingEscala.idescala}</p>
@@ -335,27 +284,21 @@ export default function Escalas() {
                 <Label>Data de Início</Label>
                 <p className="text-sm text-muted-foreground">{formatDate(editingEscala.dataescala)}</p>
               </div>
-              {editingEscala.finalescala && (
-                <div>
+              {editingEscala.finalescala && <div>
                   <Label>Data de Término</Label>
                   <p className="text-sm text-muted-foreground">{formatDate(editingEscala.finalescala)}</p>
-                </div>
-              )}
-              {editingEscala.telefone && (
-                <div>
+                </div>}
+              {editingEscala.telefone && <div>
                   <Label>Telefone</Label>
                   <p className="text-sm text-muted-foreground">{editingEscala.telefone}</p>
-                </div>
-              )}
+                </div>}
               <div className="flex justify-end">
                 <Button onClick={() => setIsDialogOpen(false)}>
                   Fechar
                 </Button>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
