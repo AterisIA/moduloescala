@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, MoreHorizontal, Edit, Calendar, Clock, Users } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Edit, Calendar, Clock, Users, Plus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,13 @@ export default function Escalas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEscala, setEditingEscala] = useState<Escala | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    nomepessoaescala: "",
+    dataescala: "",
+    finalescala: "",
+    telefone: ""
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -94,7 +101,67 @@ export default function Escalas() {
 
   const handleEditEscala = (escala: Escala) => {
     setEditingEscala(escala);
+    setIsCreating(false);
     setIsDialogOpen(true);
+  };
+
+  const handleCreateEscala = () => {
+    setFormData({
+      nomepessoaescala: "",
+      dataescala: "",
+      finalescala: "",
+      telefone: ""
+    });
+    setEditingEscala(null);
+    setIsCreating(true);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmitEscala = async () => {
+    if (!formData.nomepessoaescala || !formData.dataescala) {
+      toast({
+        title: "Erro",
+        description: "Nome da pessoa e data inicial são obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const escalaData = {
+        nomepessoaescala: formData.nomepessoaescala,
+        dataescala: formData.dataescala,
+        finalescala: formData.finalescala || null,
+        telefone: formData.telefone || null
+      };
+
+      const { error } = await supabase
+        .from('escala')
+        .insert(escalaData);
+
+      if (error) {
+        toast({
+          title: "Erro ao criar escala",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Escala criada com sucesso!",
+      });
+
+      setIsDialogOpen(false);
+      fetchEscalas(); // Recarregar lista
+    } catch (error) {
+      toast({
+        title: "Erro ao criar escala",
+        description: "Erro inesperado ao criar escala.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -106,12 +173,10 @@ export default function Escalas() {
           <Badge variant="outline" className="mt-2">Responsável: Davi</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="destructive" className="text-xs">
-            Criar: Não permitido
-          </Badge>
-          <Badge variant="destructive" className="text-xs">
-            Excluir: Não permitido
-          </Badge>
+          <Button onClick={handleCreateEscala} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Criar Escala
+          </Button>
         </div>
       </div>
 
@@ -191,9 +256,57 @@ export default function Escalas() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Detalhes da Escala</DialogTitle>
+            <DialogTitle>{isCreating ? "Criar Nova Escala" : "Detalhes da Escala"}</DialogTitle>
           </DialogHeader>
-          {editingEscala && (
+          
+          {isCreating ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="nomepessoaescala">Nome da Pessoa *</Label>
+                <Input
+                  id="nomepessoaescala"
+                  value={formData.nomepessoaescala}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nomepessoaescala: e.target.value }))}
+                  placeholder="Digite o nome da pessoa"
+                />
+              </div>
+              <div>
+                <Label htmlFor="dataescala">Data/Hora de Início *</Label>
+                <Input
+                  id="dataescala"
+                  type="datetime-local"
+                  value={formData.dataescala}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dataescala: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="finalescala">Data/Hora de Término</Label>
+                <Input
+                  id="finalescala"
+                  type="datetime-local"
+                  value={formData.finalescala}
+                  onChange={(e) => setFormData(prev => ({ ...prev, finalescala: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                  placeholder="Digite o telefone"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSubmitEscala}>
+                  Criar Escala
+                </Button>
+              </div>
+            </div>
+          ) : editingEscala && (
             <div className="space-y-4">
               <div>
                 <Label>ID da Escala</Label>
