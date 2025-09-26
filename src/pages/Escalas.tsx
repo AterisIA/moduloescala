@@ -135,6 +135,7 @@ export default function Escalas() {
     }
 
     try {
+      // Remover o idescala do insert já que é gerado automaticamente
       const escalaData = {
         nomepessoaescala: formData.nomepessoaescala,
         dataescala: formData.dataescala,
