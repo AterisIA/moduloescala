@@ -16,6 +16,7 @@ interface Escala {
   idescala: number;
   nomepessoaescala: string;
   dataescala: string;
+  finalescala?: string;
   telefone?: string;
 }
 
@@ -76,6 +77,21 @@ export default function Escalas() {
     });
   };
 
+  const formatDuration = (start: string, end?: string) => {
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : null;
+    
+    if (!endDate) {
+      return `${formatDate(start)} - Em andamento`;
+    }
+    
+    const duration = endDate.getTime() - startDate.getTime();
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${formatDate(start)} - ${formatDate(end)} (${hours}h${minutes > 0 ? `${minutes}min` : ''})`;
+  };
+
   const handleEditEscala = (escala: Escala) => {
     setEditingEscala(escala);
     setIsDialogOpen(true);
@@ -129,30 +145,26 @@ export default function Escalas() {
                   <div key={escala.idescala} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-primary" />
+                        <Users className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">Escala #{escala.idescala}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {escala.nomepessoaescala}
-                          </span>
-                          <span className="flex items-center gap-1">
+                        <h3 className="font-semibold text-foreground text-lg">{escala.nomepessoaescala}</h3>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          <div className="flex items-center gap-1 mb-1">
                             <Clock className="h-3 w-3" />
-                            {formatDate(escala.dataescala)}
-                          </span>
+                            {formatDuration(escala.dataescala, escala.finalescala)}
+                          </div>
                           {escala.telefone && (
-                            <span className="text-xs">
-                              Tel: {escala.telefone}
-                            </span>
+                            <div className="text-xs">
+                              📞 {escala.telefone}
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="default">
-                        Escala
+                      <Badge variant={escala.finalescala ? "secondary" : "default"}>
+                        {escala.finalescala ? "Finalizada" : "Em andamento"}
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -189,12 +201,22 @@ export default function Escalas() {
               </div>
               <div>
                 <Label>Nome da Pessoa</Label>
-                <p className="text-sm text-muted-foreground">{editingEscala.nomepessoaescala}</p>
+                <p className="text-sm font-medium">{editingEscala.nomepessoaescala}</p>
               </div>
               <div>
-                <Label>Data/Hora da Escala</Label>
+                <Label>Duração da Escala</Label>
+                <p className="text-sm text-muted-foreground">{formatDuration(editingEscala.dataescala, editingEscala.finalescala)}</p>
+              </div>
+              <div>
+                <Label>Data de Início</Label>
                 <p className="text-sm text-muted-foreground">{formatDate(editingEscala.dataescala)}</p>
               </div>
+              {editingEscala.finalescala && (
+                <div>
+                  <Label>Data de Término</Label>
+                  <p className="text-sm text-muted-foreground">{formatDate(editingEscala.finalescala)}</p>
+                </div>
+              )}
               {editingEscala.telefone && (
                 <div>
                   <Label>Telefone</Label>
