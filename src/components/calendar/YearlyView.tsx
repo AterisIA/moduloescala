@@ -93,8 +93,8 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
       >
         {/* Header Row 1: Month names and week labels */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
-          <div>Funcionário</div>
-          <div className="text-xs text-muted-foreground mt-1">Ano {format(currentDate, 'yyyy')}</div>
+          <div>Escalas do Ano</div>
+          <div className="text-xs text-muted-foreground mt-1">{format(currentDate, 'yyyy')}</div>
         </div>
         
         {monthNames.map((monthName) => (

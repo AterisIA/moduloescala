@@ -94,8 +94,8 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         {/* Header with dates */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
           <div className="p-2">
-            <span className="hidden md:inline">Funcionário</span>
-            <span className="md:hidden">Func.</span>
+            <span className="hidden md:inline">Escalas da Semana</span>
+            <span className="md:hidden">Escalas</span>
           </div>
         </div>
         {dates.map(date => (

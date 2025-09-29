@@ -78,8 +78,8 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
         {/* Header with hours */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
           <div className="p-2">
-            <div className="hidden md:block">Funcionário</div>
-            <div className="md:hidden">Func.</div>
+            <div className="hidden md:block">Escalas do Dia</div>
+            <div className="md:hidden">Escalas</div>
             <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
               {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
             </div>

@@ -87,7 +87,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
       >
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
-          <div>Funcionário</div>
+          <div>Escalas do Mês</div>
         </div>
         
         {monthDays.map(date => (
