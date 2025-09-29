@@ -131,26 +131,29 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
               
               {monthDays.map(date => {
                 const schedule = getScheduleForDate(employee.id, date);
+                const isWorking = schedule?.type === 'work';
                 
                 return (
                   <div 
                     key={`${employee.id}-${date.toISOString()}`}
                     className={`min-h-16 p-2 border-b border-r transition-colors flex items-center justify-center ${
-                      isPast(date) ? 'opacity-60' : 'hover:bg-muted/50'
+                      isPast(date) ? 'opacity-60' : ''
+                    } ${
+                      isWorking 
+                        ? 'bg-[hsl(var(--schedule-red)/0.15)] hover:bg-[hsl(var(--schedule-red)/0.25)]'
+                        : schedule?.type === 'rest'
+                        ? 'bg-[hsl(var(--schedule-gray)/0.15)]'
+                        : schedule?.type === 'vacation'
+                        ? 'bg-[hsl(var(--schedule-blue)/0.15)]'
+                        : 'hover:bg-muted/50'
                     } ${getDayClass(date)}`}
                   >
                     {schedule ? (
-                      <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1">
+                      <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full text-center">
                         {schedule.type === 'work' ? (
-                          <>
-                            <div className="text-[10px] font-medium leading-tight">
-                              {schedule.startTime.slice(0,5)}
-                            </div>
-                            <div className="w-full h-1 rounded-full bg-[hsl(var(--schedule-red))]" />
-                            <div className="text-[10px] font-medium leading-tight">
-                              {schedule.endTime.slice(0,5)}
-                            </div>
-                          </>
+                          <div className="text-[11px] font-medium leading-tight">
+                            {schedule.startTime.slice(0,5)}-{schedule.endTime.slice(0,5)}
+                          </div>
                         ) : (
                           <div className="text-lg">
                             {schedule.type === 'rest' ? '💤' : '🏖️'}
