@@ -15,7 +15,7 @@ interface PresenceEntry {
   idescala: number;
   idcomunicacao: number;
   nomepessoaescala: string;
-  telefone?: number;
+  telefone?: string;
   status?: string;
   dtcomunicacao?: string;
   dtresposta?: string;
@@ -69,7 +69,7 @@ export default function Presenca() {
           idescala: item.idescala,
           idcomunicacao: item.idcomunicacao,
           nomepessoaescala: escala?.nomepessoaescala || 'Nome não encontrado',
-          telefone: item.telefone || undefined,
+          telefone: escala?.telefone || undefined,
           status: item.status || undefined,
           dtcomunicacao: item.dtcomunicacao || undefined,
           dtresposta: item.dtresposta || undefined,
