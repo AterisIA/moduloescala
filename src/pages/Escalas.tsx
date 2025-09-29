@@ -27,9 +27,13 @@ interface Coordenador {
   nome: string;
 }
 
-interface Empresa {
-  id_empresa: string;
+interface Plantao {
+  id_plantao: string;
   nome: string;
+  id_empresa: string;
+  empresa?: {
+    nome: string;
+  };
 }
 export default function Escalas() {
   const [escalas, setEscalas] = useState<Escala[]>([]);
@@ -39,12 +43,15 @@ export default function Escalas() {
   const [editingEscala, setEditingEscala] = useState<Escala | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [coordenadores, setCoordenadores] = useState<Coordenador[]>([]);
+  const [plantoes, setPlantoes] = useState<Plantao[]>([]);
+  const [selectedEmpresa, setSelectedEmpresa] = useState<string>("");
   const [formData, setFormData] = useState({
     nomepessoaescala: "",
     dataescala: "",
     finalescala: "",
     telefone: "",
-    id_coordenador: ""
+    id_coordenador: "",
+    id_plantao: ""
   });
   const {
     toast
@@ -52,6 +59,7 @@ export default function Escalas() {
   useEffect(() => {
     fetchEscalas();
     fetchCoordenadores();
+    fetchPlantoes();
   }, []);
 
   const fetchCoordenadores = async () => {
@@ -72,6 +80,43 @@ export default function Escalas() {
       setCoordenadores(data || []);
     } catch (error) {
       console.error("Erro ao buscar coordenadores:", error);
+    }
+  };
+
+  const fetchPlantoes = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('plantao')
+        .select(`
+          id_plantao,
+          nome,
+          id_empresa,
+          empresa:id_empresa (
+            nome
+          )
+        `)
+        .order('nome', { ascending: true }) as { data: any[] | null; error: any };
+      
+      if (error) {
+        toast({
+          title: "Erro ao carregar plantões",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Mapear para o formato correto
+      const plantoesMapeados = data?.map((p: any) => ({
+        id_plantao: p.id_plantao,
+        nome: p.nome,
+        id_empresa: p.id_empresa,
+        empresa: p.empresa
+      })) || [];
+      
+      setPlantoes(plantoesMapeados);
+    } catch (error) {
+      console.error("Erro ao buscar plantões:", error);
     }
   };
 
@@ -138,11 +183,28 @@ export default function Escalas() {
       dataescala: "",
       finalescala: "",
       telefone: "",
-      id_coordenador: ""
+      id_coordenador: "",
+      id_plantao: ""
     });
+    setSelectedEmpresa("");
     setEditingEscala(null);
     setIsCreating(true);
     setIsDialogOpen(true);
+  };
+
+  const handlePlantaoChange = (plantaoId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      id_plantao: plantaoId
+    }));
+    
+    // Encontrar o plantão selecionado e mostrar a empresa
+    const plantaoSelecionado = plantoes.find(p => p.id_plantao === plantaoId);
+    if (plantaoSelecionado?.empresa) {
+      setSelectedEmpresa(plantaoSelecionado.empresa.nome);
+    } else {
+      setSelectedEmpresa("");
+    }
   };
   const cleanPhoneNumber = (phone: string) => {
     return phone.replace(/\D/g, '');
@@ -164,7 +226,22 @@ export default function Escalas() {
         finalescala: formData.finalescala || null,
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
         id_coordenador: formData.id_coordenador || null
-      };
+  };
+
+  const handlePlantaoChange = (plantaoId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      id_plantao: plantaoId
+    }));
+    
+    // Encontrar o plantão selecionado e mostrar a empresa
+    const plantaoSelecionado = plantoes.find(p => p.id_plantao === plantaoId);
+    if (plantaoSelecionado?.empresa) {
+      setSelectedEmpresa(plantaoSelecionado.empresa.nome);
+    } else {
+      setSelectedEmpresa("");
+    }
+  };
       const {
         error
       } = await supabase.from('escala').insert(escalaData);
@@ -312,6 +389,25 @@ export default function Escalas() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label htmlFor="plantao">Plantão</Label>
+                <Select value={formData.id_plantao} onValueChange={handlePlantaoChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um plantão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plantoes.map(plantao => <SelectItem key={plantao.id_plantao} value={plantao.id_plantao}>
+                        {plantao.nome}
+                      </SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedEmpresa && (
+                <div>
+                  <Label htmlFor="empresa">Empresa</Label>
+                  <Input id="empresa" value={selectedEmpresa} disabled className="bg-muted" />
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
