@@ -55,7 +55,12 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   const isWorkingHour = (hour: number, schedule: Schedule) => {
     if (!schedule || schedule.type !== 'work') return false;
     const start = parseInt(schedule.startTime.split(':')[0]);
-    const end = parseInt(schedule.endTime.split(':')[0]);
+    const endHour = parseInt(schedule.endTime.split(':')[0]);
+    const endMinutes = parseInt(schedule.endTime.split(':')[1]);
+    
+    // If end time has minutes (like 23:59), include that hour
+    const end = endMinutes > 0 ? endHour + 1 : endHour;
+    
     return hour >= start && hour < end;
   };
 
