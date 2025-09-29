@@ -28,35 +28,60 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   const getScheduleForEmployee = (employeeId: string) => {
     return schedules.find(schedule => 
       schedule.employeeId === employeeId && 
-      isSameDay(schedule.date, currentDate)
+      schedule.startDateTime && 
+      isSameDay(schedule.startDateTime, currentDate)
     );
   };
 
   const getScheduleColor = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
-    if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
+    if (!schedule.startDateTime) return 'bg-gray-200 text-gray-800';
     
-    const start = parseInt(schedule.startTime.split(':')[0]);
-    const end = parseInt(schedule.endTime.split(':')[0]);
+    const hour = schedule.startDateTime.getHours();
     
-    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-gray-800';
-    if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
-    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-gray-800';
-    
-    return 'bg-gray-200 text-gray-800';
+    if (hour >= 6 && hour < 14) {
+      return 'bg-[hsl(var(--schedule-diurno))] text-white';
+    } else if (hour >= 14 && hour < 22) {
+      return 'bg-[hsl(var(--schedule-vespertino))] text-white';
+    } else {
+      return 'bg-[hsl(var(--schedule-noturno))] text-white';
+    }
   };
 
   const getScheduleDisplay = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return '💤';
-    if (schedule.type === 'vacation') return '🏖️';
-    return `${schedule.startTime}-${schedule.endTime}`;
+    if (!schedule.startDateTime || !schedule.endDateTime) return schedule.startTime;
+    
+    const start = schedule.startDateTime.toTimeString().substring(0, 5);
+    const end = schedule.endDateTime.toTimeString().substring(0, 5);
+    return `${start} - ${end}`;
   };
 
-  const isWorkingHour = (hour: number, schedule: Schedule) => {
-    if (!schedule || schedule.type !== 'work') return false;
-    const start = parseInt(schedule.startTime.split(':')[0]);
-    const end = parseInt(schedule.endTime.split(':')[0]);
-    return hour >= start && hour < end;
+  const calculateBlockPosition = (schedule: Schedule) => {
+    if (!schedule.startDateTime || !schedule.endDateTime) return { left: 0, width: 0 };
+    
+    const startHour = schedule.startDateTime.getHours() + schedule.startDateTime.getMinutes() / 60;
+    const endHour = schedule.endDateTime.getHours() + schedule.endDateTime.getMinutes() / 60;
+    
+    // Se a escala vai até o dia seguinte
+    const duration = endHour <= startHour ? (24 - startHour) + endHour : endHour - startHour;
+    
+    const left = (startHour / 24) * 100;
+    const width = (duration / 24) * 100;
+    
+    return { left: `${left}%`, width: `${width}%` };
+  };
+
+  const isWithinSchedule = (hour: number, schedule: Schedule) => {
+    if (!schedule || !schedule.startDateTime || !schedule.endDateTime) return false;
+    
+    const startHour = schedule.startDateTime.getHours();
+    const endHour = schedule.endDateTime.getHours();
+    
+    if (startHour <= endHour) {
+      return hour >= startHour && hour < endHour;
+    } else {
+      // Escala noturna que passa para o próximo dia
+      return hour >= startHour || hour < endHour;
+    }
   };
 
   return (
@@ -115,38 +140,34 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 </div>
               </div>
               
-              {hours.map(hour => {
-                const isWorking = schedule && isWorkingHour(hour, schedule);
-                
-                return (
+              {/* Schedule display area - using full width for proportional blocks */}
+              <div className="col-span-24 relative min-h-[60px] border-b bg-gray-50">
+                {schedule ? (
                   <div 
-                    key={`${employee.id}-${hour}`}
-                    className={`calendar-cell border-b transition-colors ${
-                      isWorking 
-                        ? `${getScheduleColor(schedule)}`
-                        : 'hover:bg-muted/50'
-                    }`}
+                    className={`absolute top-1 bottom-1 ${getScheduleColor(schedule)} 
+                      rounded px-2 py-1 text-xs font-medium flex items-center justify-center z-10 shadow-sm`}
+                    style={calculateBlockPosition(schedule)}
                   >
-                    {isWorking ? (
-                      <div className="text-center text-xs font-medium">
-                        <div className="hidden sm:block">
-                          {hour === parseInt(schedule.startTime.split(':')[0]) && schedule.startTime}
-                          {hour === parseInt(schedule.endTime.split(':')[0]) - 1 && schedule.endTime}
-                        </div>
-                        <div className="sm:hidden">●</div>
-                      </div>
-                    ) : schedule && (schedule.type === 'rest' || schedule.type === 'vacation') ? (
-                      <div className={`text-center text-xs ${getScheduleColor(schedule)}`}>
-                        {getScheduleDisplay(schedule)}
-                      </div>
-                    ) : (
-                      <div className="text-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
+                    <div className="text-center">
+                      <div className="font-semibold">{getScheduleDisplay(schedule)}</div>
+                      <div className="text-xs opacity-90">{employee.name}</div>
+                    </div>
+                  </div>
+                ) : (
+                  // Grid de horas para quando não há escala
+                  <div className="grid grid-cols-24 h-full">
+                    {hours.map(hour => (
+                      <div
+                        key={hour}
+                        className="border-r border-gray-200 flex items-center justify-center text-gray-400 text-xs hover:bg-gray-100 cursor-pointer"
+                        title={`Adicionar escala para ${String(hour).padStart(2, '0')}:00`}
+                      >
                         +
                       </div>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
+                )}
+              </div>
             </Fragment>
           );
         })}

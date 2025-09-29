@@ -12,7 +12,7 @@ import { DailyView } from "./DailyView";
 import { CalendarGrid } from "./CalendarGrid";
 import { MonthlyView } from "./MonthlyView";
 import { YearlyView } from "./YearlyView";
-import { mockEmployees, mockSchedules } from "@/data/mockData";
+import { useEscalas } from "@/hooks/useEscalas";
 export function TeamManagement() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
@@ -20,6 +20,9 @@ export function TeamManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
+  
+  // Usar dados reais das escalas
+  const { employees, schedules, loading, error } = useEscalas();
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -65,10 +68,31 @@ export function TeamManagement() {
     setSelectedDepartments([]);
     setFilterDepartment("all");
   };
-  const filteredEmployees = mockEmployees.filter(emp => {
+  const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p>Carregando escalas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+        <div className="text-center text-red-500">
+          <p>Erro ao carregar escalas: {error}</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="calendar-container lg:pl-4">
       {/* Mobile-first sticky header */}
@@ -150,7 +174,7 @@ export function TeamManagement() {
               <DailyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={schedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
@@ -159,7 +183,7 @@ export function TeamManagement() {
               <CalendarGrid 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={schedules} 
                 selectedDepartments={selectedDepartments} 
                 viewType={viewType} 
               />
@@ -169,7 +193,7 @@ export function TeamManagement() {
               <MonthlyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={schedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
@@ -178,7 +202,7 @@ export function TeamManagement() {
               <YearlyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={schedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
