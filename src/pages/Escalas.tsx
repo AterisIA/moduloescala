@@ -21,6 +21,16 @@ interface Escala {
   finalescala?: string;
   telefone?: string;
 }
+
+interface Coordenador {
+  id_coordenador: string;
+  nome: string;
+}
+
+interface Empresa {
+  id_empresa: string;
+  nome: string;
+}
 export default function Escalas() {
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,18 +38,66 @@ export default function Escalas() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEscala, setEditingEscala] = useState<Escala | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [coordenadores, setCoordenadores] = useState<Coordenador[]>([]);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [formData, setFormData] = useState({
     nomepessoaescala: "",
     dataescala: "",
     finalescala: "",
-    telefone: ""
+    telefone: "",
+    id_coordenador: "",
+    id_empresa: ""
   });
   const {
     toast
   } = useToast();
   useEffect(() => {
     fetchEscalas();
+    fetchCoordenadores();
+    fetchEmpresas();
   }, []);
+
+  const fetchCoordenadores = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('coordenador')
+        .select('*')
+        .order('nome', { ascending: true }) as { data: Coordenador[] | null; error: any };
+      
+      if (error) {
+        toast({
+          title: "Erro ao carregar coordenadores",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      setCoordenadores(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar coordenadores:", error);
+    }
+  };
+
+  const fetchEmpresas = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('empresa')
+        .select('*')
+        .order('nome', { ascending: true }) as { data: Empresa[] | null; error: any };
+      
+      if (error) {
+        toast({
+          title: "Erro ao carregar empresas",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      setEmpresas(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+    }
+  };
   const fetchEscalas = async () => {
     try {
       setLoading(true);
@@ -102,7 +160,9 @@ export default function Escalas() {
       nomepessoaescala: "",
       dataescala: "",
       finalescala: "",
-      telefone: ""
+      telefone: "",
+      id_coordenador: "",
+      id_empresa: ""
     });
     setEditingEscala(null);
     setIsCreating(true);
@@ -126,7 +186,9 @@ export default function Escalas() {
         nomepessoaescala: formData.nomepessoaescala,
         dataescala: formData.dataescala,
         finalescala: formData.finalescala || null,
-        telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null
+        telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
+        id_coordenador: formData.id_coordenador || null,
+        id_empresa: formData.id_empresa || null
       };
       const {
         error
@@ -258,6 +320,38 @@ export default function Escalas() {
               ...prev,
               telefone: value || ""
             }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Digite o telefone" />
+              </div>
+              <div>
+                <Label htmlFor="coordenador">Coordenador</Label>
+                <Select value={formData.id_coordenador} onValueChange={value => setFormData(prev => ({
+              ...prev,
+              id_coordenador: value
+            }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um coordenador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coordenadores.map(coord => <SelectItem key={coord.id_coordenador} value={coord.id_coordenador}>
+                        {coord.nome}
+                      </SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="empresa">Empresa</Label>
+                <Select value={formData.id_empresa} onValueChange={value => setFormData(prev => ({
+              ...prev,
+              id_empresa: value
+            }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {empresas.map(emp => <SelectItem key={emp.id_empresa} value={emp.id_empresa}>
+                        {emp.nome}
+                      </SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
