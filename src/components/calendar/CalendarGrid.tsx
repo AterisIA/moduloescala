@@ -81,14 +81,14 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   return (
     <div className="h-full overflow-auto">
       <div 
-        className="grid overflow-x-auto min-h-0" 
+        className="grid min-h-0" 
         style={{ 
           gridTemplateColumns: viewType === 'weekly' 
-            ? 'minmax(160px, 280px) repeat(7, minmax(80px, 1fr))'
-            : 'minmax(160px, 280px) repeat(auto-fit, minmax(32px, 1fr))',
-          '--col-fixed': 'minmax(160px, 280px)',
+            ? 'minmax(140px, 200px) repeat(7, minmax(70px, 1fr))'
+            : `minmax(140px, 200px) repeat(${dates.length}, minmax(32px, 50px))`,
+          '--col-fixed': 'minmax(140px, 200px)',
           '--cols': viewType === 'weekly' ? '7' : dates.length.toString(),
-          '--col-day': viewType === 'weekly' ? 'minmax(80px, 1fr)' : 'minmax(32px, 1fr)'
+          '--col-day': viewType === 'weekly' ? 'minmax(70px, 1fr)' : 'minmax(32px, 50px)'
         } as React.CSSProperties}
       >
         {/* Header with dates */}

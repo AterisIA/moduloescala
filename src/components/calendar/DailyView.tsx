@@ -67,12 +67,12 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   return (
     <div className="h-full overflow-auto">
       <div 
-        className="grid overflow-x-auto min-h-0" 
+        className="grid min-h-0" 
         style={{ 
-          gridTemplateColumns: 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
-          '--col-fixed': 'minmax(160px, 280px)',
+          gridTemplateColumns: 'minmax(140px, 200px) repeat(24, minmax(40px, 60px))',
+          '--col-fixed': 'minmax(140px, 200px)',
           '--cols': '24',
-          '--col-day': 'minmax(56px, 1fr)'
+          '--col-day': 'minmax(40px, 60px)'
         } as React.CSSProperties}
       >
         {/* Header with hours */}
