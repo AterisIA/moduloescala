@@ -7,7 +7,7 @@ import { Search, Filter } from "lucide-react";
 import { ViewType } from "@/types/calendar";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarViewTabs } from "./CalendarViewTabs";
-import { SelectedChipsBar } from "./SelectedChipsBar";
+
 import { DailyView } from "./DailyView";
 import { CalendarGrid } from "./CalendarGrid";
 import { MonthlyView } from "./MonthlyView";
@@ -22,9 +22,8 @@ export function TeamManagement() {
   } = useEscalas();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("all");
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
@@ -54,22 +53,7 @@ export function TeamManagement() {
     });
   };
   const handleDepartmentFilter = (department: string) => {
-    if (department === "all") {
-      setSelectedDepartments([]);
-      setFilterDepartment("all");
-    } else {
-      if (!selectedDepartments.includes(department)) {
-        setSelectedDepartments([...selectedDepartments, department]);
-      }
-      setFilterDepartment("all");
-    }
-  };
-  const handleRemoveDepartment = (department: string) => {
-    setSelectedDepartments(prev => prev.filter(d => d !== department));
-  };
-  const handleClearAllFilters = () => {
-    setSelectedDepartments([]);
-    setFilterDepartment("all");
+    setSelectedDepartment(department);
   };
   const filteredEmployees = escalasEmployees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
@@ -114,7 +98,7 @@ export function TeamManagement() {
             
             {/* Mobile: show filter button, Desktop: show select */}
             <div className="sm:hidden">
-              <Select value={filterDepartment} onValueChange={handleDepartmentFilter}>
+              <Select value={selectedDepartment} onValueChange={handleDepartmentFilter}>
                 <SelectTrigger className="w-full touch-target">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Filtrar departamentos" />
@@ -127,7 +111,7 @@ export function TeamManagement() {
             </div>
 
             <div className="hidden sm:block">
-              <Select value={filterDepartment} onValueChange={handleDepartmentFilter}>
+              <Select value={selectedDepartment} onValueChange={handleDepartmentFilter}>
                 <SelectTrigger className="w-40">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
@@ -139,9 +123,6 @@ export function TeamManagement() {
               </Select>
             </div>
           </div>
-
-          {/* Selected Chips */}
-          <SelectedChipsBar selectedDepartments={selectedDepartments} onRemoveDepartment={handleRemoveDepartment} onClearAll={handleClearAllFilters} />
         </div>
       </header>
 
@@ -150,13 +131,13 @@ export function TeamManagement() {
         <Card className="h-full border-0 rounded-none">
           <CardContent className="p-0 h-full overflow-auto">
             {/* Calendar Views */}
-            {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
+            {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
             
-            {viewType === 'weekly' && <CalendarGrid currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} viewType={viewType} />}
+            {viewType === 'weekly' && <CalendarGrid currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} viewType={viewType} />}
             
-            {viewType === 'monthly' && <MonthlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
+            {viewType === 'monthly' && <MonthlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
             
-            {viewType === 'yearly' && <YearlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
+            {viewType === 'yearly' && <YearlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
           </CardContent>
         </Card>
       </main>
