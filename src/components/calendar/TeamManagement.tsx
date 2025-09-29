@@ -127,9 +127,9 @@ export function TeamManagement() {
       </header>
 
       {/* Main content area */}
-      <main className="calendar-main">
-        <Card className="h-full border-0 rounded-none">
-          <CardContent className="p-0 h-full overflow-auto">
+      <main className="calendar-main overflow-auto">
+        <Card className="border-0 rounded-none">
+          <CardContent className="p-0">
             {/* Calendar Views */}
             {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
             
