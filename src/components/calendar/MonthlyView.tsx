@@ -80,10 +80,10 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
     `${Math.floor(hours)}:${String(Math.round((hours % 1) * 60)).padStart(2, '0')}`;
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="overflow-auto">
       <div 
-        className="grid gap-1"
-        style={{ gridTemplateColumns: `minmax(140px, 200px) repeat(${monthDays.length}, minmax(45px, 70px))` }}
+        className="grid gap-1 min-w-fit"
+        style={{ gridTemplateColumns: `250px repeat(${monthDays.length}, minmax(60px, 1fr))` }}
       >
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">

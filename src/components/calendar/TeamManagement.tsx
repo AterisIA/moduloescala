@@ -75,9 +75,9 @@ export function TeamManagement() {
         </div>
       </div>;
   }
-  return <div className="calendar-container lg:pl-4 h-screen flex flex-col">
+  return <div className="calendar-container lg:pl-4">
       {/* Mobile-first sticky header */}
-      <header className="calendar-header flex-shrink-0">
+      <header className="calendar-header">
         <div className="p-4 space-y-4">
           {/* Navigation and View Controls */}
           <div className="flex items-center justify-between">
@@ -126,10 +126,10 @@ export function TeamManagement() {
         </div>
       </header>
 
-      {/* Main content area with fixed height */}
-      <main className="flex-1 min-h-0 overflow-hidden">
-        <Card className="h-full border-0 rounded-none">
-          <CardContent className="p-0 h-full">
+      {/* Main content area */}
+      <main className="calendar-main overflow-auto">
+        <Card className="border-0 rounded-none">
+          <CardContent className="p-0">
             {/* Calendar Views */}
             {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
             
