@@ -14,7 +14,12 @@ import { MonthlyView } from "./MonthlyView";
 import { YearlyView } from "./YearlyView";
 import { useEscalas } from "@/hooks/useEscalas";
 export function TeamManagement() {
-  const { employees: escalasEmployees, schedules: escalasSchedules, loading, error } = useEscalas();
+  const {
+    employees: escalasEmployees,
+    schedules: escalasSchedules,
+    loading,
+    error
+  } = useEscalas();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
@@ -70,40 +75,29 @@ export function TeamManagement() {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
-
   if (loading) {
-    return (
-      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+    return <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
           <p className="text-muted-foreground">Carregando escalas...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
-    return (
-      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+    return <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-destructive mb-2">Erro ao carregar escalas:</p>
           <p className="text-muted-foreground">{error}</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-  return (
-    <div className="calendar-container lg:pl-4">
+  return <div className="calendar-container lg:pl-4">
       {/* Mobile-first sticky header */}
       <header className="calendar-header">
         <div className="p-4 space-y-4">
           {/* Navigation and View Controls */}
           <div className="flex items-center justify-between">
-            <CalendarNavigation 
-              currentDate={currentDate} 
-              onNavigate={handleNavigate} 
-              viewType={viewType} 
-            />
+            <CalendarNavigation currentDate={currentDate} onNavigate={handleNavigate} viewType={viewType} />
           </div>
 
           {/* View Tabs - scrollable on mobile */}
@@ -115,12 +109,7 @@ export function TeamManagement() {
           <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input 
-                placeholder="Buscar funcionários..." 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-                className="pl-10" 
-              />
+              <Input placeholder="Buscar funcionários..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             
             {/* Mobile: show filter button, Desktop: show select */}
@@ -132,9 +121,7 @@ export function TeamManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                  ))}
+                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -147,20 +134,14 @@ export function TeamManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                  ))}
+                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Selected Chips */}
-          <SelectedChipsBar 
-            selectedDepartments={selectedDepartments} 
-            onRemoveDepartment={handleRemoveDepartment} 
-            onClearAll={handleClearAllFilters} 
-          />
+          <SelectedChipsBar selectedDepartments={selectedDepartments} onRemoveDepartment={handleRemoveDepartment} onClearAll={handleClearAllFilters} />
         </div>
       </header>
 
@@ -169,65 +150,20 @@ export function TeamManagement() {
         <Card className="h-full border-0 rounded-none">
           <CardContent className="p-0 h-full overflow-auto">
             {/* Calendar Views */}
-            {viewType === 'daily' && (
-              <DailyView 
-                currentDate={currentDate} 
-                employees={filteredEmployees} 
-                schedules={escalasSchedules} 
-                selectedDepartments={selectedDepartments} 
-              />
-            )}
+            {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
             
-            {viewType === 'weekly' && (
-              <CalendarGrid 
-                currentDate={currentDate} 
-                employees={filteredEmployees} 
-                schedules={escalasSchedules} 
-                selectedDepartments={selectedDepartments} 
-                viewType={viewType} 
-              />
-            )}
+            {viewType === 'weekly' && <CalendarGrid currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} viewType={viewType} />}
             
-            {viewType === 'monthly' && (
-              <MonthlyView 
-                currentDate={currentDate} 
-                employees={filteredEmployees} 
-                schedules={escalasSchedules} 
-                selectedDepartments={selectedDepartments} 
-              />
-            )}
+            {viewType === 'monthly' && <MonthlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
             
-            {viewType === 'yearly' && (
-              <YearlyView 
-                currentDate={currentDate} 
-                employees={filteredEmployees} 
-                schedules={escalasSchedules} 
-                selectedDepartments={selectedDepartments} 
-              />
-            )}
+            {viewType === 'yearly' && <YearlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartments} />}
           </CardContent>
         </Card>
       </main>
 
       {/* Footer with safe area for mobile */}
       <footer className="safe-bottom p-4 border-t bg-background">
-        <Card className="p-3">
-          <div className="flex flex-wrap gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-diurno))]"></div>
-              <span>Diurno</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-vespertino))]"></div>
-              <span>Vespertino</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-[hsl(var(--schedule-noturno))]"></div>
-              <span>Noturno</span>
-            </div>
-          </div>
-        </Card>
+        
       </footer>
-    </div>
-  );
+    </div>;
 }
