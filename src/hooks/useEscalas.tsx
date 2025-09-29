@@ -8,6 +8,24 @@ interface EscalaData {
   finalescala: string | null;
   nomepessoaescala: string;
   telefone: string | null;
+  id_coordenador: string | null;
+  id_plantao: string | null;
+}
+
+interface CoordenadorData {
+  id_coordenador: string;
+  nome: string;
+}
+
+interface PlantaoData {
+  id_plantao: string;
+  nome: string;
+  id_empresa: string;
+}
+
+interface EmpresaData {
+  id_empresa: string;
+  nome: string;
 }
 
 export function useEscalas() {
@@ -25,14 +43,50 @@ export function useEscalas() {
       setLoading(true);
       setError(null);
 
+      // Fetch all related data
       const { data: escalasData, error: escalasError } = await supabase
         .from('escala')
         .select('*')
         .order('dataescala', { ascending: true });
 
-      if (escalasError) {
-        throw escalasError;
-      }
+      const coordResult = await (supabase as any)
+        .from('coordenador')
+        .select('*');
+      const coordenadoresData = coordResult.data as CoordenadorData[] | null;
+      const coordError = coordResult.error;
+
+      const plantaoResult = await (supabase as any)
+        .from('plantao')
+        .select('*');
+      const plantoesData = plantaoResult.data as PlantaoData[] | null;
+      const plantaoError = plantaoResult.error;
+
+      const empresaResult = await (supabase as any)
+        .from('empresa')
+        .select('*');
+      const empresasData = empresaResult.data as EmpresaData[] | null;
+      const empresaError = empresaResult.error;
+
+      if (escalasError) throw escalasError;
+      if (coordError) console.warn('Error loading coordenadores:', coordError);
+      if (plantaoError) console.warn('Error loading plantoes:', plantaoError);
+      if (empresaError) console.warn('Error loading empresas:', empresaError);
+
+      // Create lookup maps
+      const coordenadoresMap = new Map<string, CoordenadorData>();
+      coordenadoresData?.forEach((coord) => {
+        coordenadoresMap.set(coord.id_coordenador, coord);
+      });
+
+      const plantoesMap = new Map<string, PlantaoData>();
+      plantoesData?.forEach((plantao) => {
+        plantoesMap.set(plantao.id_plantao, plantao);
+      });
+
+      const empresasMap = new Map<string, EmpresaData>();
+      empresasData?.forEach((empresa) => {
+        empresasMap.set(empresa.id_empresa, empresa);
+      });
 
       // Transform data to our format
       const uniqueEmployees = new Map<string, Employee>();
@@ -42,13 +96,38 @@ export function useEscalas() {
         console.log('Processing escala:', escala);
         const employeeId = escala.nomepessoaescala.replace(/\s+/g, '_').toLowerCase();
         
+        // Determine department based on relationships
+        let department = "Terceirizados"; // Default
+        let position = "Funcionário";
+        
+        if (escala.id_coordenador) {
+          department = "Coordenadores";
+          const coordenador = coordenadoresMap.get(escala.id_coordenador);
+          if (coordenador) {
+            position = `Coordenador - ${coordenador.nome}`;
+          }
+        } else if (escala.id_plantao) {
+          const plantao = plantoesMap.get(escala.id_plantao);
+          if (plantao) {
+            department = "Plantões";
+            position = `Plantão - ${plantao.nome}`;
+            
+            // Check if we should categorize by empresa
+            const empresa = empresasMap.get(plantao.id_empresa);
+            if (empresa) {
+              // For now keep in Plantões, but we have empresa info available
+              // You can change this logic if you want empresa to be a separate filter
+            }
+          }
+        }
+        
         // Create unique employee
         if (!uniqueEmployees.has(employeeId)) {
           uniqueEmployees.set(employeeId, {
             id: employeeId,
             name: escala.nomepessoaescala.trim(),
-            position: "Funcionário", // Default position
-            department: "Geral", // Default department
+            position: position,
+            department: department,
             weeklyHours: 40,
             workedHours: 0,
             expectedHours: 40,
