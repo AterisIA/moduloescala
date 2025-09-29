@@ -39,48 +39,72 @@ export function useEscalas() {
       const schedulesArray: Schedule[] = [];
 
       escalasData?.forEach((escala: EscalaData) => {
+        console.log('Processing escala:', escala);
         const employeeId = escala.nomepessoaescala.replace(/\s+/g, '_').toLowerCase();
         
         // Create unique employee
         if (!uniqueEmployees.has(employeeId)) {
           uniqueEmployees.set(employeeId, {
             id: employeeId,
-            name: escala.nomepessoaescala,
+            name: escala.nomepessoaescala.trim(),
             position: "Funcionário", // Default position
             department: "Geral", // Default department
             weeklyHours: 40,
             workedHours: 0,
             expectedHours: 40,
-            avatar: escala.nomepessoaescala.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+            avatar: escala.nomepessoaescala.trim().split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
           });
         }
 
         // Create schedule from escala
         const startDate = new Date(escala.dataescala);
         const endDate = escala.finalescala ? new Date(escala.finalescala) : new Date(startDate);
+        console.log(`Escala ${escala.idescala} dates:`, { startDate, endDate });
         
-        // Extract time from dates
-        const startTime = startDate.toTimeString().substring(0, 5); // HH:MM
-        const endTime = endDate.toTimeString().substring(0, 5); // HH:MM
+        // Handle multi-day schedules properly
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
         
-        // If it's a multi-day schedule, create entries for each day
-        const currentDate = new Date(startDate);
-        const finalDate = new Date(endDate);
+        const currentDate = new Date(startDateOnly);
         
-        // Reset time to start of day for date comparison
-        currentDate.setHours(0, 0, 0, 0);
-        finalDate.setHours(23, 59, 59, 999);
-        
-        while (currentDate <= finalDate) {
-          schedulesArray.push({
+        while (currentDate <= endDateOnly) {
+          const isFirstDay = currentDate.getTime() === startDateOnly.getTime();
+          const isLastDay = currentDate.getTime() === endDateOnly.getTime();
+          const isSingleDay = startDateOnly.getTime() === endDateOnly.getTime();
+          
+          let dayStartTime: string;
+          let dayEndTime: string;
+          
+          if (isSingleDay) {
+            // Single day: use actual start and end times
+            dayStartTime = startDate.toTimeString().substring(0, 5);
+            dayEndTime = endDate.toTimeString().substring(0, 5);
+          } else if (isFirstDay) {
+            // First day: start at actual time, end at 23:59
+            dayStartTime = startDate.toTimeString().substring(0, 5);
+            dayEndTime = "23:59";
+          } else if (isLastDay) {
+            // Last day: start at 00:00, end at actual time
+            dayStartTime = "00:00";
+            dayEndTime = endDate.toTimeString().substring(0, 5);
+          } else {
+            // Middle days: full day
+            dayStartTime = "00:00";
+            dayEndTime = "23:59";
+          }
+          
+          const schedule = {
             id: `${escala.idescala}_${currentDate.toISOString().split('T')[0]}`,
             employeeId,
             date: new Date(currentDate),
-            startTime,
-            endTime,
-            type: 'work',
+            startTime: dayStartTime,
+            endTime: dayEndTime,
+            type: 'work' as const,
             location: undefined
-          });
+          };
+          
+          console.log('Created schedule:', schedule);
+          schedulesArray.push(schedule);
           
           currentDate.setDate(currentDate.getDate() + 1);
         }
@@ -88,6 +112,9 @@ export function useEscalas() {
 
       setEmployees(Array.from(uniqueEmployees.values()));
       setSchedules(schedulesArray);
+      console.log('Total employees:', uniqueEmployees.size);
+      console.log('Total schedules:', schedulesArray.length);
+      console.log('All schedules:', schedulesArray);
     } catch (err) {
       console.error('Error fetching escalas:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar escalas');
