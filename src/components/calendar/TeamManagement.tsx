@@ -12,8 +12,9 @@ import { DailyView } from "./DailyView";
 import { CalendarGrid } from "./CalendarGrid";
 import { MonthlyView } from "./MonthlyView";
 import { YearlyView } from "./YearlyView";
-import { mockEmployees, mockSchedules } from "@/data/mockData";
+import { useEscalas } from "@/hooks/useEscalas";
 export function TeamManagement() {
+  const { employees: escalasEmployees, schedules: escalasSchedules, loading, error } = useEscalas();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
@@ -65,10 +66,32 @@ export function TeamManagement() {
     setSelectedDepartments([]);
     setFilterDepartment("all");
   };
-  const filteredEmployees = mockEmployees.filter(emp => {
+  const filteredEmployees = escalasEmployees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Carregando escalas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Erro ao carregar escalas:</p>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="calendar-container lg:pl-4">
       {/* Mobile-first sticky header */}
@@ -150,7 +173,7 @@ export function TeamManagement() {
               <DailyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={escalasSchedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
@@ -159,7 +182,7 @@ export function TeamManagement() {
               <CalendarGrid 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={escalasSchedules} 
                 selectedDepartments={selectedDepartments} 
                 viewType={viewType} 
               />
@@ -169,7 +192,7 @@ export function TeamManagement() {
               <MonthlyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={escalasSchedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
@@ -178,7 +201,7 @@ export function TeamManagement() {
               <YearlyView 
                 currentDate={currentDate} 
                 employees={filteredEmployees} 
-                schedules={mockSchedules} 
+                schedules={escalasSchedules} 
                 selectedDepartments={selectedDepartments} 
               />
             )}
