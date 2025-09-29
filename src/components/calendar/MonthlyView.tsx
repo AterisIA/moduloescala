@@ -140,11 +140,11 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                       isPast(date) ? 'opacity-60' : ''
                     } ${
                       isWorking 
-                        ? 'bg-[hsl(var(--schedule-red)/0.15)] hover:bg-[hsl(var(--schedule-red)/0.25)]'
+                        ? 'bg-[hsl(var(--schedule-red)/0.3)] hover:bg-[hsl(var(--schedule-red)/0.4)]'
                         : schedule?.type === 'rest'
-                        ? 'bg-[hsl(var(--schedule-gray)/0.15)]'
+                        ? 'bg-[hsl(var(--schedule-gray)/0.3)]'
                         : schedule?.type === 'vacation'
-                        ? 'bg-[hsl(var(--schedule-blue)/0.15)]'
+                        ? 'bg-[hsl(var(--schedule-blue)/0.3)]'
                         : 'hover:bg-muted/50'
                     } ${getDayClass(date)}`}
                   >

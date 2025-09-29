@@ -66,15 +66,15 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Schedule colors - all HSL values with percentages */
-    --schedule-diurno: 142 60% 45%; /* green for diurno */
-    --schedule-vespertino: 220 85% 60%; /* blue for vespertino */
-    --schedule-noturno: 250 65% 60%; /* indigo for noturno */
-    --schedule-red: 0 84% 60%; /* work indicator */
-    --schedule-gray: 215 16% 47%; /* rest indicator */
-    --schedule-blue: 221 83% 53%; /* vacation indicator */
-    --today: 142 60% 45%; /* destaque para hoje */
-    --today-bg: 142 60% 45%; /* today background */
-    --past-day: 215 16% 47%; /* dias passados */
+    --schedule-diurno: 142 75% 50%; /* green for diurno - more vibrant */
+    --schedule-vespertino: 220 90% 58%; /* blue for vespertino - more vibrant */
+    --schedule-noturno: 250 75% 65%; /* indigo for noturno - more vibrant */
+    --schedule-red: 0 90% 65%; /* work indicator - more vibrant */
+    --schedule-gray: 215 25% 52%; /* rest indicator - more vibrant */
+    --schedule-blue: 221 88% 58%; /* vacation indicator - more vibrant */
+    --today: 142 75% 50%; /* destaque para hoje */
+    --today-bg: 142 75% 50%; /* today background */
+    --past-day: 215 25% 52%; /* dias passados */
 
     /* Responsive calendar variables */
     --row-h: 48px; /* mobile default */
