@@ -88,7 +88,6 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
         {/* Header */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
           <div>Funcionário</div>
-          <div className="text-xs text-muted-foreground mt-1">Horas/Mês</div>
         </div>
         
         {monthDays.map(date => (
@@ -119,9 +118,6 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                       <div className="flex-1 text-left">
                         <div className="font-medium text-sm">{employee.name}</div>
                         <div className="text-xs text-muted-foreground">{employee.position}</div>
-                        <div className="text-xs font-medium text-primary">
-                          {formatHours(monthlyHours)}h
-                        </div>
                       </div>
                     </div>
                   </DropdownMenuTrigger>
@@ -144,14 +140,22 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                     } ${getDayClass(date)}`}
                   >
                     {schedule ? (
-                      <div className="flex flex-col items-center gap-1">
-                        {getScheduleIndicator(schedule)}
-                        <div className="text-xs">
-                          {schedule.type === 'work' ? 
-                            `${schedule.startTime.slice(0,2)}h` : 
-                            schedule.type === 'rest' ? '💤' : '🏖️'
-                          }
-                        </div>
+                      <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1">
+                        {schedule.type === 'work' ? (
+                          <>
+                            <div className="text-[10px] font-medium leading-tight">
+                              {schedule.startTime.slice(0,5)}
+                            </div>
+                            <div className="w-full h-1 rounded-full bg-[hsl(var(--schedule-red))]" />
+                            <div className="text-[10px] font-medium leading-tight">
+                              {schedule.endTime.slice(0,5)}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-lg">
+                            {schedule.type === 'rest' ? '💤' : '🏖️'}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 rounded cursor-pointer">
