@@ -39,14 +39,12 @@ export default function Escalas() {
   const [editingEscala, setEditingEscala] = useState<Escala | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [coordenadores, setCoordenadores] = useState<Coordenador[]>([]);
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [formData, setFormData] = useState({
     nomepessoaescala: "",
     dataescala: "",
     finalescala: "",
     telefone: "",
-    id_coordenador: "",
-    id_empresa: ""
+    id_coordenador: ""
   });
   const {
     toast
@@ -54,7 +52,6 @@ export default function Escalas() {
   useEffect(() => {
     fetchEscalas();
     fetchCoordenadores();
-    fetchEmpresas();
   }, []);
 
   const fetchCoordenadores = async () => {
@@ -78,26 +75,6 @@ export default function Escalas() {
     }
   };
 
-  const fetchEmpresas = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('empresa')
-        .select('*')
-        .order('nome', { ascending: true }) as { data: Empresa[] | null; error: any };
-      
-      if (error) {
-        toast({
-          title: "Erro ao carregar empresas",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-      setEmpresas(data || []);
-    } catch (error) {
-      console.error("Erro ao buscar empresas:", error);
-    }
-  };
   const fetchEscalas = async () => {
     try {
       setLoading(true);
@@ -161,8 +138,7 @@ export default function Escalas() {
       dataescala: "",
       finalescala: "",
       telefone: "",
-      id_coordenador: "",
-      id_empresa: ""
+      id_coordenador: ""
     });
     setEditingEscala(null);
     setIsCreating(true);
@@ -187,8 +163,7 @@ export default function Escalas() {
         dataescala: formData.dataescala,
         finalescala: formData.finalescala || null,
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
-        id_coordenador: formData.id_coordenador || null,
-        id_empresa: formData.id_empresa || null
+        id_coordenador: formData.id_coordenador || null
       };
       const {
         error
@@ -333,22 +308,6 @@ export default function Escalas() {
                   <SelectContent>
                     {coordenadores.map(coord => <SelectItem key={coord.id_coordenador} value={coord.id_coordenador}>
                         {coord.nome}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="empresa">Empresa</Label>
-                <Select value={formData.id_empresa} onValueChange={value => setFormData(prev => ({
-              ...prev,
-              id_empresa: value
-            }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {empresas.map(emp => <SelectItem key={emp.id_empresa} value={emp.id_empresa}>
-                        {emp.nome}
                       </SelectItem>)}
                   </SelectContent>
                 </Select>
