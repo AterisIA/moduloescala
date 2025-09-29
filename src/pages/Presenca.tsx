@@ -94,13 +94,17 @@ export default function Presenca() {
 
   const getStatusColor = (status?: string) => {
     if (!status) return "secondary";
-    switch (status.toLowerCase()) {
-      case "aguardando":
-        return "secondary";
-      case "respondido":
+    switch (status) {
+      case "1":
         return "default";
-      case "ausente":
+      case "2":
+        return "secondary";
+      case "3":
         return "destructive";
+      case "4":
+        return "outline";
+      case "Aguardando":
+        return "secondary";
       default:
         return "outline";
     }
@@ -108,7 +112,18 @@ export default function Presenca() {
 
   const getStatusText = (status?: string) => {
     if (!status) return "Sem status";
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    switch (status) {
+      case "1":
+        return "Estarei presente";
+      case "2":
+        return "Vou me atrasar";
+      case "3":
+        return "Não poderei ir";
+      case "4":
+        return "Resposta inválida";
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
   };
 
   const formatTime = (timeString?: string) => {
