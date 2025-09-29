@@ -39,53 +39,34 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
   const getScheduleForDate = (employeeId: string, date: Date) => {
     return schedules.find(schedule => 
       schedule.employeeId === employeeId && 
-      schedule.startDateTime &&
-      (isSameDay(schedule.startDateTime, date) || 
-       (schedule.endDateTime && schedule.startDateTime <= date && date <= schedule.endDateTime))
+      isSameDay(schedule.date, date)
     );
   };
 
   const getScheduleIndicator = (schedule: Schedule) => {
-    if (!schedule.startDateTime) return <div className="w-2 h-2 rounded-full bg-gray-300" />;
-    
-    const hour = schedule.startDateTime.getHours();
-    
-    if (hour >= 6 && hour < 14) {
-      return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-diurno))]" />;
-    } else if (hour >= 14 && hour < 22) {
-      return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-vespertino))]" />;
-    } else {
-      return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-noturno))]" />;
+    switch (schedule.type) {
+      case 'work': 
+        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-red))]" />;
+      case 'rest': 
+        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-gray))]" />;
+      case 'vacation': 
+        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-blue))]" />;
+      default:
+        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-red))]" />;
     }
   };
 
   const calculateHours = (schedule: Schedule): number => {
-    if (!schedule.startDateTime || !schedule.endDateTime) return 0;
-    
-    const diffInMs = schedule.endDateTime.getTime() - schedule.startDateTime.getTime();
-    return diffInMs / (1000 * 60 * 60); // Convert to hours
+    if (schedule.type !== 'work') return 0;
+    const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+    const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+    return ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60;
   };
 
   const getMonthlyHours = (employeeId: string): number => {
     return schedules
-      .filter(s => s.employeeId === employeeId && 
-        s.startDateTime && isSameMonth(s.startDateTime, currentDate))
+      .filter(s => s.employeeId === employeeId && isSameMonth(s.date, currentDate))
       .reduce((total, schedule) => total + calculateHours(schedule), 0);
-  };
-
-  // Função para detectar se uma escala atravessa múltiplos dias no mês
-  const getScheduleSpan = (schedule: Schedule, currentDate: Date) => {
-    if (!schedule.startDateTime || !schedule.endDateTime) return { isStart: true, isEnd: true, isMiddle: false };
-    
-    const scheduleStartDate = new Date(schedule.startDateTime.toDateString());
-    const scheduleEndDate = new Date(schedule.endDateTime.toDateString());
-    const checkDate = new Date(currentDate.toDateString());
-    
-    const isStart = isSameDay(checkDate, scheduleStartDate);
-    const isEnd = isSameDay(checkDate, scheduleEndDate);
-    const isMiddle = !isStart && !isEnd && checkDate > scheduleStartDate && checkDate < scheduleEndDate;
-    
-    return { isStart, isEnd, isMiddle };
   };
 
   const getDayClass = (date: Date) => {
@@ -154,28 +135,22 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
               
               {monthDays.map(date => {
                 const schedule = getScheduleForDate(employee.id, date);
-                const span = schedule ? getScheduleSpan(schedule, date) : null;
                 
                 return (
                   <div 
                     key={`${employee.id}-${date.toISOString()}`}
                     className={`min-h-16 p-2 border-b border-r transition-colors flex items-center justify-center ${
                       isPast(date) ? 'opacity-60' : 'hover:bg-muted/50'
-                    } ${getDayClass(date)} ${
-                      schedule && span ? (span.isStart ? 'rounded-l' : '') + 
-                      (span.isEnd ? ' rounded-r' : '') + 
-                      (span.isMiddle ? ' bg-opacity-30' : '') : ''
-                    }`}
+                    } ${getDayClass(date)}`}
                   >
-                    {schedule && span ? (
+                    {schedule ? (
                       <div className="flex flex-col items-center gap-1">
                         {getScheduleIndicator(schedule)}
-                        <div className="text-xs text-center">
-                          {span.isStart && schedule.startDateTime ? 
-                            `${schedule.startDateTime.toTimeString().substring(0, 5)}` : ''}
-                          {span.isMiddle ? '●' : ''}
-                          {span.isEnd && schedule.endDateTime ? 
-                            `${schedule.endDateTime.toTimeString().substring(0, 5)}` : ''}
+                        <div className="text-xs">
+                          {schedule.type === 'work' ? 
+                            `${schedule.startTime.slice(0,2)}h` : 
+                            schedule.type === 'rest' ? '💤' : '🏖️'
+                          }
                         </div>
                       </div>
                     ) : (

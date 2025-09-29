@@ -49,47 +49,28 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   const getScheduleForDate = (employeeId: string, date: Date) => {
     return schedules.find(schedule => 
       schedule.employeeId === employeeId && 
-      schedule.startDateTime &&
-      (isSameDay(schedule.startDateTime, date) || 
-       (schedule.endDateTime && schedule.startDateTime <= date && date <= schedule.endDateTime))
+      isSameDay(schedule.date, date)
     );
   };
 
   const getScheduleColor = (schedule: Schedule) => {
-    if (!schedule.startDateTime) return 'bg-gray-200 text-gray-800';
+    if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
+    if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
     
-    const hour = schedule.startDateTime.getHours();
+    const start = parseInt(schedule.startTime.split(':')[0]);
+    const end = parseInt(schedule.endTime.split(':')[0]);
     
-    if (hour >= 6 && hour < 14) {
-      return 'bg-[hsl(var(--schedule-diurno))] text-white';
-    } else if (hour >= 14 && hour < 22) {
-      return 'bg-[hsl(var(--schedule-vespertino))] text-white';
-    } else {
-      return 'bg-[hsl(var(--schedule-noturno))] text-white';
-    }
+    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-white';
+    if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
+    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-white';
+    
+    return 'bg-gray-200 text-gray-800';
   };
 
   const getScheduleDisplay = (schedule: Schedule) => {
-    if (!schedule.startDateTime || !schedule.endDateTime) return schedule.startTime;
-    
-    const start = schedule.startDateTime.toTimeString().substring(0, 5);
-    const end = schedule.endDateTime.toTimeString().substring(0, 5);
-    return `${start} - ${end}`;
-  };
-
-  // Função para detectar se uma escala atravessa múltiplos dias
-  const getScheduleSpan = (schedule: Schedule, currentDate: Date) => {
-    if (!schedule.startDateTime || !schedule.endDateTime) return { isStart: true, isEnd: true, isMiddle: false };
-    
-    const scheduleStartDate = new Date(schedule.startDateTime.toDateString());
-    const scheduleEndDate = new Date(schedule.endDateTime.toDateString());
-    const checkDate = new Date(currentDate.toDateString());
-    
-    const isStart = isSameDay(checkDate, scheduleStartDate);
-    const isEnd = isSameDay(checkDate, scheduleEndDate);
-    const isMiddle = !isStart && !isEnd && checkDate > scheduleStartDate && checkDate < scheduleEndDate;
-    
-    return { isStart, isEnd, isMiddle };
+    if (schedule.type === 'rest') return '💤';
+    if (schedule.type === 'vacation') return '🏖️';
+    return `${schedule.startTime}-${schedule.endTime}`;
   };
 
   const isPastDay = (date: Date) => date < today;
@@ -153,7 +134,6 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
             
             {dates.map(date => {
               const schedule = getScheduleForDate(employee.id, date);
-              const span = schedule ? getScheduleSpan(schedule, date) : null;
               
               return (
                 <div 
@@ -162,32 +142,21 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                     isPastDay(date) ? 'opacity-60' : 'hover:bg-muted/50'
                   }`}
                 >
-                  {schedule && span ? (
+                  {schedule ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <div 
-                          className={`w-full h-full flex items-center justify-center text-xs cursor-pointer ${getScheduleColor(schedule)} ${
-                            span.isStart ? 'rounded-l' : ''
-                          } ${
-                            span.isEnd ? 'rounded-r' : ''
-                          } ${
-                            span.isMiddle ? 'rounded-none' : ''
-                          }`}
-                          title={`${employee.name} - ${format(date, 'dd/MM')} - ${getScheduleDisplay(schedule)}`}
+                          className={`w-full h-full flex items-center justify-center text-xs cursor-pointer ${getScheduleColor(schedule)}`}
+                          title={`${employee.name} - ${format(date, 'dd/MM')}`}
                         >
                           <div className="text-center font-medium">
-                            <span className="hidden sm:inline">
-                              {span.isStart ? schedule.startTime : ''}
-                              {span.isMiddle ? '●' : ''}
-                              {span.isEnd ? schedule.endTime : ''}
-                            </span>
+                            <span className="hidden sm:inline">{getScheduleDisplay(schedule)}</span>
                             <span className="sm:hidden">●</span>
                           </div>
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                        <DropdownMenuItem>Editar Escala</DropdownMenuItem>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Remover</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
