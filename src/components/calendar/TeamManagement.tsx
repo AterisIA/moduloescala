@@ -37,9 +37,10 @@ export function TeamManagement() {
 
     // Sincronizar largura do scroll
     const updateScrollWidth = () => {
-      const content = mainScroll.querySelector('.calendar-main > div > div > div');
-      if (content) {
-        const scrollWidth = content.scrollWidth;
+      // Buscar o elemento interno que tem o scroll horizontal real
+      const calendarContent = mainScroll.querySelector('.h-full.overflow-auto > div');
+      if (calendarContent) {
+        const scrollWidth = calendarContent.scrollWidth;
         const scrollContent = topScroll.firstElementChild as HTMLElement;
         if (scrollContent) {
           scrollContent.style.width = `${scrollWidth}px`;
@@ -59,30 +60,46 @@ export function TeamManagement() {
       updateScrollWidth();
     });
     
-    const content = mainScroll.querySelector('.calendar-main > div > div > div');
-    if (content) {
-      resizeObserver.observe(content);
+    const calendarContent = mainScroll.querySelector('.h-full.overflow-auto');
+    if (calendarContent) {
+      resizeObserver.observe(calendarContent);
     }
 
     const handleTopScroll = () => {
-      if (Math.abs(mainScroll.scrollLeft - topScroll.scrollLeft) > 1) {
-        mainScroll.scrollLeft = topScroll.scrollLeft;
+      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto') as HTMLElement;
+      if (calendarScroll && Math.abs(calendarScroll.scrollLeft - topScroll.scrollLeft) > 1) {
+        calendarScroll.scrollLeft = topScroll.scrollLeft;
       }
     };
 
-    const handleMainScroll = () => {
-      if (Math.abs(topScroll.scrollLeft - mainScroll.scrollLeft) > 1) {
-        topScroll.scrollLeft = mainScroll.scrollLeft;
+    const handleCalendarScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (Math.abs(topScroll.scrollLeft - target.scrollLeft) > 1) {
+        topScroll.scrollLeft = target.scrollLeft;
       }
     };
 
     topScroll.addEventListener('scroll', handleTopScroll, { passive: true });
-    mainScroll.addEventListener('scroll', handleMainScroll, { passive: true });
+    
+    // Adicionar listener no elemento de calendário quando ele existir
+    const addCalendarListener = () => {
+      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto');
+      if (calendarScroll) {
+        calendarScroll.addEventListener('scroll', handleCalendarScroll, { passive: true });
+      }
+    };
+    
+    addCalendarListener();
+    // Tentar adicionar novamente após um delay
+    setTimeout(addCalendarListener, 100);
 
     return () => {
       timers.forEach(timer => clearTimeout(timer));
       topScroll.removeEventListener('scroll', handleTopScroll);
-      mainScroll.removeEventListener('scroll', handleMainScroll);
+      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto');
+      if (calendarScroll) {
+        calendarScroll.removeEventListener('scroll', handleCalendarScroll);
+      }
       resizeObserver.disconnect();
     };
   }, [viewType, searchTerm, selectedDepartment]);
@@ -197,7 +214,7 @@ export function TeamManagement() {
       </div>
 
       {/* Main content area */}
-      <main ref={mainScrollRef} className="calendar-main overflow-auto">
+      <main ref={mainScrollRef} className="calendar-main overflow-y-auto">
         <Card className="border-0 rounded-none">
           <CardContent className="p-0">
             {/* Calendar Views */}
