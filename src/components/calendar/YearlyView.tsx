@@ -51,18 +51,28 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
   });
 
   // Group weeks by month usando o final da semana para melhor agrupamento
-  const weeksByMonth: { [key: string]: Date[] } = {};
-  const monthNames: string[] = [];
+  const weeksByMonth: { [key: number]: { name: string; weeks: Date[] } } = {};
   
   yearWeeks.forEach((week) => {
     const weekEnd = endOfWeek(week, { weekStartsOn: 1 });
+    const monthIndex = weekEnd.getMonth(); // 0-11
     const monthKey = format(weekEnd, 'MMM', { locale: ptBR });
-    if (!weeksByMonth[monthKey]) {
-      weeksByMonth[monthKey] = [];
-      monthNames.push(monthKey);
+    
+    if (!weeksByMonth[monthIndex]) {
+      weeksByMonth[monthIndex] = {
+        name: monthKey,
+        weeks: []
+      };
     }
-    weeksByMonth[monthKey].push(week);
+    weeksByMonth[monthIndex].weeks.push(week);
   });
+
+  // Ordenar meses cronologicamente (0-11)
+  const sortedMonthIndices = Object.keys(weeksByMonth)
+    .map(Number)
+    .sort((a, b) => a - b);
+  
+  const monthNames = sortedMonthIndices.map(idx => weeksByMonth[idx].name);
 
   const calculateHours = (schedule: Schedule): number => {
     if (schedule.type !== 'work') return 0;
@@ -162,24 +172,27 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
           </Select>
         </div>
         
-        {monthNames.map((monthName) => (
-          <Fragment key={monthName}>
-            <div className="bg-muted border-b border-r sticky top-0 z-10">
-              <div className="p-2 text-center font-bold border-b text-sm">{monthName}</div>
-              <div className="p-2 text-center text-xs">Total</div>
-            </div>
-            {weeksByMonth[monthName].map((week, weekIndex) => (
-              <div key={weekIndex} className="bg-muted border-b border-r sticky top-0 z-10">
-                <div className="p-1 text-center font-bold border-b text-xs">
-                  S{yearWeeks.indexOf(week) + 1}
-                </div>
-                <div className="p-1 text-center text-xs">
-                  {format(week, 'dd')}-{format(endOfWeek(week, { weekStartsOn: 1 }), 'dd')}
-                </div>
+        {sortedMonthIndices.map((monthIdx) => {
+          const monthData = weeksByMonth[monthIdx];
+          return (
+            <Fragment key={monthIdx}>
+              <div className="bg-muted border-b border-r sticky top-0 z-10">
+                <div className="p-2 text-center font-bold border-b text-sm">{monthData.name}</div>
+                <div className="p-2 text-center text-xs">Total</div>
               </div>
-            ))}
-          </Fragment>
-        ))}
+              {monthData.weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="bg-muted border-b border-r sticky top-0 z-10">
+                  <div className="p-1 text-center font-bold border-b text-xs">
+                    S{yearWeeks.indexOf(week) + 1}
+                  </div>
+                  <div className="p-1 text-center text-xs">
+                    {format(week, 'dd')}-{format(endOfWeek(week, { weekStartsOn: 1 }), 'dd')}
+                  </div>
+                </div>
+              ))}
+            </Fragment>
+          );
+        })}
 
         {/* Rows - Employee or Aggregated Entities */}
         {isQuadrantMode ? (
@@ -200,24 +213,27 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
               </div>
               
               {/* Monthly totals and weekly aggregates */}
-              {monthNames.map((monthName, monthIndex) => (
-                <Fragment key={`${entity.id}-${monthName}`}>
-                  {/* Month total - aggregated quadrants */}
-                  <div className="min-h-16 p-1 border-b border-r bg-muted/20 flex items-center justify-center">
-                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
-                  </div>
-                  
-                  {/* Week cells - aggregated quadrants per ISO week */}
-                  {weeksByMonth[monthName].map((week, weekIndex) => (
-                    <div 
-                      key={weekIndex} 
-                      className="min-h-16 p-1 border-b border-r flex items-center justify-center hover:bg-muted/50"
-                    >
-                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
+              {sortedMonthIndices.map((monthIdx) => {
+                const monthData = weeksByMonth[monthIdx];
+                return (
+                  <Fragment key={`${entity.id}-${monthIdx}`}>
+                    {/* Month total - aggregated quadrants */}
+                    <div className="min-h-16 p-1 border-b border-r bg-muted/20 flex items-center justify-center">
+                      <QuadrantCell data={aggregateMonthQuadrants(entity, monthData.name)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
                     </div>
-                  ))}
-                </Fragment>
-              ))}
+                    
+                    {/* Week cells - aggregated quadrants per ISO week */}
+                    {monthData.weeks.map((week, weekIndex) => (
+                      <div 
+                        key={weekIndex} 
+                        className="min-h-16 p-1 border-b border-r flex items-center justify-center hover:bg-muted/50"
+                      >
+                        <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
+                      </div>
+                    ))}
+                  </Fragment>
+                );
+              })}
             </Fragment>
           ))
         ) : (
@@ -254,39 +270,42 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
                 </div>
                 
                 {/* Monthly totals and weekly hours */}
-                {monthNames.map((monthName) => (
-                  <Fragment key={`${employee.id}-${monthName}`}>
-                    {/* Month total */}
-                    <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-sm font-medium">
-                          {formatHours(getMonthHours(employee.id, monthName))}
-                        </div>
-                        <div className="text-xs text-muted-foreground">total</div>
-                      </div>
-                    </div>
-                    
-                    {/* Week hours */}
-                    {weeksByMonth[monthName].map((week, weekIndex) => {
-                      const weekHours = getWeekHours(employee.id, week);
-                      return (
-                        <div 
-                          key={weekIndex} 
-                          className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
-                        >
-                          <div className="text-center">
-                            <div className="text-sm">
-                              {weekHours > 0 ? formatHours(weekHours) : '-'}
-                            </div>
-                            {weekHours > 0 && (
-                              <div className="text-xs text-muted-foreground">h</div>
-                            )}
+                {sortedMonthIndices.map((monthIdx) => {
+                  const monthData = weeksByMonth[monthIdx];
+                  return (
+                    <Fragment key={`${employee.id}-${monthIdx}`}>
+                      {/* Month total */}
+                      <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-sm font-medium">
+                            {formatHours(getMonthHours(employee.id, monthData.name))}
                           </div>
+                          <div className="text-xs text-muted-foreground">total</div>
                         </div>
-                      );
-                    })}
-                  </Fragment>
-                ))}
+                      </div>
+                      
+                      {/* Week hours */}
+                      {monthData.weeks.map((week, weekIndex) => {
+                        const weekHours = getWeekHours(employee.id, week);
+                        return (
+                          <div 
+                            key={weekIndex} 
+                            className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
+                          >
+                            <div className="text-center">
+                              <div className="text-sm">
+                                {weekHours > 0 ? formatHours(weekHours) : '-'}
+                              </div>
+                              {weekHours > 0 && (
+                                <div className="text-xs text-muted-foreground">h</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </Fragment>
+                  );
+                })}
               </Fragment>
             );
           })
