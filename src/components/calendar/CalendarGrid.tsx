@@ -110,8 +110,8 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
             {/* Department Filter */}
             <div className="w-full">
               <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
-                <SelectTrigger className="w-full h-8 text-xs">
-                  <Filter className="h-3 w-3 mr-1" />
+                <SelectTrigger className="w-full h-10 text-sm">
+                  <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
