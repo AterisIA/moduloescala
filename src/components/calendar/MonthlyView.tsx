@@ -94,22 +94,17 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
         style={{ gridTemplateColumns: `250px repeat(${monthDays.length}, minmax(60px, 1fr))` }}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10 space-y-2">
-          <div>Escalas do Mês</div>
-          
-          {/* Department Filter */}
-          <div className="w-full">
-            <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
-              <SelectTrigger className="w-full h-8 text-xs">
-                <Filter className="h-3 w-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os departamentos</SelectItem>
-                {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
+          <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+            <SelectTrigger className="w-full h-8 text-xs">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os departamentos</SelectItem>
+              {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         
         {monthDays.map(date => (

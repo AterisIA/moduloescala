@@ -87,28 +87,17 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
       >
         {/* Header with hours */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
-          <div className="p-2 space-y-2">
-            <div>
-              <div className="hidden md:block">Escalas do Dia</div>
-              <div className="md:hidden">Escalas</div>
-              <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
-              </div>
-            </div>
-            
-            {/* Department Filter */}
-            <div className="w-full">
-              <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
-                <SelectTrigger className="w-full h-8 text-xs">
-                  <Filter className="h-3 w-3 mr-1" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="p-2">
+            <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+              <SelectTrigger className="w-full h-8 text-xs">
+                <Filter className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os departamentos</SelectItem>
+                {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         
