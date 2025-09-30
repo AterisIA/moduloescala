@@ -200,109 +200,50 @@ export function useEscalas() {
 
   const fetchAggregatedData = async (filterType: FilterType, startDate: Date, endDate: Date) => {
     try {
+      // For now, return mock data structure - will implement with proper database queries
       const entities: EntityQuadrantData[] = [];
-
-      // 1) Load escala within range (no join needed)
-      const escalaResult = await (supabase as any)
-        .from('escala')
-        .select('idescala, dataescala, id_coordenador, id_plantao')
-        .gte('dataescala', startDate.toISOString())
-        .lte('dataescala', endDate.toISOString());
-      const escalas = (escalaResult.data || []) as Array<{
-        idescala: number;
-        dataescala: string;
-        id_coordenador: string | null;
-        id_plantao: string | null;
-      }>;
-      if (escalaResult.error) throw escalaResult.error;
-
-      // Build escala maps
-      const escalaById = new Map<number, { dateKey: string; id_coordenador: string | null; id_plantao: string | null }>();
-      const escalaIds: number[] = [];
-      escalas.forEach((e) => {
-        // Keep date only, avoid TZ shifts
-        const dateKey = (typeof e.dataescala === 'string' ? e.dataescala.substring(0, 10) : new Date(e.dataescala).toISOString().substring(0, 10));
-        escalaById.set(e.idescala, { dateKey, id_coordenador: e.id_coordenador, id_plantao: e.id_plantao });
-        escalaIds.push(e.idescala);
-      });
-
-      if (escalaIds.length === 0) return [];
-
-      // 2) Load StatusPresenca for those escalas
-      const statusResult = await (supabase as any)
-        .from('StatusPresenca')
-        .select('id, status, id_escala')
-        .in('id_escala', escalaIds);
-      const statusRows = statusResult.data as Array<{ id: number; status: number; id_escala: number }> | null;
-      if (statusResult.error) throw statusResult.error;
-
-      // 3) Preload dictionaries (names)
-      let coordDict = new Map<string, string>();
-      let plantaoDict = new Map<string, { nome: string; id_empresa: string }>();
-      let empresaDict = new Map<string, string>();
-
+      
       if (filterType === 'Coordenadores') {
-        const coordRes = await (supabase as any).from('coordenador').select('*');
-        (coordRes.data as CoordenadorData[] | null)?.forEach((c) => coordDict.set(c.id_coordenador, c.nome));
-      }
-      if (filterType === 'Plantões' || filterType === 'Empresas') {
-        const plantaoRes = await (supabase as any).from('plantao').select('*');
-        (plantaoRes.data as PlantaoData[] | null)?.forEach((p) => plantaoDict.set(p.id_plantao, { nome: p.nome, id_empresa: p.id_empresa }));
-      }
-      if (filterType === 'Empresas') {
-        const empRes = await (supabase as any).from('empresa').select('*');
-        (empRes.data as EmpresaData[] | null)?.forEach((e) => empresaDict.set(e.id_empresa, e.nome));
-      }
-
-      // 4) Accumulate quadrants per entity/date
-      const groupMap = new Map<string, Map<string, QuadrantData>>();
-
-      statusRows?.forEach((row) => {
-        const esc = escalaById.get(row.id_escala);
-        if (!esc) return;
-
-        let groupId: string | null = null;
-        if (filterType === 'Coordenadores') groupId = esc.id_coordenador;
-        else if (filterType === 'Plantões') groupId = esc.id_plantao;
-        else if (filterType === 'Empresas') {
-          const plant = esc.id_plantao ? plantaoDict.get(esc.id_plantao) : undefined;
-          groupId = plant ? plant.id_empresa : null;
-        }
-        if (!groupId) return;
-
-        if (!groupMap.has(groupId)) groupMap.set(groupId, new Map());
-        const dateMap = groupMap.get(groupId)!;
-        if (!dateMap.has(esc.dateKey))
-          dateMap.set(esc.dateKey, { presenca: 0, atraso: 0, falta: 0, faltaJustificada: 0, atestado: 0 });
-
-        const q = dateMap.get(esc.dateKey)!;
-        switch (row.status) {
-          case 1: q.presenca++; break;
-          case 2: q.atraso++; break;
-          case 3: q.falta++; break;
-          case 4: q.faltaJustificada++; break;
-          case 5: q.atestado++; break;
-        }
-      });
-
-      // 5) Build entities with names
-      if (filterType === 'Coordenadores') {
-        groupMap.forEach((quadrants, id) => {
-          entities.push({ id, name: coordDict.get(id) || 'Coordenador', type: filterType, quadrants });
+        // Fetch coordenadores
+        const coordResult = await (supabase as any).from('coordenador').select('*');
+        const coordData = coordResult.data as CoordenadorData[] | null;
+        
+        coordData?.forEach(coord => {
+          entities.push({
+            id: coord.id_coordenador,
+            name: coord.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
         });
       } else if (filterType === 'Plantões') {
-        groupMap.forEach((quadrants, id) => {
-          const p = plantaoDict.get(id);
-          const empresaNome = p ? (empresaDict.get(p.id_empresa) || '') : '';
-          entities.push({ id, name: p ? `${p.nome}${empresaNome ? ' - ' + empresaNome : ''}` : 'Plantão', type: filterType, quadrants });
+        // Fetch plantões
+        const plantaoResult = await (supabase as any).from('plantao').select('*');
+        const plantaoData = plantaoResult.data as PlantaoData[] | null;
+        
+        plantaoData?.forEach(plantao => {
+          entities.push({
+            id: plantao.id_plantao,
+            name: plantao.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
         });
       } else if (filterType === 'Empresas') {
-        groupMap.forEach((quadrants, id) => {
-          entities.push({ id, name: empresaDict.get(id) || 'Empresa', type: filterType, quadrants });
+        // Fetch empresas
+        const empresaResult = await (supabase as any).from('empresa').select('*');
+        const empresaData = empresaResult.data as EmpresaData[] | null;
+        
+        empresaData?.forEach(empresa => {
+          entities.push({
+            id: empresa.id_empresa,
+            name: empresa.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
         });
       }
 
-      console.log('Aggregated entities with quadrants:', entities);
       return entities;
     } catch (err) {
       console.error('Error fetching aggregated data:', err);
