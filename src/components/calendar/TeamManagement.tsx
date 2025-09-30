@@ -30,96 +30,64 @@ export function TeamManagement() {
   const mainScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const topScroll = topScrollRef.current;
+    const top = topScrollRef.current;
     const main = mainScrollRef.current;
-    if (!topScroll || !main) return;
+    if (!top || !main) return;
 
-    const getScrollTarget = (): HTMLElement | null => {
-      const candidates = Array.from(main.querySelectorAll<HTMLElement>('.overflow-x-auto'));
-      if (candidates.length === 0) return null;
-      let target: HTMLElement | null = null;
-      let maxOverflow = 0;
-      for (const el of candidates) {
-        const overflowX = el.scrollWidth - el.clientWidth;
-        if (overflowX > maxOverflow) {
-          maxOverflow = overflowX;
-          target = el;
-        }
-      }
-      // fallback: choose the widest element in main
-      if (!target) {
-        const all = Array.from(main.querySelectorAll<HTMLElement>('*'));
-        for (const el of all) {
-          const overflowX = el.scrollWidth - el.clientWidth;
-          if (overflowX > maxOverflow) {
-            maxOverflow = overflowX;
-            target = el;
-          }
-        }
-      }
-      return target;
-    };
+    const getTarget = () => main.querySelector<HTMLElement>('.calendar-scroll-container');
 
-    let scrollTarget = getScrollTarget();
+    let target = getTarget();
+    const topContent = top.querySelector<HTMLElement>('.top-scroll-content');
 
-    const topContent = topScroll.querySelector<HTMLElement>('.top-scroll-content');
-    const updateTopWidth = () => {
-      if (scrollTarget && topContent) {
-        topContent.style.width = `${scrollTarget.scrollWidth}px`;
+    const updateWidth = () => {
+      target = getTarget();
+      if (topContent && target) {
+        topContent.style.width = `${target.scrollWidth}px`;
       }
     };
 
-    // hide native bottom scrollbar on target
-    const addHideScrollbar = () => {
-      if (scrollTarget) {
-        scrollTarget.classList.add('hide-x-scrollbar');
-      }
-    };
-
-    // listeners
-    const onTopScroll = () => {
-      if (scrollTarget && Math.abs(scrollTarget.scrollLeft - topScroll.scrollLeft) > 1) {
-        scrollTarget.scrollLeft = topScroll.scrollLeft;
-      }
-    };
-    const onTargetScroll = () => {
-      if (scrollTarget && Math.abs(topScroll.scrollLeft - scrollTarget.scrollLeft) > 1) {
-        topScroll.scrollLeft = scrollTarget.scrollLeft;
-      }
-    };
-
-    // try to wire up now and after small delays (views render async)
+    // Initial sync and retries to catch late renders
     const timers = [
-      setTimeout(() => { 
-        scrollTarget = getScrollTarget(); 
-        addHideScrollbar(); 
-        updateTopWidth(); 
-        if (scrollTarget) {
-          scrollTarget.addEventListener('scroll', onTargetScroll, { passive: true });
-          topScroll.scrollLeft = scrollTarget.scrollLeft;
-        }
-      }, 0),
-      setTimeout(() => { scrollTarget = getScrollTarget(); addHideScrollbar(); updateTopWidth(); }, 100),
-      setTimeout(() => { scrollTarget = getScrollTarget(); addHideScrollbar(); updateTopWidth(); }, 300)
+      setTimeout(updateWidth, 0),
+      setTimeout(updateWidth, 150),
+      setTimeout(updateWidth, 400)
     ];
 
-    // observe size changes
-    const ro = new ResizeObserver(() => {
-      scrollTarget = getScrollTarget();
-      updateTopWidth();
-    });
-    ro.observe(main);
+    const onTopScroll = () => {
+      target = getTarget();
+      if (target && Math.abs(target.scrollLeft - top.scrollLeft) > 1) {
+        target.scrollLeft = top.scrollLeft;
+      }
+    };
 
-    topScroll.addEventListener('scroll', onTopScroll, { passive: true });
+    const onTargetScroll = () => {
+      target = getTarget();
+      if (target && Math.abs(top.scrollLeft - target.scrollLeft) > 1) {
+        top.scrollLeft = target.scrollLeft;
+      }
+    };
+
+    top.addEventListener('scroll', onTopScroll, { passive: true });
+
+    if (target) {
+      target.addEventListener('scroll', onTargetScroll, { passive: true });
+      target.classList.add('hide-x-scrollbar');
+    }
+
+    const ro = new ResizeObserver(updateWidth);
+    if (target) ro.observe(target);
 
     return () => {
       timers.forEach(t => clearTimeout(t));
-      topScroll.removeEventListener('scroll', onTopScroll);
-      if (scrollTarget) scrollTarget.removeEventListener('scroll', onTargetScroll);
+      top.removeEventListener('scroll', onTopScroll);
+      const t = getTarget();
+      if (t) {
+        t.removeEventListener('scroll', onTargetScroll);
+        t.classList.remove('hide-x-scrollbar');
+      }
       ro.disconnect();
-      if (scrollTarget) scrollTarget.classList.remove('hide-x-scrollbar');
     };
-  }, [viewType, searchTerm, selectedDepartment]);
+  }, [viewType, searchTerm, selectedDepartment, currentDate]);
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);

@@ -86,7 +86,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
   const totalColumns = monthNames.length + yearWeeks.length;
 
   return (
-    <div className="overflow-auto">
+    <div className="calendar-scroll-container overflow-auto">
       <div 
         className="grid gap-1 min-w-fit"
         style={{ gridTemplateColumns: `250px repeat(${totalColumns}, minmax(66px, 1fr))` }}

@@ -80,7 +80,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
     `${Math.floor(hours)}:${String(Math.round((hours % 1) * 60)).padStart(2, '0')}`;
 
   return (
-    <div className="overflow-auto">
+    <div className="calendar-scroll-container overflow-auto">
       <div 
         className="grid gap-1 min-w-fit"
         style={{ gridTemplateColumns: `250px repeat(${monthDays.length}, minmax(60px, 1fr))` }}

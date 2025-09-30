@@ -81,7 +81,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   return (
     <div className="h-full overflow-auto">
       <div 
-        className="grid overflow-x-auto min-h-0" 
+        className="calendar-scroll-container grid overflow-x-auto min-h-0" 
         style={{ 
           gridTemplateColumns: viewType === 'weekly' 
             ? 'minmax(160px, 280px) repeat(7, minmax(80px, 1fr))'

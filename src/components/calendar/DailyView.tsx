@@ -65,7 +65,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   };
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="calendar-scroll-container h-full overflow-auto">
       <div 
         className="grid overflow-x-auto min-h-0" 
         style={{ 
