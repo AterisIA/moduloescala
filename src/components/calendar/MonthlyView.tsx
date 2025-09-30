@@ -93,7 +93,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
       <div 
         className="grid gap-1"
         style={{ 
-          gridTemplateColumns: `250px repeat(${monthDays.length}, minmax(65px, 1fr))`,
+          gridTemplateColumns: `minmax(250px, 250px) repeat(${monthDays.length}, minmax(${isQuadrantMode ? '120px' : '65px'}, 1fr))`,
           minWidth: 'max-content'
         }}
       >

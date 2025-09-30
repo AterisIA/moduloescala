@@ -93,11 +93,11 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         className="calendar-scroll-container grid overflow-x-auto" 
         style={{ 
           gridTemplateColumns: viewType === 'weekly' 
-            ? 'minmax(160px, 280px) repeat(7, minmax(85px, 1fr))'
-            : 'minmax(160px, 280px) repeat(auto-fit, minmax(35px, 1fr))',
+            ? `minmax(160px, 280px) repeat(7, minmax(${isQuadrantMode ? '120px' : '85px'}, 1fr))`
+            : `minmax(160px, 280px) repeat(auto-fit, minmax(${isQuadrantMode ? '120px' : '35px'}, 1fr))`,
           '--col-fixed': 'minmax(160px, 280px)',
           '--cols': viewType === 'weekly' ? '7' : dates.length.toString(),
-          '--col-day': viewType === 'weekly' ? 'minmax(85px, 1fr)' : 'minmax(35px, 1fr)',
+          '--col-day': viewType === 'weekly' ? `minmax(${isQuadrantMode ? '120px' : '85px'}, 1fr)` : `minmax(${isQuadrantMode ? '120px' : '35px'}, 1fr)`,
           minWidth: 'max-content'
         } as React.CSSProperties}
       >
