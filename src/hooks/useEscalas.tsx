@@ -242,9 +242,11 @@ export function useEscalas() {
       
       console.log('Loaded entities:', entitiesMap.size);
       
-      // Step 2: Fetch quadrant data from RPC
+      // Step 2: Fetch quadrant data from RPC with hours
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
+      
+      console.log('Calling RPC with:', { p_filter: filterType, p_start: startDateStr, p_end: endDateStr });
       
       const { data, error } = await supabase.rpc('get_quadrant_counts_with_hours', {
         p_filter: filterType,
@@ -254,8 +256,39 @@ export function useEscalas() {
       
       if (error) {
         console.error('Error calling get_quadrant_counts_with_hours:', error);
+        // Try fallback to old function without hours
+        const { data: fallbackData, error: fallbackError } = await supabase.rpc('get_quadrant_counts', {
+          p_filter: filterType,
+          p_start: startDateStr,
+          p_end: endDateStr
+        });
+        
+        if (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+        } else if (fallbackData) {
+          console.log('Using fallback data (no hours):', fallbackData);
+          // Process fallback data without hours
+          fallbackData?.forEach((row: any) => {
+            const entityId = row.entity_id;
+            const dateKey = row.dt;
+            
+            if (entitiesMap.has(entityId)) {
+              const entity = entitiesMap.get(entityId)!;
+              
+              const quadrantData: QuadrantData = {
+                presenca: row.presenca || 0,
+                atraso: row.atraso || 0,
+                falta: row.falta || 0,
+                faltaJustificada: row.fj_at || 0,
+                atestado: 0
+              };
+              
+              entity.quadrants.set(dateKey, quadrantData);
+            }
+          });
+        }
       } else {
-        console.log('RPC returned data:', data);
+        console.log('RPC returned data with hours:', data);
         
         // Step 3: Populate quadrant data into entities
         data?.forEach((row: any) => {
