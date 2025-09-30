@@ -200,50 +200,61 @@ export function useEscalas() {
 
   const fetchAggregatedData = async (filterType: FilterType, startDate: Date, endDate: Date) => {
     try {
-      // For now, return mock data structure - will implement with proper database queries
-      const entities: EntityQuadrantData[] = [];
+      console.log('fetchAggregatedData called with:', { filterType, startDate, endDate });
       
-      if (filterType === 'Coordenadores') {
-        // Fetch coordenadores
-        const coordResult = await (supabase as any).from('coordenador').select('*');
-        const coordData = coordResult.data as CoordenadorData[] | null;
-        
-        coordData?.forEach(coord => {
-          entities.push({
-            id: coord.id_coordenador,
-            name: coord.nome,
-            type: filterType,
-            quadrants: new Map()
-          });
-        });
-      } else if (filterType === 'Plantões') {
-        // Fetch plantões
-        const plantaoResult = await (supabase as any).from('plantao').select('*');
-        const plantaoData = plantaoResult.data as PlantaoData[] | null;
-        
-        plantaoData?.forEach(plantao => {
-          entities.push({
-            id: plantao.id_plantao,
-            name: plantao.nome,
-            type: filterType,
-            quadrants: new Map()
-          });
-        });
-      } else if (filterType === 'Empresas') {
-        // Fetch empresas
-        const empresaResult = await (supabase as any).from('empresa').select('*');
-        const empresaData = empresaResult.data as EmpresaData[] | null;
-        
-        empresaData?.forEach(empresa => {
-          entities.push({
-            id: empresa.id_empresa,
-            name: empresa.nome,
-            type: filterType,
-            quadrants: new Map()
-          });
-        });
+      // Format dates for SQL (YYYY-MM-DD)
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      // Call RPC function to get aggregated quadrant counts
+      const { data, error } = await supabase.rpc('get_quadrant_counts', {
+        p_filter: filterType,
+        p_start: startDateStr,
+        p_end: endDateStr
+      });
+      
+      if (error) {
+        console.error('Error calling get_quadrant_counts:', error);
+        return [];
       }
-
+      
+      console.log('RPC returned data:', data);
+      
+      // Transform RPC results into EntityQuadrantData
+      const entitiesMap = new Map<string, EntityQuadrantData>();
+      
+      data?.forEach((row: any) => {
+        const entityId = row.entity_id;
+        const entityName = row.entity_name;
+        const dateKey = row.dt; // YYYY-MM-DD format
+        
+        // Get or create entity
+        if (!entitiesMap.has(entityId)) {
+          entitiesMap.set(entityId, {
+            id: entityId,
+            name: entityName,
+            type: filterType,
+            quadrants: new Map<string, QuadrantData>()
+          });
+        }
+        
+        const entity = entitiesMap.get(entityId)!;
+        
+        // Create QuadrantData for this date
+        const quadrantData: QuadrantData = {
+          presenca: row.presenca || 0,
+          atraso: row.atraso || 0,
+          falta: row.falta || 0,
+          faltaJustificada: row.fj_at || 0, // Combined status 4 and 5
+          atestado: 0 // Not used separately anymore
+        };
+        
+        entity.quadrants.set(dateKey, quadrantData);
+      });
+      
+      const entities = Array.from(entitiesMap.values());
+      console.log('Transformed entities:', entities);
+      
       return entities;
     } catch (err) {
       console.error('Error fetching aggregated data:', err);

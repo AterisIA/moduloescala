@@ -123,6 +123,7 @@ export type Database = {
           hora: string
           horaflutuante: number | null
           idcomunicacao: number
+          minutoflutuante: number | null
         }
         Insert: {
           comunicacao: string
@@ -131,6 +132,7 @@ export type Database = {
           hora: string
           horaflutuante?: number | null
           idcomunicacao?: number
+          minutoflutuante?: number | null
         }
         Update: {
           comunicacao?: string
@@ -139,6 +141,7 @@ export type Database = {
           hora?: string
           horaflutuante?: number | null
           idcomunicacao?: number
+          minutoflutuante?: number | null
         }
         Relationships: []
       }
@@ -181,6 +184,21 @@ export type Database = {
           nome_completo?: string | null
           nome_responsavel?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      coordenador: {
+        Row: {
+          id_coordenador: string
+          nome: string
+        }
+        Insert: {
+          id_coordenador?: string
+          nome: string
+        }
+        Update: {
+          id_coordenador?: string
+          nome?: string
         }
         Relationships: []
       }
@@ -335,6 +353,21 @@ export type Database = {
           },
         ]
       }
+      empresa: {
+        Row: {
+          id_empresa: string
+          nome: string
+        }
+        Insert: {
+          id_empresa?: string
+          nome: string
+        }
+        Update: {
+          id_empresa?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       envio_comunicacao_log: {
         Row: {
           data_hora_comunicacao: string | null
@@ -384,6 +417,8 @@ export type Database = {
         Row: {
           dataescala: string
           finalescala: string | null
+          id_coordenador: string | null
+          id_plantao: string | null
           idescala: number
           nomepessoaescala: string
           telefone: string | null
@@ -391,6 +426,8 @@ export type Database = {
         Insert: {
           dataescala: string
           finalescala?: string | null
+          id_coordenador?: string | null
+          id_plantao?: string | null
           idescala?: number
           nomepessoaescala: string
           telefone?: string | null
@@ -398,6 +435,8 @@ export type Database = {
         Update: {
           dataescala?: string
           finalescala?: string | null
+          id_coordenador?: string | null
+          id_plantao?: string | null
           idescala?: number
           nomepessoaescala?: string
           telefone?: string | null
@@ -523,6 +562,32 @@ export type Database = {
         }
         Relationships: []
       }
+      plantao: {
+        Row: {
+          id_empresa: string
+          id_plantao: string
+          nome: string
+        }
+        Insert: {
+          id_empresa: string
+          id_plantao?: string
+          nome: string
+        }
+        Update: {
+          id_empresa?: string
+          id_plantao?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantao_id_empresa_fkey"
+            columns: ["id_empresa"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id_empresa"]
+          },
+        ]
+      }
       quiz_responses: {
         Row: {
           created_at: string
@@ -573,6 +638,7 @@ export type Database = {
           idcomunicacao: number
           idescala: number
           idresposta: number
+          respostaEscala: string | null
           status: string | null
           telefone: number | null
         }
@@ -583,6 +649,7 @@ export type Database = {
           idcomunicacao: number
           idescala: number
           idresposta?: number
+          respostaEscala?: string | null
           status?: string | null
           telefone?: number | null
         }
@@ -593,6 +660,7 @@ export type Database = {
           idcomunicacao?: number
           idescala?: number
           idresposta?: number
+          respostaEscala?: string | null
           status?: string | null
           telefone?: number | null
         }
@@ -612,6 +680,24 @@ export type Database = {
             referencedColumns: ["idescala"]
           },
         ]
+      }
+      StatusPresenca: {
+        Row: {
+          id: number
+          id_escala: number | null
+          status: number | null
+        }
+        Insert: {
+          id?: number
+          id_escala?: number | null
+          status?: number | null
+        }
+        Update: {
+          id?: number
+          id_escala?: number | null
+          status?: number | null
+        }
+        Relationships: []
       }
       user_permissions: {
         Row: {
@@ -898,6 +984,18 @@ export type Database = {
         Returns: {
           id_permission: string
           vc_name: string
+        }[]
+      }
+      get_quadrant_counts: {
+        Args: { p_end: string; p_filter: string; p_start: string }
+        Returns: {
+          atraso: number
+          dt: string
+          entity_id: string
+          entity_name: string
+          falta: number
+          fj_at: number
+          presenca: number
         }[]
       }
       get_user_menu_permissions: {
