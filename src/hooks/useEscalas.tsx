@@ -97,28 +97,23 @@ export function useEscalas() {
         console.log('Processing escala:', escala);
         const employeeId = escala.nomepessoaescala.replace(/\s+/g, '_').toLowerCase();
         
-        // Determine department based on relationships
-        let department = "Terceirizados"; // Default
+        // All employees are categorized as "Terceirizados" by default
+        let department = "Terceirizados";
         let position = "Funcionário";
         
+        // Add coordinator info if available
         if (escala.id_coordenador) {
-          department = "Coordenadores";
           const coordenador = coordenadoresMap.get(escala.id_coordenador);
           if (coordenador) {
-            position = `Coordenador - ${coordenador.nome}`;
+            position = `${position} - Coord: ${coordenador.nome}`;
           }
-        } else if (escala.id_plantao) {
+        }
+        
+        // Add shift info if available
+        if (escala.id_plantao) {
           const plantao = plantoesMap.get(escala.id_plantao);
           if (plantao) {
-            department = "Plantões";
-            position = `Plantão - ${plantao.nome}`;
-            
-            // Check if we should categorize by empresa
-            const empresa = empresasMap.get(plantao.id_empresa);
-            if (empresa) {
-              // For now keep in Plantões, but we have empresa info available
-              // You can change this logic if you want empresa to be a separate filter
-            }
+            position = `${position} - ${plantao.nome}`;
           }
         }
         
