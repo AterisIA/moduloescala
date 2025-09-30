@@ -43,14 +43,20 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
   const yearWeeks = eachWeekOfInterval(
     { start: startOfYear(currentDate), end: endOfYear(currentDate) },
     { weekStartsOn: 1 }
-  );
+  ).filter(week => {
+    // Apenas incluir semanas que pertencem ao ano atual
+    // Uma semana pertence ao ano se a maioria dos seus dias estão no ano
+    const weekEnd = endOfWeek(week, { weekStartsOn: 1 });
+    return getYear(weekEnd) === getYear(currentDate);
+  });
 
-  // Group weeks by month
+  // Group weeks by month usando o final da semana para melhor agrupamento
   const weeksByMonth: { [key: string]: Date[] } = {};
   const monthNames: string[] = [];
   
   yearWeeks.forEach((week) => {
-    const monthKey = format(week, 'MMM', { locale: ptBR });
+    const weekEnd = endOfWeek(week, { weekStartsOn: 1 });
+    const monthKey = format(weekEnd, 'MMM', { locale: ptBR });
     if (!weeksByMonth[monthKey]) {
       weeksByMonth[monthKey] = [];
       monthNames.push(monthKey);
