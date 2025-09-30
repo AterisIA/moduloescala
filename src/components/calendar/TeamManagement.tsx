@@ -23,7 +23,7 @@ export function TeamManagement() {
   } = useEscalas();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("Terceirizados");
   const [searchTerm, setSearchTerm] = useState("");
   const [aggregatedEntities, setAggregatedEntities] = useState<any[]>([]);
   const [loadingAggregated, setLoadingAggregated] = useState(false);
@@ -122,7 +122,7 @@ export function TeamManagement() {
     setSelectedDepartment(department);
     
     // Fetch aggregated data if not Terceirizados
-    if (department !== "all" && department !== "Terceirizados") {
+    if (department !== "Terceirizados") {
       setLoadingAggregated(true);
       const startDate = new Date(currentDate);
       const endDate = new Date(currentDate);
@@ -148,7 +148,7 @@ export function TeamManagement() {
       setAggregatedEntities([]);
     }
   };
-  const isQuadrantMode = selectedDepartment !== "all" && selectedDepartment !== "Terceirizados";
+  const isQuadrantMode = selectedDepartment !== "Terceirizados";
   
   const filteredEmployees = escalasEmployees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
@@ -217,7 +217,7 @@ export function TeamManagement() {
               currentDate={currentDate} 
               employees={filteredEmployees} 
               schedules={escalasSchedules} 
-              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              selectedDepartments={[selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
               selectedDepartment={selectedDepartment}
@@ -229,7 +229,7 @@ export function TeamManagement() {
               currentDate={currentDate} 
               employees={filteredEmployees} 
               schedules={escalasSchedules} 
-              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} 
+              selectedDepartments={[selectedDepartment]}
               viewType={viewType}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
@@ -242,7 +242,7 @@ export function TeamManagement() {
               currentDate={currentDate} 
               employees={filteredEmployees} 
               schedules={escalasSchedules} 
-              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              selectedDepartments={[selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
               selectedDepartment={selectedDepartment}
@@ -254,7 +254,7 @@ export function TeamManagement() {
               currentDate={currentDate} 
               employees={filteredEmployees} 
               schedules={escalasSchedules} 
-              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              selectedDepartments={[selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
               selectedDepartment={selectedDepartment}
