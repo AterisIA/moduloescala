@@ -52,7 +52,7 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
   };
 
   return (
-    <div className={`grid grid-cols-2 gap-0.5 w-full h-full min-h-[60px] ${className}`}>
+    <div className={`grid grid-cols-2 gap-px w-full h-full min-h-[50px] sm:min-h-[60px] ${className}`}>
       {quadrants.map((quadrant, index) => {
         const hours = index === 0 ? data.presencaHoras :
                      index === 1 ? data.atrasoHoras :
@@ -62,12 +62,12 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
         return (
           <div
             key={index}
-            className={`flex flex-col items-center justify-center p-1 ${quadrant.color} rounded-sm`}
+            className={`flex flex-col items-center justify-center px-0.5 py-1 ${quadrant.color} rounded-sm`}
           >
-            <div className="text-lg font-bold leading-none">
+            <div className="text-xs sm:text-sm md:text-base font-bold leading-none truncate max-w-full">
               {getDisplayValue(quadrant.value, hours)}
             </div>
-            <div className="text-[10px] font-medium mt-0.5">
+            <div className="text-[8px] sm:text-[9px] md:text-[10px] font-medium mt-0.5 truncate max-w-full">
               {quadrant.label}
             </div>
           </div>
