@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { Employee, Schedule, ViewType } from "@/types/calendar";
+import { Employee, Schedule, ViewType, EntityQuadrantData } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format, addDays, startOfWeek, startOfMonth, endOfWeek, endOfMonth, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,9 +16,11 @@ interface CalendarGridProps {
   schedules: Schedule[];
   selectedDepartments: string[];
   viewType: ViewType;
+  isQuadrantMode?: boolean;
+  aggregatedEntities?: EntityQuadrantData[];
 }
 
-export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType }: CalendarGridProps) {
+export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [] }: CalendarGridProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );

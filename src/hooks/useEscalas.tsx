@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Employee, Schedule } from '@/types/calendar';
+import { Employee, Schedule, EntityQuadrantData, QuadrantData, FilterType } from '@/types/calendar';
 
 interface EscalaData {
   idescala: number;
@@ -31,6 +31,7 @@ interface EmpresaData {
 export function useEscalas() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [aggregatedEntities, setAggregatedEntities] = useState<EntityQuadrantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -202,11 +203,66 @@ export function useEscalas() {
     }
   };
 
+  const fetchAggregatedData = async (filterType: FilterType, startDate: Date, endDate: Date) => {
+    try {
+      // For now, return mock data structure - will implement with proper database queries
+      const entities: EntityQuadrantData[] = [];
+      
+      if (filterType === 'Coordenadores') {
+        // Fetch coordenadores
+        const coordResult = await (supabase as any).from('coordenador').select('*');
+        const coordData = coordResult.data as CoordenadorData[] | null;
+        
+        coordData?.forEach(coord => {
+          entities.push({
+            id: coord.id_coordenador,
+            name: coord.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      } else if (filterType === 'Plantões') {
+        // Fetch plantões
+        const plantaoResult = await (supabase as any).from('plantao').select('*');
+        const plantaoData = plantaoResult.data as PlantaoData[] | null;
+        
+        plantaoData?.forEach(plantao => {
+          entities.push({
+            id: plantao.id_plantao,
+            name: plantao.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      } else if (filterType === 'Empresas') {
+        // Fetch empresas
+        const empresaResult = await (supabase as any).from('empresa').select('*');
+        const empresaData = empresaResult.data as EmpresaData[] | null;
+        
+        empresaData?.forEach(empresa => {
+          entities.push({
+            id: empresa.id_empresa,
+            name: empresa.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      }
+
+      return entities;
+    } catch (err) {
+      console.error('Error fetching aggregated data:', err);
+      return [];
+    }
+  };
+
   return {
     employees,
     schedules,
+    aggregatedEntities,
     loading,
     error,
-    refetch: fetchEscalas
+    refetch: fetchEscalas,
+    fetchAggregatedData
   };
 }

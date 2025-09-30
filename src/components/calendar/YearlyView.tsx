@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { Employee, Schedule } from "@/types/calendar";
+import { Employee, Schedule, EntityQuadrantData } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   DropdownMenu, 
@@ -23,9 +23,11 @@ interface YearlyViewProps {
   employees: Employee[];
   schedules: Schedule[];
   selectedDepartments: string[];
+  isQuadrantMode?: boolean;
+  aggregatedEntities?: EntityQuadrantData[];
 }
 
-export function YearlyView({ currentDate, employees, schedules, selectedDepartments }: YearlyViewProps) {
+export function YearlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [] }: YearlyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );

@@ -18,12 +18,15 @@ export function TeamManagement() {
     employees: escalasEmployees,
     schedules: escalasSchedules,
     loading,
-    error
+    error,
+    fetchAggregatedData
   } = useEscalas();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('daily');
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [aggregatedEntities, setAggregatedEntities] = useState<any[]>([]);
+  const [loadingAggregated, setLoadingAggregated] = useState(false);
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -115,18 +118,52 @@ export function TeamManagement() {
       return newDate;
     });
   };
-  const handleDepartmentFilter = (department: string) => {
+  const handleDepartmentFilter = async (department: string) => {
     setSelectedDepartment(department);
+    
+    // Fetch aggregated data if not Terceirizados
+    if (department !== "all" && department !== "Terceirizados") {
+      setLoadingAggregated(true);
+      const startDate = new Date(currentDate);
+      const endDate = new Date(currentDate);
+      
+      if (viewType === 'daily') {
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (viewType === 'weekly') {
+        startDate.setDate(currentDate.getDate() - currentDate.getDay());
+        endDate.setDate(startDate.getDate() + 6);
+      } else if (viewType === 'monthly') {
+        startDate.setDate(1);
+        endDate.setMonth(endDate.getMonth() + 1, 0);
+      } else if (viewType === 'yearly') {
+        startDate.setMonth(0, 1);
+        endDate.setMonth(11, 31);
+      }
+      
+      const entities = await fetchAggregatedData(department as any, startDate, endDate);
+      setAggregatedEntities(entities);
+      setLoadingAggregated(false);
+    } else {
+      setAggregatedEntities([]);
+    }
   };
+  const isQuadrantMode = selectedDepartment !== "all" && selectedDepartment !== "Terceirizados";
+  
   const filteredEmployees = escalasEmployees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
-  if (loading) {
+  
+  const filteredEntities = aggregatedEntities.filter(entity => {
+    const matchesSearch = entity.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+  if (loading || loadingAggregated) {
     return <div className="calendar-container lg:pl-4 flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Carregando escalas...</p>
+          <p className="text-muted-foreground">Carregando dados...</p>
         </div>
       </div>;
   }
@@ -203,13 +240,42 @@ export function TeamManagement() {
         <Card className="border-0 rounded-none">
           <CardContent className="p-0">
             {/* Calendar Views */}
-            {viewType === 'daily' && <DailyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
+            {viewType === 'daily' && <DailyView 
+              currentDate={currentDate} 
+              employees={filteredEmployees} 
+              schedules={escalasSchedules} 
+              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              isQuadrantMode={isQuadrantMode}
+              aggregatedEntities={filteredEntities}
+            />}
             
-            {viewType === 'weekly' && <CalendarGrid currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} viewType={viewType} />}
+            {viewType === 'weekly' && <CalendarGrid 
+              currentDate={currentDate} 
+              employees={filteredEmployees} 
+              schedules={escalasSchedules} 
+              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} 
+              viewType={viewType}
+              isQuadrantMode={isQuadrantMode}
+              aggregatedEntities={filteredEntities}
+            />}
             
-            {viewType === 'monthly' && <MonthlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
+            {viewType === 'monthly' && <MonthlyView 
+              currentDate={currentDate} 
+              employees={filteredEmployees} 
+              schedules={escalasSchedules} 
+              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              isQuadrantMode={isQuadrantMode}
+              aggregatedEntities={filteredEntities}
+            />}
             
-            {viewType === 'yearly' && <YearlyView currentDate={currentDate} employees={filteredEmployees} schedules={escalasSchedules} selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]} />}
+            {viewType === 'yearly' && <YearlyView 
+              currentDate={currentDate} 
+              employees={filteredEmployees} 
+              schedules={escalasSchedules} 
+              selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
+              isQuadrantMode={isQuadrantMode}
+              aggregatedEntities={filteredEntities}
+            />}
           </CardContent>
         </Card>
       </main>

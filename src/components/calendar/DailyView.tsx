@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { Employee, Schedule } from "@/types/calendar";
+import { Employee, Schedule, EntityQuadrantData } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -9,18 +9,23 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { QuadrantCell } from "./QuadrantCell";
 
 interface DailyViewProps {
   currentDate: Date;
   employees: Employee[];
   schedules: Schedule[];
   selectedDepartments: string[];
+  isQuadrantMode?: boolean;
+  aggregatedEntities?: EntityQuadrantData[];
 }
 
-export function DailyView({ currentDate, employees, schedules, selectedDepartments }: DailyViewProps) {
+export function DailyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [] }: DailyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
+  
+  const dateKey = format(currentDate, 'yyyy-MM-dd');
 
   // Generate hours from 00 to 23
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -95,66 +100,105 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
           </div>
         ))}
 
-        {/* Employee rows */}
-        {filteredEmployees.map(employee => {
-          const schedule = getScheduleForEmployee(employee.id);
-          
-          return (
-            <Fragment key={employee.id}>
-              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
-                <div className="flex items-center gap-2 p-2 w-full min-w-0">
-                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-                    <AvatarFallback className="text-xs">
-                      {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-xs md:text-sm truncate">
-                      {employee.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate hidden sm:block">{employee.position}</div>
-                    <div className="text-xs text-primary truncate hidden lg:block">
-                      {schedule ? getScheduleDisplay(schedule) : 'Sem escala'}
+        {/* Rows - Employee or Aggregated Entities */}
+        {isQuadrantMode ? (
+          // Quadrant mode - show aggregated entities
+          aggregatedEntities.map(entity => {
+            const quadrant = entity.quadrants.get(dateKey) || {
+              presenca: 0,
+              atraso: 0,
+              falta: 0,
+              faltaJustificada: 0,
+              atestado: 0
+            };
+            
+            return (
+              <Fragment key={entity.id}>
+                <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                  <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                    <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                      <AvatarFallback className="text-xs">
+                        {entity.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-xs md:text-sm truncate">
+                        {entity.name}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {hours.map(hour => {
-                const isWorking = schedule && isWorkingHour(hour, schedule);
                 
-                return (
-                  <div 
-                    key={`${employee.id}-${hour}`}
-                    className={`calendar-cell border-b transition-colors ${
-                      isWorking 
-                        ? `${getScheduleColor(schedule)}`
-                        : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    {isWorking ? (
-                      <div className="text-center text-xs font-medium">
-                        <div className="hidden sm:block">
-                          {hour === parseInt(schedule.startTime.split(':')[0]) && schedule.startTime}
-                          {hour === parseInt(schedule.endTime.split(':')[0]) - 1 && schedule.endTime}
-                        </div>
-                        <div className="sm:hidden">●</div>
-                      </div>
-                    ) : schedule && (schedule.type === 'rest' || schedule.type === 'vacation') ? (
-                      <div className={`text-center text-xs ${getScheduleColor(schedule)}`}>
-                        {getScheduleDisplay(schedule)}
-                      </div>
-                    ) : (
-                      <div className="text-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
-                        +
-                      </div>
-                    )}
+                {hours.map(hour => (
+                  <div key={`${entity.id}-${hour}`} className="calendar-cell border-b p-1">
+                    {hour === 12 && <QuadrantCell data={quadrant} />}
                   </div>
-                );
-              })}
-            </Fragment>
-          );
-        })}
+                ))}
+              </Fragment>
+            );
+          })
+        ) : (
+          // Normal mode - show employees
+          filteredEmployees.map(employee => {
+            const schedule = getScheduleForEmployee(employee.id);
+            
+            return (
+              <Fragment key={employee.id}>
+                <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                  <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                    <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                      <AvatarFallback className="text-xs">
+                        {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-xs md:text-sm truncate">
+                        {employee.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate hidden sm:block">{employee.position}</div>
+                      <div className="text-xs text-primary truncate hidden lg:block">
+                        {schedule ? getScheduleDisplay(schedule) : 'Sem escala'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {hours.map(hour => {
+                  const isWorking = schedule && isWorkingHour(hour, schedule);
+                  
+                  return (
+                    <div 
+                      key={`${employee.id}-${hour}`}
+                      className={`calendar-cell border-b transition-colors ${
+                        isWorking 
+                          ? `${getScheduleColor(schedule)}`
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      {isWorking ? (
+                        <div className="text-center text-xs font-medium">
+                          <div className="hidden sm:block">
+                            {hour === parseInt(schedule.startTime.split(':')[0]) && schedule.startTime}
+                            {hour === parseInt(schedule.endTime.split(':')[0]) - 1 && schedule.endTime}
+                          </div>
+                          <div className="sm:hidden">●</div>
+                        </div>
+                      ) : schedule && (schedule.type === 'rest' || schedule.type === 'vacation') ? (
+                        <div className={`text-center text-xs ${getScheduleColor(schedule)}`}>
+                          {getScheduleDisplay(schedule)}
+                        </div>
+                      ) : (
+                        <div className="text-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
+                          +
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Fragment>
+            );
+          })
+        )}
       </div>
     </div>
   );
