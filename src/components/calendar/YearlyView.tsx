@@ -99,9 +99,10 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
       .reduce((total, schedule) => total + calculateHours(schedule), 0);
   };
 
-  const getMonthHours = (employeeId: string, monthName: string): number => {
-    const monthWeeks = weeksByMonth[monthName] || [];
-    return monthWeeks.reduce((total, week) => {
+  const getMonthHours = (employeeId: string, monthIndex: number): number => {
+    const monthData = weeksByMonth[monthIndex];
+    if (!monthData) return 0;
+    return monthData.weeks.reduce((total, week) => {
       return total + getWeekHours(employeeId, week);
     }, 0);
   };
@@ -138,11 +139,11 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
     return acc;
   };
 
-  const aggregateMonthQuadrants = (entity: EntityQuadrantData, monthLabel: string): QuadrantData => {
+  const aggregateMonthQuadrants = (entity: EntityQuadrantData, monthIndex: number): QuadrantData => {
     let acc = { ...emptyQuadrant };
     entity.quadrants?.forEach((q, dateStr) => {
       const d = parseISO(dateStr);
-      if (format(d, 'MMM', { locale: ptBR }) === monthLabel && isSameYear(d, currentDate)) {
+      if (d.getMonth() === monthIndex && isSameYear(d, currentDate)) {
         acc = sumQuadrants(acc, q);
       }
     });
@@ -219,7 +220,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
                   <Fragment key={`${entity.id}-${monthIdx}`}>
                     {/* Month total - aggregated quadrants */}
                     <div className="min-h-16 p-1 border-b border-r bg-muted/20 flex items-center justify-center">
-                      <QuadrantCell data={aggregateMonthQuadrants(entity, monthData.name)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
+                      <QuadrantCell data={aggregateMonthQuadrants(entity, monthIdx)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
                     </div>
                     
                     {/* Week cells - aggregated quadrants per ISO week */}
@@ -278,7 +279,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
                       <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
                         <div className="text-center">
                           <div className="text-sm font-medium">
-                            {formatHours(getMonthHours(employee.id, monthData.name))}
+                            {formatHours(getMonthHours(employee.id, monthIdx))}
                           </div>
                           <div className="text-xs text-muted-foreground">total</div>
                         </div>
