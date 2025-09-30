@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { Employee, Schedule, EntityQuadrantData } from "@/types/calendar";
+import { Employee, Schedule, EntityQuadrantData, QuadrantData } from "@/types/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   DropdownMenu, 
@@ -14,7 +14,8 @@ import {
   endOfYear, 
   endOfWeek,
   getYear,
-  isSameYear
+  isSameYear,
+  parseISO
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QuadrantCell } from "./QuadrantCell";
@@ -85,6 +86,46 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
 
   const formatHours = (hours: number) => 
     `${Math.floor(hours)}:${String(Math.round((hours % 1) * 60)).padStart(2, '0')}`;
+  
+  // Quadrant aggregations for yearly view (aggregated entities)
+  const emptyQuadrant: QuadrantData = {
+    presenca: 0,
+    atraso: 0,
+    falta: 0,
+    faltaJustificada: 0,
+    atestado: 0,
+  };
+
+  const sumQuadrants = (a: QuadrantData, b: QuadrantData): QuadrantData => ({
+    presenca: a.presenca + b.presenca,
+    atraso: a.atraso + b.atraso,
+    falta: a.falta + b.falta,
+    faltaJustificada: a.faltaJustificada + b.faltaJustificada,
+    atestado: a.atestado + b.atestado,
+  });
+
+  const aggregateWeekQuadrants = (entity: EntityQuadrantData, weekStart: Date): QuadrantData => {
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+    let acc = { ...emptyQuadrant };
+    entity.quadrants?.forEach((q, dateStr) => {
+      const d = parseISO(dateStr);
+      if (d >= weekStart && d <= weekEnd && isSameYear(d, currentDate)) {
+        acc = sumQuadrants(acc, q);
+      }
+    });
+    return acc;
+  };
+
+  const aggregateMonthQuadrants = (entity: EntityQuadrantData, monthLabel: string): QuadrantData => {
+    let acc = { ...emptyQuadrant };
+    entity.quadrants?.forEach((q, dateStr) => {
+      const d = parseISO(dateStr);
+      if (format(d, 'MMM', { locale: ptBR }) === monthLabel && isSameYear(d, currentDate)) {
+        acc = sumQuadrants(acc, q);
+      }
+    });
+    return acc;
+  };
 
   const totalColumns = monthNames.length + yearWeeks.length;
 
@@ -140,22 +181,18 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
               {/* Monthly totals and weekly aggregates */}
               {monthNames.map((monthName, monthIndex) => (
                 <Fragment key={`${entity.id}-${monthName}`}>
-                  {/* Month total - simplified */}
+                  {/* Month total - aggregated quadrants */}
                   <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
-                    <div className="text-center text-xs text-muted-foreground">
-                      Ver detalhes
-                    </div>
+                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} />
                   </div>
                   
-                  {/* Week cells - show message to use monthly/weekly view */}
+                  {/* Week cells - aggregated quadrants per ISO week */}
                   {weeksByMonth[monthName].map((week, weekIndex) => (
                     <div 
                       key={weekIndex} 
                       className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
                     >
-                      <div className="text-center text-xs text-muted-foreground">
-                        -
-                      </div>
+                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} />
                     </div>
                   ))}
                 </Fragment>
