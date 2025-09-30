@@ -53,7 +53,7 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
   };
 
   return (
-    <div className={`grid grid-cols-2 gap-px w-full h-full ${compact ? 'min-h-[45px]' : 'min-h-[70px] sm:min-h-[80px]'} ${className}`}>
+    <div className={`grid grid-cols-2 gap-px w-full h-full ${compact ? 'min-h-[55px]' : 'min-h-[70px] sm:min-h-[80px]'} ${className}`}>
       {quadrants.map((quadrant, index) => {
         const hours = index === 0 ? data.presencaHoras :
                      index === 1 ? data.atrasoHoras :
@@ -64,19 +64,19 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
           <div
             key={index}
             className={`flex flex-col items-center justify-center ${
-              compact ? 'px-0.5 py-0.5' : 'px-1 py-2'
+              compact ? 'px-1 py-1' : 'px-1 py-2'
             } ${quadrant.color} rounded-sm overflow-hidden`}
           >
             <div className={`font-bold leading-none whitespace-nowrap ${
               compact 
-                ? 'text-[10px]' 
+                ? 'text-xs' 
                 : 'text-sm sm:text-base md:text-lg'
             }`}>
               {getDisplayValue(quadrant.value, hours)}
             </div>
             <div className={`font-medium whitespace-nowrap ${
               compact 
-                ? 'text-[7px] mt-0' 
+                ? 'text-[8px] mt-0.5' 
                 : 'text-[9px] sm:text-[10px] md:text-xs mt-1'
             }`}>
               {quadrant.label}
