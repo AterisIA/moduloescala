@@ -191,9 +191,9 @@ export function TeamManagement() {
       <div 
         ref={topScrollRef}
         className="overflow-x-auto overflow-y-hidden bg-muted/30 border-b"
-        style={{ height: '12px' }}
+        style={{ height: '14px' }}
       >
-        <div style={{ height: '1px', minWidth: '100%' }} />
+        <div style={{ height: '1px', width: '3000px' }} />
       </div>
 
       {/* Main content area */}
