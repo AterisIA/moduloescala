@@ -194,17 +194,17 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
               {monthNames.map((monthName, monthIndex) => (
                 <Fragment key={`${entity.id}-${monthName}`}>
                   {/* Month total - aggregated quadrants */}
-                  <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
-                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} isMonochrome={isMonochrome} displayMode={displayMode} />
+                  <div className="min-h-16 p-1 border-b border-r bg-muted/20 flex items-center justify-center">
+                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
                   </div>
                   
                   {/* Week cells - aggregated quadrants per ISO week */}
                   {weeksByMonth[monthName].map((week, weekIndex) => (
                     <div 
                       key={weekIndex} 
-                      className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
+                      className="min-h-16 p-1 border-b border-r flex items-center justify-center hover:bg-muted/50"
                     >
-                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} displayMode={displayMode} />
+                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} displayMode={displayMode} compact />
                     </div>
                   ))}
                 </Fragment>

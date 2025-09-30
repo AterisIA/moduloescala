@@ -7,9 +7,10 @@ interface QuadrantCellProps {
   className?: string;
   isMonochrome?: boolean;
   displayMode?: DisplayMode;
+  compact?: boolean;
 }
 
-export function QuadrantCell({ data, className = "", isMonochrome = false, displayMode = 'absolute' }: QuadrantCellProps) {
+export function QuadrantCell({ data, className = "", isMonochrome = false, displayMode = 'absolute', compact = false }: QuadrantCellProps) {
   const total = data.presenca + data.atraso + data.falta + data.faltaJustificada + data.atestado;
   
   const quadrants = [
@@ -52,7 +53,7 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
   };
 
   return (
-    <div className={`grid grid-cols-2 gap-px w-full h-full min-h-[70px] sm:min-h-[80px] ${className}`}>
+    <div className={`grid grid-cols-2 gap-px w-full h-full ${compact ? 'min-h-[45px]' : 'min-h-[70px] sm:min-h-[80px]'} ${className}`}>
       {quadrants.map((quadrant, index) => {
         const hours = index === 0 ? data.presencaHoras :
                      index === 1 ? data.atrasoHoras :
@@ -62,12 +63,22 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
         return (
           <div
             key={index}
-            className={`flex flex-col items-center justify-center px-1 py-2 ${quadrant.color} rounded-sm overflow-hidden`}
+            className={`flex flex-col items-center justify-center ${
+              compact ? 'px-0.5 py-0.5' : 'px-1 py-2'
+            } ${quadrant.color} rounded-sm overflow-hidden`}
           >
-            <div className="text-sm sm:text-base md:text-lg font-bold leading-none whitespace-nowrap">
+            <div className={`font-bold leading-none whitespace-nowrap ${
+              compact 
+                ? 'text-[10px]' 
+                : 'text-sm sm:text-base md:text-lg'
+            }`}>
               {getDisplayValue(quadrant.value, hours)}
             </div>
-            <div className="text-[9px] sm:text-[10px] md:text-xs font-medium mt-1 whitespace-nowrap">
+            <div className={`font-medium whitespace-nowrap ${
+              compact 
+                ? 'text-[7px] mt-0' 
+                : 'text-[9px] sm:text-[10px] md:text-xs mt-1'
+            }`}>
               {quadrant.label}
             </div>
           </div>
