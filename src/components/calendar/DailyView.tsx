@@ -1,28 +1,30 @@
 import React, { Fragment } from "react";
 import { Employee, Schedule } from "@/types/calendar";
-import { ViewMode, EntityWithStats } from "@/types/presence";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatusQuadrants } from "./StatusQuadrants";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface DailyViewProps {
   currentDate: Date;
   employees: Employee[];
   schedules: Schedule[];
-  viewMode: ViewMode;
-  entities: EntityWithStats[];
+  selectedDepartments: string[];
 }
 
-export function DailyView({ currentDate, employees, schedules, viewMode, entities }: DailyViewProps) {
-  console.log('DailyView render - viewMode:', viewMode, 'employees:', employees?.length);
-  
+export function DailyView({ currentDate, employees, schedules, selectedDepartments }: DailyViewProps) {
+  const filteredEmployees = employees.filter(emp => 
+    selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
+  );
+
   // Generate hours from 00 to 23
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  
-  console.log('filteredEmployees defined:', employees?.length);
 
-  // Helper functions for schedule rendering (used in terceirizados mode)
   const getScheduleForEmployee = (employeeId: string) => {
     return schedules.find(schedule => 
       schedule.employeeId === employeeId && 
@@ -62,64 +64,6 @@ export function DailyView({ currentDate, employees, schedules, viewMode, entitie
     return hour >= start && hour < end;
   };
 
-  // If not terceirizados mode, show quadrant view
-  if (viewMode !== 'terceirizados') {
-    return (
-      <div className="calendar-scroll-container h-full overflow-auto">
-        <div 
-          className="grid min-h-0" 
-          style={{ 
-            gridTemplateColumns: 'minmax(160px, 280px) minmax(120px, 1fr)',
-          } as React.CSSProperties}
-        >
-          {/* Header */}
-          <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
-            <div className="p-2">
-              <div className="hidden md:block">
-                {viewMode === 'coordenadores' && 'Coordenadores'}
-                {viewMode === 'plantao' && 'Plantões'}
-                {viewMode === 'empresa' && 'Empresas'}
-              </div>
-              <div className="md:hidden">
-                {viewMode === 'coordenadores' && 'Coord.'}
-                {viewMode === 'plantao' && 'Plantões'}
-                {viewMode === 'empresa' && 'Empresas'}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
-              </div>
-            </div>
-          </div>
-          
-          <div className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
-            <div className="text-center py-2">Status</div>
-          </div>
-
-          {/* Entity rows */}
-          {entities.map(entity => (
-            <Fragment key={entity.id}>
-              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
-                <div className="flex items-center gap-2 p-2 w-full min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-xs md:text-sm truncate">
-                      {entity.name}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="calendar-cell border-b p-2">
-                <StatusQuadrants stats={entity.stats} />
-              </div>
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Terceirizados mode - show employee schedules
-
   return (
     <div className="calendar-scroll-container h-full overflow-auto">
       <div 
@@ -152,7 +96,7 @@ export function DailyView({ currentDate, employees, schedules, viewMode, entitie
         ))}
 
         {/* Employee rows */}
-        {employees.map(employee => {
+        {filteredEmployees.map(employee => {
           const schedule = getScheduleForEmployee(employee.id);
           
           return (

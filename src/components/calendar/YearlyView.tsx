@@ -1,8 +1,6 @@
 import React, { Fragment } from "react";
 import { Employee, Schedule } from "@/types/calendar";
-import { ViewMode, EntityWithStats } from "@/types/presence";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatusQuadrants } from "./StatusQuadrants";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -24,12 +22,13 @@ interface YearlyViewProps {
   currentDate: Date;
   employees: Employee[];
   schedules: Schedule[];
-  viewMode: ViewMode;
-  entities: EntityWithStats[];
+  selectedDepartments: string[];
 }
 
-export function YearlyView({ currentDate, employees, schedules, viewMode, entities }: YearlyViewProps) {
-  const filteredEmployees = employees;
+export function YearlyView({ currentDate, employees, schedules, selectedDepartments }: YearlyViewProps) {
+  const filteredEmployees = employees.filter(emp => 
+    selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
+  );
 
   const yearWeeks = eachWeekOfInterval(
     { start: startOfYear(currentDate), end: endOfYear(currentDate) },

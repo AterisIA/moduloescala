@@ -1,8 +1,6 @@
 import React, { Fragment } from "react";
 import { Employee, Schedule } from "@/types/calendar";
-import { ViewMode, EntityWithStats } from "@/types/presence";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatusQuadrants } from "./StatusQuadrants";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -25,12 +23,13 @@ interface MonthlyViewProps {
   currentDate: Date;
   employees: Employee[];
   schedules: Schedule[];
-  viewMode: ViewMode;
-  entities: EntityWithStats[];
+  selectedDepartments: string[];
 }
 
-export function MonthlyView({ currentDate, employees, schedules, viewMode, entities }: MonthlyViewProps) {
-  const filteredEmployees = employees;
+export function MonthlyView({ currentDate, employees, schedules, selectedDepartments }: MonthlyViewProps) {
+  const filteredEmployees = employees.filter(emp => 
+    selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
+  );
 
   const monthDays = eachDayOfInterval({ 
     start: startOfMonth(currentDate), 

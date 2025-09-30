@@ -1,28 +1,27 @@
 import React, { Fragment } from "react";
 import { Employee, Schedule, ViewType } from "@/types/calendar";
-import { ViewMode, EntityWithStats } from "@/types/presence";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatusQuadrants } from "./StatusQuadrants";
+import { format, addDays, startOfWeek, startOfMonth, endOfWeek, endOfMonth, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { format, addDays, startOfWeek, startOfMonth, endOfWeek, endOfMonth, isSameDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface CalendarGridProps {
   currentDate: Date;
   employees: Employee[];
   schedules: Schedule[];
+  selectedDepartments: string[];
   viewType: ViewType;
-  viewMode: ViewMode;
-  entities: EntityWithStats[];
 }
 
-export function CalendarGrid({ currentDate, employees, schedules, viewType, viewMode, entities }: CalendarGridProps) {
-  const filteredEmployees = employees;
+export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType }: CalendarGridProps) {
+  const filteredEmployees = employees.filter(emp => 
+    selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
+  );
 
   const getDateRange = () => {
     if (viewType === 'weekly') {
