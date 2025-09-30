@@ -11,6 +11,7 @@ import Escalas from "./pages/Escalas";
 import Calendario from "./pages/Calendario";
 import Presenca from "./pages/Presenca";
 import Relatorio from "./pages/Relatorio";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
           <Route path="/presenca" element={<Layout><Presenca /></Layout>} />
           <Route path="/relatorio" element={<Layout><Relatorio /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -5,7 +5,8 @@ import {
   CalendarDays, 
   UserCheck, 
   BarChart3,
-  Building2
+  Building2,
+  LayoutDashboard
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -23,6 +24,12 @@ import {
 } from "@/components/ui/sidebar";
 
 const navigation = [
+  {
+    name: "Dashboard Avançado",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    description: "Análise completa"
+  },
   {
     name: "Contatos Terceirização",
     href: "/contatos",
