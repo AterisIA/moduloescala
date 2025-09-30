@@ -67,7 +67,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   return (
     <div className="calendar-scroll-container h-full overflow-auto">
       <div 
-        className="grid overflow-x-auto min-h-0" 
+        className="grid min-h-0" 
         style={{ 
           gridTemplateColumns: 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
           '--col-fixed': 'minmax(160px, 280px)',
