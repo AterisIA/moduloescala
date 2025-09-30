@@ -80,9 +80,11 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
       <div 
         className="grid min-h-0" 
         style={{ 
-          gridTemplateColumns: 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
+          gridTemplateColumns: isQuadrantMode 
+            ? 'minmax(160px, 280px) 1fr'
+            : 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
           '--col-fixed': 'minmax(160px, 280px)',
-          '--cols': '24',
+          '--cols': isQuadrantMode ? '1' : '24',
           '--col-day': 'minmax(56px, 1fr)'
         } as React.CSSProperties}
       >
@@ -100,14 +102,22 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
           </div>
         </div>
         
-        {hours.map(hour => (
-          <div key={hour} className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
-            <div className="text-center">
-              <span className="hidden sm:inline">{String(hour).padStart(2, '0')}:00</span>
-              <span className="sm:hidden">{hour}</span>
+        {isQuadrantMode ? (
+          <div className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
+            <div className="text-center font-semibold">
+              Total do Dia
             </div>
           </div>
-        ))}
+        ) : (
+          hours.map(hour => (
+            <div key={hour} className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
+              <div className="text-center">
+                <span className="hidden sm:inline">{String(hour).padStart(2, '0')}:00</span>
+                <span className="sm:hidden">{hour}</span>
+              </div>
+            </div>
+          ))
+        )}
 
         {/* Rows - Employee or Aggregated Entities */}
         {isQuadrantMode ? (
@@ -138,11 +148,9 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                   </div>
                 </div>
                 
-                {hours.map(hour => (
-                  <div key={`${entity.id}-${hour}`} className="calendar-cell border-b p-1">
-                    {hour === 12 && <QuadrantCell data={quadrant} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />}
-                  </div>
-                ))}
+                <div className="calendar-cell border-b p-2">
+                  <QuadrantCell data={quadrant} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                </div>
               </Fragment>
             );
           })
