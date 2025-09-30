@@ -1,9 +1,16 @@
 export interface DashboardFilters {
   startDate: Date;
   endDate: Date;
-  entityType: 'coordenadores' | 'plantao' | 'empresa' | 'all';
-  entityId?: string;
-  statusFilter?: number[];
+}
+
+export interface CommunicationResponse {
+  idresposta: number;
+  idescala: number;
+  idcomunicacao: number;
+  status: string;
+  dtcomunicacao: string;
+  dtresposta?: string;
+  horaresposta?: string;
 }
 
 export interface KPIMetric {
@@ -18,9 +25,10 @@ export interface KPIMetric {
 
 export interface PresenceDataPoint {
   date: string;
-  presenca: number;
+  confirmado: number;
   atraso: number;
   falta: number;
+  aguardando: number;
 }
 
 export interface StatusDistribution {
@@ -30,9 +38,9 @@ export interface StatusDistribution {
 }
 
 export interface EntityRanking {
-  id: string;
+  id: number;
   name: string;
-  presenca: number;
+  confirmados: number;
   total: number;
   percentage: number;
 }

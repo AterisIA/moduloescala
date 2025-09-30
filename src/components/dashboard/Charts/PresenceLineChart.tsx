@@ -17,7 +17,7 @@ export const PresenceLineChart = ({ data }: PresenceLineChartProps) => {
   return (
     <Card className="col-span-1 lg:col-span-2">
       <CardHeader>
-        <CardTitle>Evolução da Presença</CardTitle>
+        <CardTitle>Evolução das Respostas</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -42,23 +42,30 @@ export const PresenceLineChart = ({ data }: PresenceLineChartProps) => {
             <Legend />
             <Line 
               type="monotone" 
-              dataKey="presenca" 
-              stroke="hsl(var(--success))" 
-              name="Presença"
+              dataKey="confirmado" 
+              stroke="hsl(142 75% 50%)" 
+              name="Confirmado"
               strokeWidth={2}
             />
             <Line 
               type="monotone" 
               dataKey="atraso" 
-              stroke="hsl(var(--warning))" 
+              stroke="hsl(38 92% 50%)" 
               name="Atraso"
               strokeWidth={2}
             />
             <Line 
               type="monotone" 
               dataKey="falta" 
-              stroke="hsl(var(--destructive))" 
+              stroke="hsl(0 84% 60%)" 
               name="Falta"
+              strokeWidth={2}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="aguardando" 
+              stroke="hsl(240 4% 46%)" 
+              name="Aguardando"
               strokeWidth={2}
             />
           </LineChart>

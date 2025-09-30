@@ -6,7 +6,7 @@ import { PresenceLineChart } from "@/components/dashboard/Charts/PresenceLineCha
 import { StatusPieChart } from "@/components/dashboard/Charts/StatusPieChart";
 import { EntityBarChart } from "@/components/dashboard/Charts/EntityBarChart";
 import { TopPerformersTable } from "@/components/dashboard/DataTables/TopPerformersTable";
-import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
+
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { DashboardFilters as Filters } from "@/types/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,8 +17,7 @@ import { Button } from "@/components/ui/button";
 const Dashboard = () => {
   const [filters, setFilters] = useState<Filters>({
     startDate: subDays(new Date(), 30),
-    endDate: new Date(),
-    entityType: 'all'
+    endDate: new Date()
   });
 
   const {
@@ -56,7 +55,7 @@ const Dashboard = () => {
       <div>
         <h1 className="text-3xl font-bold mb-2">Dashboard Avançado</h1>
         <p className="text-muted-foreground">
-          Análise completa de presença, faltas e desempenho
+          Histórico de comunicações e desempenho de respostas
         </p>
       </div>
 
@@ -83,12 +82,7 @@ const Dashboard = () => {
             <StatusPieChart data={statusDistribution} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <EntityBarChart data={entityRanking} title="Top 10 Coordenadores" />
-            <div className="lg:col-span-2">
-              <InsightsPanel insights={insights} />
-            </div>
-          </div>
+          <EntityBarChart data={entityRanking} />
 
           <TopPerformersTable data={topPerformers} />
         </>

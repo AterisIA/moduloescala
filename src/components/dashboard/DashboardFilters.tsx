@@ -4,7 +4,6 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardFilters as Filters } from "@/types/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -68,24 +67,6 @@ export const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersP
             />
           </PopoverContent>
         </Popover>
-      </div>
-
-      <div className="flex-1">
-        <label className="text-sm font-medium mb-2 block">Tipo de Entidade</label>
-        <Select
-          value={filters.entityType}
-          onValueChange={(value) => onFiltersChange({ ...filters, entityType: value as any })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="coordenadores">Coordenadores</SelectItem>
-            <SelectItem value="plantao">Plantões</SelectItem>
-            <SelectItem value="empresa">Empresas</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

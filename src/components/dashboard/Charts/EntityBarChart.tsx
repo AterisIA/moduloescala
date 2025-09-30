@@ -7,7 +7,7 @@ interface EntityBarChartProps {
   title?: string;
 }
 
-export const EntityBarChart = ({ data, title = "Ranking de Entidades" }: EntityBarChartProps) => {
+export const EntityBarChart = ({ data, title = "Top 10 Escalas por Taxa de Confirmação" }: EntityBarChartProps) => {
   const topData = data.slice(0, 10);
 
   return (
