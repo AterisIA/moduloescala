@@ -32,10 +32,10 @@ interface YearlyViewProps {
   onDepartmentChange: (department: string) => void;
   departments: string[];
   isMonochrome?: boolean;
-  isPercentageMode?: boolean;
+  displayMode?: 'absolute' | 'percentage' | 'hours';
 }
 
-export function YearlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, isPercentageMode = false }: YearlyViewProps) {
+export function YearlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, displayMode = 'absolute' }: YearlyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -195,7 +195,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
                 <Fragment key={`${entity.id}-${monthName}`}>
                   {/* Month total - aggregated quadrants */}
                   <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
-                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                    <QuadrantCell data={aggregateMonthQuadrants(entity, monthName)} isMonochrome={isMonochrome} displayMode={displayMode} />
                   </div>
                   
                   {/* Week cells - aggregated quadrants per ISO week */}
@@ -204,7 +204,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
                       key={weekIndex} 
                       className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
                     >
-                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                      <QuadrantCell data={aggregateWeekQuadrants(entity, week)} isMonochrome={isMonochrome} displayMode={displayMode} />
                     </div>
                   ))}
                 </Fragment>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { Badge } from "@/components/ui/badge";
-import { Search, Palette, Percent } from "lucide-react";
+import { Search, Palette, Hash, Percent, Clock } from "lucide-react";
 import { ViewType } from "@/types/calendar";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarViewTabs } from "./CalendarViewTabs";
@@ -29,7 +29,7 @@ export function TeamManagement() {
   const [aggregatedEntities, setAggregatedEntities] = useState<any[]>([]);
   const [loadingAggregated, setLoadingAggregated] = useState(false);
   const [isMonochrome, setIsMonochrome] = useState(false);
-  const [isPercentageMode, setIsPercentageMode] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'absolute' | 'percentage' | 'hours'>('absolute');
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -211,14 +211,30 @@ export function TeamManagement() {
             </Toggle>
             
             <Toggle
-              pressed={isPercentageMode}
-              onPressedChange={setIsPercentageMode}
-              aria-label="Alternar modo percentual"
+              pressed={displayMode !== 'absolute'}
+              onPressedChange={() => {
+                setDisplayMode(prev => {
+                  if (prev === 'absolute') return 'percentage';
+                  if (prev === 'percentage') return 'hours';
+                  return 'absolute';
+                });
+              }}
+              aria-label="Alternar modo de exibição"
               className="shrink-0"
             >
-              <Percent className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{isPercentageMode ? "Percentual" : "Números"}</span>
-              <span className="sm:hidden">%</span>
+              {displayMode === 'absolute' && <Hash className="h-4 w-4 mr-2" />}
+              {displayMode === 'percentage' && <Percent className="h-4 w-4 mr-2" />}
+              {displayMode === 'hours' && <Clock className="h-4 w-4 mr-2" />}
+              <span className="hidden sm:inline">
+                {displayMode === 'absolute' && 'Números'}
+                {displayMode === 'percentage' && 'Percentual'}
+                {displayMode === 'hours' && 'Horas'}
+              </span>
+              <span className="sm:hidden">
+                {displayMode === 'absolute' && '#'}
+                {displayMode === 'percentage' && '%'}
+                {displayMode === 'hours' && 'h'}
+              </span>
             </Toggle>
           </div>
         </div>
@@ -249,7 +265,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
-              isPercentageMode={isPercentageMode}
+              displayMode={displayMode}
             />}
             
             {viewType === 'weekly' && <CalendarGrid 
@@ -264,7 +280,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
-              isPercentageMode={isPercentageMode}
+              displayMode={displayMode}
             />}
             
             {viewType === 'monthly' && <MonthlyView 
@@ -278,7 +294,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
-              isPercentageMode={isPercentageMode}
+              displayMode={displayMode}
             />}
             
             {viewType === 'yearly' && <YearlyView 
@@ -292,7 +308,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
-              isPercentageMode={isPercentageMode}
+              displayMode={displayMode}
             />}
           </CardContent>
         </Card>

@@ -1,13 +1,15 @@
 import { QuadrantData } from "@/types/calendar";
 
+export type DisplayMode = 'absolute' | 'percentage' | 'hours';
+
 interface QuadrantCellProps {
   data: QuadrantData;
   className?: string;
   isMonochrome?: boolean;
-  isPercentageMode?: boolean;
+  displayMode?: DisplayMode;
 }
 
-export function QuadrantCell({ data, className = "", isMonochrome = false, isPercentageMode = false }: QuadrantCellProps) {
+export function QuadrantCell({ data, className = "", isMonochrome = false, displayMode = 'absolute' }: QuadrantCellProps) {
   const total = data.presenca + data.atraso + data.falta + data.faltaJustificada + data.atestado;
   
   const quadrants = [
@@ -34,9 +36,19 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, isPer
   ];
   
   const getDisplayValue = (value: number) => {
-    if (!isPercentageMode || total === 0) return value;
-    const percentage = Math.round((value / total) * 100);
-    return `${percentage}%`;
+    if (displayMode === 'percentage') {
+      if (total === 0) return '0%';
+      const percentage = Math.round((value / total) * 100);
+      return `${percentage}%`;
+    }
+    
+    if (displayMode === 'hours') {
+      // Assumindo 8 horas por registro
+      const hours = value * 8;
+      return `${hours}h`;
+    }
+    
+    return value;
   };
 
   return (

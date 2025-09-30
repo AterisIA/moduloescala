@@ -23,10 +23,10 @@ interface DailyViewProps {
   onDepartmentChange: (department: string) => void;
   departments: string[];
   isMonochrome?: boolean;
-  isPercentageMode?: boolean;
+  displayMode?: 'absolute' | 'percentage' | 'hours';
 }
 
-export function DailyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, isPercentageMode = false }: DailyViewProps) {
+export function DailyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, displayMode = 'absolute' }: DailyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -149,7 +149,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 </div>
                 
                 <div className="calendar-cell border-b p-2">
-                  <QuadrantCell data={quadrant} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                  <QuadrantCell data={quadrant} isMonochrome={isMonochrome} displayMode={displayMode} />
                 </div>
               </Fragment>
             );
