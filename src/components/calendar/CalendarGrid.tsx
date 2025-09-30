@@ -9,6 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { QuadrantCell } from "./QuadrantCell";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -115,63 +116,106 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           </div>
         ))}
 
-        {/* Employee rows */}
-        {filteredEmployees.map(employee => (
-          <Fragment key={employee.id}>
-            <div className="calendar-cell calendar-cell-fixed bg-background border-b">
-              <div className="flex items-center gap-2 p-2 w-full min-w-0">
-                <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-                  <AvatarFallback className="text-xs">
-                    {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-xs md:text-sm truncate">
-                    {employee.name}
+        {/* Rows - Employee or Aggregated Entities */}
+        {isQuadrantMode ? (
+          // Quadrant mode - show aggregated entities
+          aggregatedEntities.map(entity => (
+            <Fragment key={entity.id}>
+              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                    <AvatarFallback className="text-xs">
+                      {entity.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-xs md:text-sm truncate">
+                      {entity.name}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground truncate hidden sm:block">{employee.position}</div>
                 </div>
               </div>
-            </div>
-            
-            {dates.map(date => {
-              const schedule = getScheduleForDate(employee.id, date);
               
-              return (
-                <div 
-                  key={`${employee.id}-${date.toISOString()}`}
-                  className={`calendar-cell border-b cursor-pointer transition-colors ${
-                    isPastDay(date) ? 'opacity-60' : 'hover:bg-muted/50'
-                  }`}
-                >
-                  {schedule ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <div 
-                          className={`w-full h-full flex items-center justify-center text-xs cursor-pointer ${getScheduleColor(schedule)}`}
-                          title={`${employee.name} - ${format(date, 'dd/MM')}`}
-                        >
-                          <div className="text-center font-medium">
-                            <span className="hidden sm:inline">{getScheduleDisplay(schedule)}</span>
-                            <span className="sm:hidden">●</span>
-                          </div>
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Remover</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
-                      +
+              {dates.map(date => {
+                const dateKey = format(date, 'yyyy-MM-dd');
+                const quadrant = entity.quadrants.get(dateKey) || {
+                  presenca: 0,
+                  atraso: 0,
+                  falta: 0,
+                  faltaJustificada: 0,
+                  atestado: 0
+                };
+                
+                return (
+                  <div 
+                    key={`${entity.id}-${date.toISOString()}`}
+                    className="calendar-cell border-b p-1"
+                  >
+                    <QuadrantCell data={quadrant} />
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))
+        ) : (
+          // Normal mode - show employees
+          filteredEmployees.map(employee => (
+            <Fragment key={employee.id}>
+              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                <div className="flex items-center gap-2 p-2 w-full min-w-0">
+                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                    <AvatarFallback className="text-xs">
+                      {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-xs md:text-sm truncate">
+                      {employee.name}
                     </div>
-                  )}
+                    <div className="text-xs text-muted-foreground truncate hidden sm:block">{employee.position}</div>
+                  </div>
                 </div>
-              );
-            })}
-          </Fragment>
-        ))}
+              </div>
+              
+              {dates.map(date => {
+                const schedule = getScheduleForDate(employee.id, date);
+                
+                return (
+                  <div 
+                    key={`${employee.id}-${date.toISOString()}`}
+                    className={`calendar-cell border-b cursor-pointer transition-colors ${
+                      isPastDay(date) ? 'opacity-60' : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    {schedule ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div 
+                            className={`w-full h-full flex items-center justify-center text-xs cursor-pointer ${getScheduleColor(schedule)}`}
+                            title={`${employee.name} - ${format(date, 'dd/MM')}`}
+                          >
+                            <div className="text-center font-medium">
+                              <span className="hidden sm:inline">{getScheduleDisplay(schedule)}</span>
+                              <span className="sm:hidden">●</span>
+                            </div>
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">Remover</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 cursor-pointer">
+                        +
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))
+        )}
       </div>
     </div>
   );

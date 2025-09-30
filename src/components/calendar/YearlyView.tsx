@@ -17,6 +17,7 @@ import {
   isSameYear
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { QuadrantCell } from "./QuadrantCell";
 
 interface YearlyViewProps {
   currentDate: Date;
@@ -118,75 +119,120 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
           </Fragment>
         ))}
 
-        {/* Employee rows */}
-        {filteredEmployees.map(employee => {
-          const yearlyHours = getEmployeeYearlyHours(employee.id);
-          
-          return (
-            <Fragment key={employee.id}>
+        {/* Rows - Employee or Aggregated Entities */}
+        {isQuadrantMode ? (
+          // Quadrant mode - show aggregated entities (simplified for yearly view)
+          aggregatedEntities.map(entity => (
+            <Fragment key={entity.id}>
               <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 text-left">
-                        <div className="font-medium text-sm">{employee.name}</div>
-                        <div className="text-xs text-muted-foreground">{employee.position}</div>
-                        <div className="text-xs font-medium text-primary">
-                          {formatHours(yearlyHours)}h
-                        </div>
-                      </div>
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Ver Detalhes Anuais</DropdownMenuItem>
-                    <DropdownMenuItem>Editar Funcionário</DropdownMenuItem>
-                    <DropdownMenuItem>Relatório Anual</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-3 flex-1">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs">
+                      {entity.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium text-sm">{entity.name}</div>
+                  </div>
+                </div>
               </div>
               
-              {/* Monthly totals and weekly hours */}
-              {monthNames.map((monthName) => (
-                <Fragment key={`${employee.id}-${monthName}`}>
-                  {/* Month total */}
+              {/* Monthly totals and weekly aggregates */}
+              {monthNames.map((monthName, monthIndex) => (
+                <Fragment key={`${entity.id}-${monthName}`}>
+                  {/* Month total - simplified */}
                   <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-sm font-medium">
-                        {formatHours(getMonthHours(employee.id, monthName))}
-                      </div>
-                      <div className="text-xs text-muted-foreground">total</div>
+                    <div className="text-center text-xs text-muted-foreground">
+                      Ver detalhes
                     </div>
                   </div>
                   
-                  {/* Week hours */}
-                  {weeksByMonth[monthName].map((week, weekIndex) => {
-                    const weekHours = getWeekHours(employee.id, week);
-                    return (
-                      <div 
-                        key={weekIndex} 
-                        className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
-                      >
-                        <div className="text-center">
-                          <div className="text-sm">
-                            {weekHours > 0 ? formatHours(weekHours) : '-'}
-                          </div>
-                          {weekHours > 0 && (
-                            <div className="text-xs text-muted-foreground">h</div>
-                          )}
-                        </div>
+                  {/* Week cells - show message to use monthly/weekly view */}
+                  {weeksByMonth[monthName].map((week, weekIndex) => (
+                    <div 
+                      key={weekIndex} 
+                      className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
+                    >
+                      <div className="text-center text-xs text-muted-foreground">
+                        -
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </Fragment>
               ))}
             </Fragment>
-          );
-        })}
+          ))
+        ) : (
+          // Normal mode - show employees
+          filteredEmployees.map(employee => {
+            const yearlyHours = getEmployeeYearlyHours(employee.id);
+            
+            return (
+              <Fragment key={employee.id}>
+                <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-sm">{employee.name}</div>
+                          <div className="text-xs text-muted-foreground">{employee.position}</div>
+                          <div className="text-xs font-medium text-primary">
+                            {formatHours(yearlyHours)}h
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem>Ver Detalhes Anuais</DropdownMenuItem>
+                      <DropdownMenuItem>Editar Funcionário</DropdownMenuItem>
+                      <DropdownMenuItem>Relatório Anual</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                {/* Monthly totals and weekly hours */}
+                {monthNames.map((monthName) => (
+                  <Fragment key={`${employee.id}-${monthName}`}>
+                    {/* Month total */}
+                    <div className="min-h-16 p-2 border-b border-r bg-muted/20 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-sm font-medium">
+                          {formatHours(getMonthHours(employee.id, monthName))}
+                        </div>
+                        <div className="text-xs text-muted-foreground">total</div>
+                      </div>
+                    </div>
+                    
+                    {/* Week hours */}
+                    {weeksByMonth[monthName].map((week, weekIndex) => {
+                      const weekHours = getWeekHours(employee.id, week);
+                      return (
+                        <div 
+                          key={weekIndex} 
+                          className="min-h-16 p-2 border-b border-r flex items-center justify-center hover:bg-muted/50"
+                        >
+                          <div className="text-center">
+                            <div className="text-sm">
+                              {weekHours > 0 ? formatHours(weekHours) : '-'}
+                            </div>
+                            {weekHours > 0 && (
+                              <div className="text-xs text-muted-foreground">h</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+              </Fragment>
+            );
+          })
+        )}
       </div>
     </div>
   );

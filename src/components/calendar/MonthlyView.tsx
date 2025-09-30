@@ -18,6 +18,7 @@ import {
   isSameDay 
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { QuadrantCell } from "./QuadrantCell";
 
 interface MonthlyViewProps {
   currentDate: Date;
@@ -102,77 +103,118 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
           </div>
         ))}
 
-        {/* Employee rows */}
-        {filteredEmployees.map(employee => {
-          const monthlyHours = getMonthlyHours(employee.id);
-          
-          return (
-            <Fragment key={employee.id}>
+        {/* Rows - Employee or Aggregated Entities */}
+        {isQuadrantMode ? (
+          // Quadrant mode - show aggregated entities
+          aggregatedEntities.map(entity => (
+            <Fragment key={entity.id}>
               <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 text-left">
-                        <div className="font-medium text-sm">{employee.name}</div>
-                        <div className="text-xs text-muted-foreground">{employee.position}</div>
-                      </div>
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                    <DropdownMenuItem>Editar Funcionário</DropdownMenuItem>
-                    <DropdownMenuItem>Relatório Mensal</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-3 flex-1">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs">
+                      {entity.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium text-sm">{entity.name}</div>
+                  </div>
+                </div>
               </div>
               
               {monthDays.map(date => {
-                const schedule = getScheduleForDate(employee.id, date);
-                const isWorking = schedule?.type === 'work';
+                const dateKey = format(date, 'yyyy-MM-dd');
+                const quadrant = entity.quadrants.get(dateKey) || {
+                  presenca: 0,
+                  atraso: 0,
+                  falta: 0,
+                  faltaJustificada: 0,
+                  atestado: 0
+                };
                 
                 return (
                   <div 
-                    key={`${employee.id}-${date.toISOString()}`}
-                    className={`min-h-16 p-2 border-b border-r transition-colors flex items-center justify-center ${
-                      isPast(date) ? 'opacity-60' : ''
-                    } ${
-                      isWorking 
-                        ? 'bg-[hsl(var(--schedule-red)/0.3)] hover:bg-[hsl(var(--schedule-red)/0.4)]'
-                        : schedule?.type === 'rest'
-                        ? 'bg-[hsl(var(--schedule-gray)/0.3)]'
-                        : schedule?.type === 'vacation'
-                        ? 'bg-[hsl(var(--schedule-blue)/0.3)]'
-                        : 'hover:bg-muted/50'
-                    } ${getDayClass(date)}`}
+                    key={`${entity.id}-${date.toISOString()}`}
+                    className={`min-h-16 p-1 border-b border-r ${getDayClass(date)}`}
                   >
-                    {schedule ? (
-                      <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full text-center">
-                        {schedule.type === 'work' ? (
-                          <div className="text-[11px] font-medium leading-tight">
-                            {schedule.startTime.slice(0,5)}-{schedule.endTime.slice(0,5)}
-                          </div>
-                        ) : (
-                          <div className="text-lg">
-                            {schedule.type === 'rest' ? '💤' : '🏖️'}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 rounded cursor-pointer">
-                        +
-                      </div>
-                    )}
+                    <QuadrantCell data={quadrant} />
                   </div>
                 );
               })}
             </Fragment>
-          );
-        })}
+          ))
+        ) : (
+          // Normal mode - show employees
+          filteredEmployees.map(employee => {
+            const monthlyHours = getMonthlyHours(employee.id);
+            
+            return (
+              <Fragment key={employee.id}>
+                <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {employee.avatar || employee.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-sm">{employee.name}</div>
+                          <div className="text-xs text-muted-foreground">{employee.position}</div>
+                        </div>
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                      <DropdownMenuItem>Editar Funcionário</DropdownMenuItem>
+                      <DropdownMenuItem>Relatório Mensal</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                {monthDays.map(date => {
+                  const schedule = getScheduleForDate(employee.id, date);
+                  const isWorking = schedule?.type === 'work';
+                  
+                  return (
+                    <div 
+                      key={`${employee.id}-${date.toISOString()}`}
+                      className={`min-h-16 p-2 border-b border-r transition-colors flex items-center justify-center ${
+                        isPast(date) ? 'opacity-60' : ''
+                      } ${
+                        isWorking 
+                          ? 'bg-[hsl(var(--schedule-red)/0.3)] hover:bg-[hsl(var(--schedule-red)/0.4)]'
+                          : schedule?.type === 'rest'
+                          ? 'bg-[hsl(var(--schedule-gray)/0.3)]'
+                          : schedule?.type === 'vacation'
+                          ? 'bg-[hsl(var(--schedule-blue)/0.3)]'
+                          : 'hover:bg-muted/50'
+                      } ${getDayClass(date)}`}
+                    >
+                      {schedule ? (
+                        <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full text-center">
+                          {schedule.type === 'work' ? (
+                            <div className="text-[11px] font-medium leading-tight">
+                              {schedule.startTime.slice(0,5)}-{schedule.endTime.slice(0,5)}
+                            </div>
+                          ) : (
+                            <div className="text-lg">
+                              {schedule.type === 'rest' ? '💤' : '🏖️'}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground hover:bg-muted/30 rounded cursor-pointer">
+                          +
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Fragment>
+            );
+          })
+        )}
       </div>
     </div>
   );
