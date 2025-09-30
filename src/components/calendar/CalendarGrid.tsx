@@ -23,9 +23,10 @@ interface CalendarGridProps {
   selectedDepartment: string;
   onDepartmentChange: (department: string) => void;
   departments: string[];
+  isMonochrome?: boolean;
 }
 
-export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments }: CalendarGridProps) {
+export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false }: CalendarGridProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -161,7 +162,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                     key={`${entity.id}-${date.toISOString()}`}
                     className="calendar-cell border-b p-1"
                   >
-                    <QuadrantCell data={quadrant} />
+                    <QuadrantCell data={quadrant} isMonochrome={isMonochrome} />
                   </div>
                 );
               })}

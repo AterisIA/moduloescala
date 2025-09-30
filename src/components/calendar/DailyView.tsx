@@ -22,9 +22,10 @@ interface DailyViewProps {
   selectedDepartment: string;
   onDepartmentChange: (department: string) => void;
   departments: string[];
+  isMonochrome?: boolean;
 }
 
-export function DailyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments }: DailyViewProps) {
+export function DailyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false }: DailyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -138,7 +139,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
                 
                 {hours.map(hour => (
                   <div key={`${entity.id}-${hour}`} className="calendar-cell border-b p-1">
-                    {hour === 12 && <QuadrantCell data={quadrant} />}
+                    {hour === 12 && <QuadrantCell data={quadrant} isMonochrome={isMonochrome} />}
                   </div>
                 ))}
               </Fragment>

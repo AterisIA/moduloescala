@@ -31,9 +31,10 @@ interface MonthlyViewProps {
   selectedDepartment: string;
   onDepartmentChange: (department: string) => void;
   departments: string[];
+  isMonochrome?: boolean;
 }
 
-export function MonthlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments }: MonthlyViewProps) {
+export function MonthlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false }: MonthlyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -147,7 +148,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                     key={`${entity.id}-${date.toISOString()}`}
                     className={`min-h-16 p-1 border-b border-r ${getDayClass(date)}`}
                   >
-                    <QuadrantCell data={quadrant} />
+                    <QuadrantCell data={quadrant} isMonochrome={isMonochrome} />
                   </div>
                 );
               })}

@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, Palette } from "lucide-react";
 import { ViewType } from "@/types/calendar";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarViewTabs } from "./CalendarViewTabs";
@@ -27,6 +28,7 @@ export function TeamManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [aggregatedEntities, setAggregatedEntities] = useState<any[]>([]);
   const [loadingAggregated, setLoadingAggregated] = useState(false);
+  const [isMonochrome, setIsMonochrome] = useState(false);
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -189,12 +191,23 @@ export function TeamManagement() {
             <CalendarViewTabs viewType={viewType} onViewChange={setViewType} />
           </div>
 
-          {/* Search */}
+          {/* Search and Color Toggle */}
           <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input placeholder="Buscar funcionários..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
+            
+            <Toggle
+              pressed={isMonochrome}
+              onPressedChange={setIsMonochrome}
+              aria-label="Alternar modo de cores"
+              className="shrink-0"
+            >
+              <Palette className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{isMonochrome ? "Monocromático" : "Colorido"}</span>
+              <span className="sm:hidden">{isMonochrome ? "Mono" : "Cor"}</span>
+            </Toggle>
           </div>
         </div>
       </header>
@@ -223,6 +236,7 @@ export function TeamManagement() {
               selectedDepartment={selectedDepartment}
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
+              isMonochrome={isMonochrome}
             />}
             
             {viewType === 'weekly' && <CalendarGrid 
@@ -236,6 +250,7 @@ export function TeamManagement() {
               selectedDepartment={selectedDepartment}
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
+              isMonochrome={isMonochrome}
             />}
             
             {viewType === 'monthly' && <MonthlyView 
@@ -248,6 +263,7 @@ export function TeamManagement() {
               selectedDepartment={selectedDepartment}
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
+              isMonochrome={isMonochrome}
             />}
             
             {viewType === 'yearly' && <YearlyView 
@@ -260,6 +276,7 @@ export function TeamManagement() {
               selectedDepartment={selectedDepartment}
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
+              isMonochrome={isMonochrome}
             />}
           </CardContent>
         </Card>
