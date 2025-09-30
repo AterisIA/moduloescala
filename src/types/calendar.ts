@@ -24,11 +24,16 @@ export type ViewType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type FilterType = 'Terceirizados' | 'Coordenadores' | 'Plantões' | 'Empresas';
 
 export interface QuadrantData {
-  presenca: number;      // status 1
-  atraso: number;        // status 2
-  falta: number;         // status 3
-  faltaJustificada: number; // status 4
-  atestado: number;      // status 5
+  presenca: number;      // status 1 - count
+  atraso: number;        // status 2 - count
+  falta: number;         // status 3 - count
+  faltaJustificada: number; // status 4 - count
+  atestado: number;      // status 5 - count
+  presencaHoras?: number;      // hours for status 1
+  atrasoHoras?: number;        // hours for status 2
+  faltaHoras?: number;         // hours for status 3
+  faltaJustificadaHoras?: number; // hours for status 4
+  atestadoHoras?: number;      // hours for status 5
 }
 
 export interface AggregatedEntity {
