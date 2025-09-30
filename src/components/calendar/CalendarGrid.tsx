@@ -89,16 +89,17 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
 
   return (
     <div className="h-full overflow-y-auto">
-      <div 
-        className="calendar-scroll-container grid overflow-x-auto" 
-        style={{ 
-          gridTemplateColumns: `minmax(160px, 280px) repeat(7, minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'}))`,
-          '--col-fixed': 'minmax(160px, 280px)',
-          '--cols': '7',
-          '--col-day': `minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'})`,
-          minWidth: `${280 + (7 * (isQuadrantMode ? 160 : 120))}px`
-        } as React.CSSProperties}
-      >
+      <div className="calendar-scroll-container overflow-x-auto">
+        <div 
+          className="grid" 
+          style={{ 
+            gridTemplateColumns: `minmax(160px, 280px) repeat(7, minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'}))`,
+            '--col-fixed': 'minmax(160px, 280px)',
+            '--cols': '7',
+            '--col-day': `minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'})`,
+            minWidth: `${280 + (7 * (isQuadrantMode ? 160 : 120))}px`
+          } as React.CSSProperties}
+        >
         {/* Header with dates */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
           <div className="p-2">
@@ -227,6 +228,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
             </Fragment>
           ))
         )}
+        </div>
       </div>
     </div>
   );

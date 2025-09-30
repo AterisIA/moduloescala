@@ -46,11 +46,12 @@ export function TeamManagement() {
     const topContent = top.querySelector<HTMLElement>('.top-scroll-content');
 
     const updateWidth = () => {
-      target = getTarget();
-      if (topContent && target) {
-        const scrollWidth = Math.max(target.scrollWidth, 2000); // Minimum 2000px to ensure scrollbar
-        topContent.style.width = `${scrollWidth}px`;
-      }
+      requestAnimationFrame(() => {
+        target = getTarget();
+        if (topContent && target) {
+          topContent.style.width = `${target.scrollWidth}px`;
+        }
+      });
     };
 
     // Extended retries to catch late renders
@@ -64,15 +65,33 @@ export function TeamManagement() {
 
     const onTopScroll = () => {
       target = getTarget();
-      if (target && Math.abs(target.scrollLeft - top.scrollLeft) > 1) {
-        target.scrollLeft = top.scrollLeft;
+      if (!target) return;
+      
+      const maxTopScroll = top.scrollWidth - top.clientWidth;
+      const maxTargetScroll = target.scrollWidth - target.clientWidth;
+      
+      if (maxTopScroll > 0 && maxTargetScroll > 0) {
+        const ratio = top.scrollLeft / maxTopScroll;
+        const newTargetScroll = ratio * maxTargetScroll;
+        if (Math.abs(target.scrollLeft - newTargetScroll) > 1) {
+          target.scrollLeft = newTargetScroll;
+        }
       }
     };
 
     const onTargetScroll = () => {
       target = getTarget();
-      if (target && Math.abs(top.scrollLeft - target.scrollLeft) > 1) {
-        top.scrollLeft = target.scrollLeft;
+      if (!target) return;
+      
+      const maxTopScroll = top.scrollWidth - top.clientWidth;
+      const maxTargetScroll = target.scrollWidth - target.clientWidth;
+      
+      if (maxTopScroll > 0 && maxTargetScroll > 0) {
+        const ratio = target.scrollLeft / maxTargetScroll;
+        const newTopScroll = ratio * maxTopScroll;
+        if (Math.abs(top.scrollLeft - newTopScroll) > 1) {
+          top.scrollLeft = newTopScroll;
+        }
       }
     };
 
