@@ -140,8 +140,8 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
       <div 
         className="grid gap-1"
         style={{ 
-          gridTemplateColumns: `minmax(250px, 250px) repeat(${totalColumns}, minmax(100px, 100px))`,
-          minWidth: `${250 + (totalColumns * 100)}px`
+          gridTemplateColumns: `minmax(250px, 250px) repeat(${totalColumns}, minmax(120px, 120px))`,
+          minWidth: `${250 + (totalColumns * 120)}px`
         }}
       >
         {/* Header Row 1: Month names and week labels */}

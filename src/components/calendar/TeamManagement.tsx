@@ -48,15 +48,18 @@ export function TeamManagement() {
     const updateWidth = () => {
       target = getTarget();
       if (topContent && target) {
-        topContent.style.width = `${target.scrollWidth}px`;
+        const scrollWidth = Math.max(target.scrollWidth, 2000); // Minimum 2000px to ensure scrollbar
+        topContent.style.width = `${scrollWidth}px`;
       }
     };
 
-    // Initial sync and retries to catch late renders
+    // Extended retries to catch late renders
     const timers = [
       setTimeout(updateWidth, 0),
-      setTimeout(updateWidth, 150),
-      setTimeout(updateWidth, 400)
+      setTimeout(updateWidth, 100),
+      setTimeout(updateWidth, 300),
+      setTimeout(updateWidth, 600),
+      setTimeout(updateWidth, 1000)
     ];
 
     const onTopScroll = () => {
@@ -80,8 +83,24 @@ export function TeamManagement() {
       target.classList.add('hide-x-scrollbar');
     }
 
-    const ro = new ResizeObserver(updateWidth);
+    // ResizeObserver for dynamic content changes
+    const ro = new ResizeObserver(() => {
+      setTimeout(updateWidth, 50);
+    });
     if (target) ro.observe(target);
+
+    // MutationObserver to detect DOM changes
+    const mo = new MutationObserver(() => {
+      setTimeout(updateWidth, 100);
+    });
+    if (target) {
+      mo.observe(target, { 
+        childList: true, 
+        subtree: true, 
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    }
 
     return () => {
       timers.forEach(t => clearTimeout(t));
@@ -92,8 +111,9 @@ export function TeamManagement() {
         t.classList.remove('hide-x-scrollbar');
       }
       ro.disconnect();
+      mo.disconnect();
     };
-  }, [viewType, searchTerm, selectedDepartment, currentDate]);
+  }, [viewType, searchTerm, selectedDepartment, currentDate, aggregatedEntities, loadingAggregated]);
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
