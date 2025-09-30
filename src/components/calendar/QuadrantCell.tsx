@@ -22,14 +22,14 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, isPer
       color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-yellow-100 text-yellow-800" 
     },
     { 
-      value: data.falta, 
-      label: "F", 
-      color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-red-100 text-red-800" 
+      value: data.faltaJustificada, 
+      label: "FJ", 
+      color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800" 
     },
     { 
-      value: data.faltaJustificada + data.atestado, 
-      label: "FJ/AT", 
-      color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800" 
+      value: data.falta + data.atestado, 
+      label: "FI", 
+      color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-red-100 text-red-800" 
     }
   ];
   
