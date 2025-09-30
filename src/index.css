@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide horizontal scrollbar but keep scroll functionality */
+.hide-x-scrollbar::-webkit-scrollbar { height: 0px; }
+.hide-x-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

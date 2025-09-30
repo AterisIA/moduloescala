@@ -31,76 +31,93 @@ export function TeamManagement() {
 
   useEffect(() => {
     const topScroll = topScrollRef.current;
-    const mainScroll = mainScrollRef.current;
-    
-    if (!topScroll || !mainScroll) return;
+    const main = mainScrollRef.current;
+    if (!topScroll || !main) return;
 
-    // Sincronizar largura do scroll
-    const updateScrollWidth = () => {
-      // Buscar o elemento interno que tem o scroll horizontal real
-      const calendarContent = mainScroll.querySelector('.h-full.overflow-auto > div');
-      if (calendarContent) {
-        const scrollWidth = calendarContent.scrollWidth;
-        const scrollContent = topScroll.firstElementChild as HTMLElement;
-        if (scrollContent) {
-          scrollContent.style.width = `${scrollWidth}px`;
+    const getScrollTarget = (): HTMLElement | null => {
+      const candidates = Array.from(main.querySelectorAll<HTMLElement>('.overflow-x-auto'));
+      if (candidates.length === 0) return null;
+      let target: HTMLElement | null = null;
+      let maxOverflow = 0;
+      for (const el of candidates) {
+        const overflowX = el.scrollWidth - el.clientWidth;
+        if (overflowX > maxOverflow) {
+          maxOverflow = overflowX;
+          target = el;
         }
       }
+      // fallback: choose the widest element in main
+      if (!target) {
+        const all = Array.from(main.querySelectorAll<HTMLElement>('*'));
+        for (const el of all) {
+          const overflowX = el.scrollWidth - el.clientWidth;
+          if (overflowX > maxOverflow) {
+            maxOverflow = overflowX;
+            target = el;
+          }
+        }
+      }
+      return target;
     };
 
-    // Atualizar múltiplas vezes para garantir sincronização
+    let scrollTarget = getScrollTarget();
+
+    const topContent = topScroll.querySelector<HTMLElement>('.top-scroll-content');
+    const updateTopWidth = () => {
+      if (scrollTarget && topContent) {
+        topContent.style.width = `${scrollTarget.scrollWidth}px`;
+      }
+    };
+
+    // hide native bottom scrollbar on target
+    const addHideScrollbar = () => {
+      if (scrollTarget) {
+        scrollTarget.classList.add('hide-x-scrollbar');
+      }
+    };
+
+    // listeners
+    const onTopScroll = () => {
+      if (scrollTarget && Math.abs(scrollTarget.scrollLeft - topScroll.scrollLeft) > 1) {
+        scrollTarget.scrollLeft = topScroll.scrollLeft;
+      }
+    };
+    const onTargetScroll = () => {
+      if (scrollTarget && Math.abs(topScroll.scrollLeft - scrollTarget.scrollLeft) > 1) {
+        topScroll.scrollLeft = scrollTarget.scrollLeft;
+      }
+    };
+
+    // try to wire up now and after small delays (views render async)
     const timers = [
-      setTimeout(updateScrollWidth, 0),
-      setTimeout(updateScrollWidth, 100),
-      setTimeout(updateScrollWidth, 300),
-      setTimeout(updateScrollWidth, 500)
+      setTimeout(() => { 
+        scrollTarget = getScrollTarget(); 
+        addHideScrollbar(); 
+        updateTopWidth(); 
+        if (scrollTarget) {
+          scrollTarget.addEventListener('scroll', onTargetScroll, { passive: true });
+          topScroll.scrollLeft = scrollTarget.scrollLeft;
+        }
+      }, 0),
+      setTimeout(() => { scrollTarget = getScrollTarget(); addHideScrollbar(); updateTopWidth(); }, 100),
+      setTimeout(() => { scrollTarget = getScrollTarget(); addHideScrollbar(); updateTopWidth(); }, 300)
     ];
-    
-    const resizeObserver = new ResizeObserver(() => {
-      updateScrollWidth();
+
+    // observe size changes
+    const ro = new ResizeObserver(() => {
+      scrollTarget = getScrollTarget();
+      updateTopWidth();
     });
-    
-    const calendarContent = mainScroll.querySelector('.h-full.overflow-auto');
-    if (calendarContent) {
-      resizeObserver.observe(calendarContent);
-    }
+    ro.observe(main);
 
-    const handleTopScroll = () => {
-      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto') as HTMLElement;
-      if (calendarScroll && Math.abs(calendarScroll.scrollLeft - topScroll.scrollLeft) > 1) {
-        calendarScroll.scrollLeft = topScroll.scrollLeft;
-      }
-    };
-
-    const handleCalendarScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (Math.abs(topScroll.scrollLeft - target.scrollLeft) > 1) {
-        topScroll.scrollLeft = target.scrollLeft;
-      }
-    };
-
-    topScroll.addEventListener('scroll', handleTopScroll, { passive: true });
-    
-    // Adicionar listener no elemento de calendário quando ele existir
-    const addCalendarListener = () => {
-      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto');
-      if (calendarScroll) {
-        calendarScroll.addEventListener('scroll', handleCalendarScroll, { passive: true });
-      }
-    };
-    
-    addCalendarListener();
-    // Tentar adicionar novamente após um delay
-    setTimeout(addCalendarListener, 100);
+    topScroll.addEventListener('scroll', onTopScroll, { passive: true });
 
     return () => {
-      timers.forEach(timer => clearTimeout(timer));
-      topScroll.removeEventListener('scroll', handleTopScroll);
-      const calendarScroll = mainScroll.querySelector('.h-full.overflow-auto');
-      if (calendarScroll) {
-        calendarScroll.removeEventListener('scroll', handleCalendarScroll);
-      }
-      resizeObserver.disconnect();
+      timers.forEach(t => clearTimeout(t));
+      topScroll.removeEventListener('scroll', onTopScroll);
+      if (scrollTarget) scrollTarget.removeEventListener('scroll', onTargetScroll);
+      ro.disconnect();
+      if (scrollTarget) scrollTarget.classList.remove('hide-x-scrollbar');
     };
   }, [viewType, searchTerm, selectedDepartment]);
   const handleNavigate = (direction: 'prev' | 'next') => {
@@ -210,7 +227,7 @@ export function TeamManagement() {
         className="overflow-x-auto overflow-y-hidden bg-muted/30 border-b"
         style={{ height: '14px' }}
       >
-        <div style={{ height: '1px', width: '3000px' }} />
+        <div className="top-scroll-content" style={{ height: '1px', minWidth: '100%' }} />
       </div>
 
       {/* Main content area */}
