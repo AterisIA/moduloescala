@@ -4,9 +4,12 @@ interface QuadrantCellProps {
   data: QuadrantData;
   className?: string;
   isMonochrome?: boolean;
+  isPercentageMode?: boolean;
 }
 
-export function QuadrantCell({ data, className = "", isMonochrome = false }: QuadrantCellProps) {
+export function QuadrantCell({ data, className = "", isMonochrome = false, isPercentageMode = false }: QuadrantCellProps) {
+  const total = data.presenca + data.atraso + data.falta + data.faltaJustificada + data.atestado;
+  
   const quadrants = [
     { 
       value: data.presenca, 
@@ -29,6 +32,12 @@ export function QuadrantCell({ data, className = "", isMonochrome = false }: Qua
       color: isMonochrome ? "bg-gray-100 text-gray-800" : "bg-blue-100 text-blue-800" 
     }
   ];
+  
+  const getDisplayValue = (value: number) => {
+    if (!isPercentageMode || total === 0) return value;
+    const percentage = Math.round((value / total) * 100);
+    return `${percentage}%`;
+  };
 
   return (
     <div className={`grid grid-cols-2 gap-0.5 w-full h-full min-h-[60px] ${className}`}>
@@ -38,7 +47,7 @@ export function QuadrantCell({ data, className = "", isMonochrome = false }: Qua
           className={`flex flex-col items-center justify-center p-1 ${quadrant.color} rounded-sm`}
         >
           <div className="text-lg font-bold leading-none">
-            {quadrant.value}
+            {getDisplayValue(quadrant.value)}
           </div>
           <div className="text-[10px] font-medium mt-0.5">
             {quadrant.label}

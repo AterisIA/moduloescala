@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { Badge } from "@/components/ui/badge";
-import { Search, Palette } from "lucide-react";
+import { Search, Palette, Percent } from "lucide-react";
 import { ViewType } from "@/types/calendar";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarViewTabs } from "./CalendarViewTabs";
@@ -29,6 +29,7 @@ export function TeamManagement() {
   const [aggregatedEntities, setAggregatedEntities] = useState<any[]>([]);
   const [loadingAggregated, setLoadingAggregated] = useState(false);
   const [isMonochrome, setIsMonochrome] = useState(false);
+  const [isPercentageMode, setIsPercentageMode] = useState(false);
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
   
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -208,6 +209,17 @@ export function TeamManagement() {
               <span className="hidden sm:inline">{isMonochrome ? "Monocromático" : "Colorido"}</span>
               <span className="sm:hidden">{isMonochrome ? "Mono" : "Cor"}</span>
             </Toggle>
+            
+            <Toggle
+              pressed={isPercentageMode}
+              onPressedChange={setIsPercentageMode}
+              aria-label="Alternar modo percentual"
+              className="shrink-0"
+            >
+              <Percent className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{isPercentageMode ? "Percentual" : "Números"}</span>
+              <span className="sm:hidden">%</span>
+            </Toggle>
           </div>
         </div>
       </header>
@@ -237,6 +249,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
+              isPercentageMode={isPercentageMode}
             />}
             
             {viewType === 'weekly' && <CalendarGrid 
@@ -251,6 +264,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
+              isPercentageMode={isPercentageMode}
             />}
             
             {viewType === 'monthly' && <MonthlyView 
@@ -264,6 +278,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
+              isPercentageMode={isPercentageMode}
             />}
             
             {viewType === 'yearly' && <YearlyView 
@@ -277,6 +292,7 @@ export function TeamManagement() {
               onDepartmentChange={handleDepartmentFilter}
               departments={departments}
               isMonochrome={isMonochrome}
+              isPercentageMode={isPercentageMode}
             />}
           </CardContent>
         </Card>

@@ -24,9 +24,10 @@ interface CalendarGridProps {
   onDepartmentChange: (department: string) => void;
   departments: string[];
   isMonochrome?: boolean;
+  isPercentageMode?: boolean;
 }
 
-export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false }: CalendarGridProps) {
+export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, isPercentageMode = false }: CalendarGridProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -157,14 +158,14 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
                   atestado: 0
                 };
                 
-                return (
-                  <div 
-                    key={`${entity.id}-${date.toISOString()}`}
-                    className="calendar-cell border-b p-1"
-                  >
-                    <QuadrantCell data={quadrant} isMonochrome={isMonochrome} />
-                  </div>
-                );
+                  return (
+                    <div 
+                      key={`${entity.id}-${date.toISOString()}`}
+                      className="calendar-cell border-b p-1"
+                    >
+                      <QuadrantCell data={quadrant} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                    </div>
+                  );
               })}
             </Fragment>
           ))

@@ -32,9 +32,10 @@ interface MonthlyViewProps {
   onDepartmentChange: (department: string) => void;
   departments: string[];
   isMonochrome?: boolean;
+  isPercentageMode?: boolean;
 }
 
-export function MonthlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false }: MonthlyViewProps) {
+export function MonthlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments, isMonochrome = false, isPercentageMode = false }: MonthlyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -143,14 +144,14 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                   atestado: 0
                 };
                 
-                return (
-                  <div 
-                    key={`${entity.id}-${date.toISOString()}`}
-                    className={`min-h-16 p-1 border-b border-r ${getDayClass(date)}`}
-                  >
-                    <QuadrantCell data={quadrant} isMonochrome={isMonochrome} />
-                  </div>
-                );
+                  return (
+                    <div 
+                      key={`${entity.id}-${date.toISOString()}`}
+                      className={`min-h-16 p-1 border-b border-r ${getDayClass(date)}`}
+                    >
+                      <QuadrantCell data={quadrant} isMonochrome={isMonochrome} isPercentageMode={isPercentageMode} />
+                    </div>
+                  );
               })}
             </Fragment>
           ))
