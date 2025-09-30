@@ -246,6 +246,30 @@ export type Database = {
           },
         ]
       }
+      disparo_relatorio_log: {
+        Row: {
+          data_disparo: string
+          disparado_em: string | null
+          horario: string
+          id: number
+          id_disparo_relatorio: number
+        }
+        Insert: {
+          data_disparo: string
+          disparado_em?: string | null
+          horario: string
+          id?: number
+          id_disparo_relatorio: number
+        }
+        Update: {
+          data_disparo?: string
+          disparado_em?: string | null
+          horario?: string
+          id?: number
+          id_disparo_relatorio?: number
+        }
+        Relationships: []
+      }
       DisparoRelatorio: {
         Row: {
           horario: string | null
@@ -1179,6 +1203,10 @@ export type Database = {
           idcontato: string
           valid: boolean
         }[]
+      }
+      verificar_disparos_relatorio: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
