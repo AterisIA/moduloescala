@@ -92,15 +92,11 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
       <div 
         className="calendar-scroll-container grid overflow-x-auto" 
         style={{ 
-          gridTemplateColumns: viewType === 'weekly' 
-            ? `minmax(160px, 280px) repeat(7, minmax(${isQuadrantMode ? '160px' : '85px'}, ${isQuadrantMode ? '160px' : '1fr'}))`
-            : `minmax(160px, 280px) repeat(auto-fit, minmax(${isQuadrantMode ? '160px' : '35px'}, ${isQuadrantMode ? '160px' : '1fr'}))`,
+          gridTemplateColumns: `minmax(160px, 280px) repeat(7, minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'}))`,
           '--col-fixed': 'minmax(160px, 280px)',
-          '--cols': viewType === 'weekly' ? '7' : dates.length.toString(),
-          '--col-day': viewType === 'weekly' ? `minmax(${isQuadrantMode ? '160px' : '85px'}, ${isQuadrantMode ? '160px' : '1fr'})` : `minmax(${isQuadrantMode ? '160px' : '35px'}, ${isQuadrantMode ? '160px' : '1fr'})`,
-          minWidth: isQuadrantMode 
-            ? (viewType === 'weekly' ? `${280 + (7 * 160)}px` : `${280 + (dates.length * 160)}px`)
-            : 'max-content'
+          '--cols': '7',
+          '--col-day': `minmax(${isQuadrantMode ? '160px' : '120px'}, ${isQuadrantMode ? '160px' : '120px'})`,
+          minWidth: `${280 + (7 * (isQuadrantMode ? 160 : 120))}px`
         } as React.CSSProperties}
       >
         {/* Header with dates */}
