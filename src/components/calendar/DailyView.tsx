@@ -15,9 +15,52 @@ interface DailyViewProps {
 }
 
 export function DailyView({ currentDate, employees, schedules, viewMode, entities }: DailyViewProps) {
+  console.log('DailyView render - viewMode:', viewMode, 'employees:', employees?.length);
+  
   // Generate hours from 00 to 23
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const filteredEmployees = employees;
+  
+  console.log('filteredEmployees defined:', employees?.length);
+
+  // Helper functions for schedule rendering (used in terceirizados mode)
+  const getScheduleForEmployee = (employeeId: string) => {
+    return schedules.find(schedule => 
+      schedule.employeeId === employeeId && 
+      isSameDay(schedule.date, currentDate)
+    );
+  };
+
+  const getScheduleColor = (schedule: Schedule) => {
+    if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
+    if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
+    
+    const start = parseInt(schedule.startTime.split(':')[0]);
+    const end = parseInt(schedule.endTime.split(':')[0]);
+    
+    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-gray-800';
+    if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
+    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-gray-800';
+    
+    return 'bg-gray-200 text-gray-800';
+  };
+
+  const getScheduleDisplay = (schedule: Schedule) => {
+    if (schedule.type === 'rest') return '💤';
+    if (schedule.type === 'vacation') return '🏖️';
+    return `${schedule.startTime}-${schedule.endTime}`;
+  };
+
+  const isWorkingHour = (hour: number, schedule: Schedule) => {
+    if (!schedule || schedule.type !== 'work') return false;
+    const start = parseInt(schedule.startTime.split(':')[0]);
+    const endHour = parseInt(schedule.endTime.split(':')[0]);
+    const endMinutes = parseInt(schedule.endTime.split(':')[1]);
+    
+    // If end time has minutes (like 23:59), include that hour
+    const end = endMinutes > 0 ? endHour + 1 : endHour;
+    
+    return hour >= start && hour < end;
+  };
 
   // If not terceirizados mode, show quadrant view
   if (viewMode !== 'terceirizados') {
@@ -75,44 +118,7 @@ export function DailyView({ currentDate, employees, schedules, viewMode, entitie
     );
   }
 
-  const getScheduleForEmployee = (employeeId: string) => {
-    return schedules.find(schedule => 
-      schedule.employeeId === employeeId && 
-      isSameDay(schedule.date, currentDate)
-    );
-  };
-
-  const getScheduleColor = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
-    if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
-    
-    const start = parseInt(schedule.startTime.split(':')[0]);
-    const end = parseInt(schedule.endTime.split(':')[0]);
-    
-    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-gray-800';
-    if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
-    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-gray-800';
-    
-    return 'bg-gray-200 text-gray-800';
-  };
-
-  const getScheduleDisplay = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return '💤';
-    if (schedule.type === 'vacation') return '🏖️';
-    return `${schedule.startTime}-${schedule.endTime}`;
-  };
-
-  const isWorkingHour = (hour: number, schedule: Schedule) => {
-    if (!schedule || schedule.type !== 'work') return false;
-    const start = parseInt(schedule.startTime.split(':')[0]);
-    const endHour = parseInt(schedule.endTime.split(':')[0]);
-    const endMinutes = parseInt(schedule.endTime.split(':')[1]);
-    
-    // If end time has minutes (like 23:59), include that hour
-    const end = endMinutes > 0 ? endHour + 1 : endHour;
-    
-    return hour >= start && hour < end;
-  };
+  // Terceirizados mode - show employee schedules
 
   return (
     <div className="calendar-scroll-container h-full overflow-auto">
@@ -146,7 +152,7 @@ export function DailyView({ currentDate, employees, schedules, viewMode, entitie
         ))}
 
         {/* Employee rows */}
-        {filteredEmployees.map(employee => {
+        {employees.map(employee => {
           const schedule = getScheduleForEmployee(employee.id);
           
           return (

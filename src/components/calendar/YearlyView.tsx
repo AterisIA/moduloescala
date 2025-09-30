@@ -29,9 +29,7 @@ interface YearlyViewProps {
 }
 
 export function YearlyView({ currentDate, employees, schedules, viewMode, entities }: YearlyViewProps) {
-  const filteredEmployees = employees.filter(emp => 
-    true
-  );
+  const filteredEmployees = employees;
 
   const yearWeeks = eachWeekOfInterval(
     { start: startOfYear(currentDate), end: endOfYear(currentDate) },
