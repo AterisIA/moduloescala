@@ -48,32 +48,53 @@ export function TeamManagement() {
     const updateWidth = () => {
       target = getTarget();
       if (topContent && target) {
-        const scrollWidth = Math.max(target.scrollWidth, 2000); // Minimum 2000px to ensure scrollbar
+        // Match the exact scrollable width of the target to keep ranges equal
+        const scrollWidth = Math.max(target.scrollWidth, target.clientWidth);
         topContent.style.width = `${scrollWidth}px`;
       }
     };
 
-    // Extended retries to catch late renders
-    const timers = [
-      setTimeout(updateWidth, 0),
-      setTimeout(updateWidth, 100),
-      setTimeout(updateWidth, 300),
-      setTimeout(updateWidth, 600),
-      setTimeout(updateWidth, 1000)
-    ];
-
-    const onTopScroll = () => {
+    const syncFromTop = () => {
       target = getTarget();
-      if (target && Math.abs(target.scrollLeft - top.scrollLeft) > 1) {
-        target.scrollLeft = top.scrollLeft;
+      if (!target) return;
+      const topMax = Math.max(0, top.scrollWidth - top.clientWidth);
+      const tgtMax = Math.max(0, target.scrollWidth - target.clientWidth);
+      if (topMax === 0 || tgtMax === 0) return;
+      const ratio = top.scrollLeft / topMax;
+      const desired = ratio * tgtMax;
+      if (Math.abs(target.scrollLeft - desired) > 1) {
+        target.scrollLeft = desired;
       }
     };
 
-    const onTargetScroll = () => {
+    const syncFromTarget = () => {
       target = getTarget();
-      if (target && Math.abs(top.scrollLeft - target.scrollLeft) > 1) {
-        top.scrollLeft = target.scrollLeft;
+      if (!target) return;
+      const topMax = Math.max(0, top.scrollWidth - top.clientWidth);
+      const tgtMax = Math.max(0, target.scrollWidth - target.clientWidth);
+      if (topMax === 0 || tgtMax === 0) return;
+      const ratio = target.scrollLeft / tgtMax;
+      const desired = ratio * topMax;
+      if (Math.abs(top.scrollLeft - desired) > 1) {
+        top.scrollLeft = desired;
       }
+    };
+
+    // Initial sync and retries to catch late renders
+    const timers = [
+      setTimeout(() => { updateWidth(); syncFromTarget(); }, 0),
+      setTimeout(() => { updateWidth(); syncFromTarget(); }, 120),
+      setTimeout(() => { updateWidth(); syncFromTarget(); }, 300),
+      setTimeout(() => { updateWidth(); syncFromTarget(); }, 600),
+      setTimeout(() => { updateWidth(); syncFromTarget(); }, 1000)
+    ];
+
+    const onTopScroll = () => {
+      syncFromTop();
+    };
+
+    const onTargetScroll = () => {
+      syncFromTarget();
     };
 
     top.addEventListener('scroll', onTopScroll, { passive: true });
@@ -85,13 +106,15 @@ export function TeamManagement() {
 
     // ResizeObserver for dynamic content changes
     const ro = new ResizeObserver(() => {
-      setTimeout(updateWidth, 50);
+      updateWidth();
+      syncFromTarget();
     });
     if (target) ro.observe(target);
 
     // MutationObserver to detect DOM changes
     const mo = new MutationObserver(() => {
-      setTimeout(updateWidth, 100);
+      updateWidth();
+      syncFromTarget();
     });
     if (target) {
       mo.observe(target, { 
