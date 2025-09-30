@@ -101,25 +101,17 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
       >
         {/* Header with dates */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
-          <div className="p-2 space-y-2">
-            <div>
-              <span className="hidden md:inline">Escalas da Semana</span>
-              <span className="md:hidden">Escalas</span>
-            </div>
-            
-            {/* Department Filter */}
-            <div className="w-full">
-              <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
-                <SelectTrigger className="w-full h-10 text-sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="p-2">
+            <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+              <SelectTrigger className="w-full h-10 text-sm">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os departamentos</SelectItem>
+                {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         {dates.map(date => (
