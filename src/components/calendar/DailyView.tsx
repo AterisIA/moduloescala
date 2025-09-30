@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { QuadrantCell } from "./QuadrantCell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter } from "lucide-react";
 
 interface DailyViewProps {
   currentDate: Date;
@@ -90,7 +89,6 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
           <div className="p-2">
             <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
               <SelectTrigger className="w-full h-8 text-xs">
-                <Filter className="h-3 w-3 mr-1" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

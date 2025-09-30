@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { QuadrantCell } from "./QuadrantCell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter } from "lucide-react";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -104,7 +103,6 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           <div className="p-2">
             <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
               <SelectTrigger className="w-full h-10 text-sm">
-                <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

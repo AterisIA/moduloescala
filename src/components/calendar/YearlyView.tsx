@@ -20,7 +20,6 @@ import {
 import { ptBR } from "date-fns/locale";
 import { QuadrantCell } from "./QuadrantCell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter } from "lucide-react";
 
 interface YearlyViewProps {
   currentDate: Date;
@@ -144,7 +143,6 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
           <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
             <SelectTrigger className="w-full h-8 text-xs">
-              <Filter className="h-3 w-3 mr-1" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
