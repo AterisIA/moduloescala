@@ -49,9 +49,9 @@ export const PresenceLineChart = ({ data }: PresenceLineChartProps) => {
             />
             <Line 
               type="monotone" 
-              dataKey="atestado" 
+              dataKey="atraso" 
               stroke="hsl(var(--warning))" 
-              name="Atestado"
+              name="Atraso"
               strokeWidth={2}
             />
             <Line 
@@ -59,13 +59,6 @@ export const PresenceLineChart = ({ data }: PresenceLineChartProps) => {
               dataKey="falta" 
               stroke="hsl(var(--destructive))" 
               name="Falta"
-              strokeWidth={2}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="faltaJustificada" 
-              stroke="hsl(var(--muted-foreground))" 
-              name="Falta Justificada"
               strokeWidth={2}
             />
           </LineChart>

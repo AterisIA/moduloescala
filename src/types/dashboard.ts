@@ -19,9 +19,8 @@ export interface KPIMetric {
 export interface PresenceDataPoint {
   date: string;
   presenca: number;
-  atestado: number;
+  atraso: number;
   falta: number;
-  faltaJustificada: number;
 }
 
 export interface StatusDistribution {

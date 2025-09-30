@@ -55,9 +55,8 @@ export const useDashboardData = (filters: DashboardFilters) => {
       // Calculate KPIs
       const totalRecords = statusData?.length || 0;
       const presencaCount = statusData?.filter((s: any) => s.status === 1).length || 0;
-      const atestadoCount = statusData?.filter((s: any) => s.status === 5).length || 0;
+      const atrasoCount = statusData?.filter((s: any) => s.status === 2).length || 0;
       const faltaCount = statusData?.filter((s: any) => s.status === 3).length || 0;
-      const faltaJustCount = statusData?.filter((s: any) => s.status === 4).length || 0;
 
       const presencaRate = totalRecords > 0 ? (presencaCount / totalRecords) * 100 : 0;
 
@@ -90,16 +89,16 @@ export const useDashboardData = (filters: DashboardFilters) => {
           changeType: 'neutral'
         },
         {
-          id: 'atestados',
-          title: 'Atestados',
-          value: atestadoCount,
+          id: 'atrasos',
+          title: 'Atrasos',
+          value: atrasoCount,
           change: 0,
           changeType: 'neutral'
         },
         {
           id: 'faltas',
-          title: 'Faltas Totais',
-          value: faltaCount + faltaJustCount,
+          title: 'Faltas',
+          value: faltaCount,
           change: 0,
           changeType: 'negative'
         }
@@ -108,27 +107,25 @@ export const useDashboardData = (filters: DashboardFilters) => {
       // Status distribution
       setStatusDistribution([
         { name: 'Presença', value: presencaCount, color: 'hsl(142 75% 50%)' },
-        { name: 'Atestado', value: atestadoCount, color: 'hsl(38 92% 50%)' },
-        { name: 'Falta', value: faltaCount, color: 'hsl(0 84% 60%)' },
-        { name: 'Falta Justificada', value: faltaJustCount, color: 'hsl(240 4% 46%)' }
+        { name: 'Atraso', value: atrasoCount, color: 'hsl(38 92% 50%)' },
+        { name: 'Falta', value: faltaCount, color: 'hsl(0 84% 60%)' }
       ]);
 
       // Time series data (grouped by date)
-      const dateMap = new Map<string, { presenca: number; atestado: number; falta: number; faltaJustificada: number }>();
+      const dateMap = new Map<string, { presenca: number; atraso: number; falta: number }>();
       
       escalas?.forEach((escala: any) => {
         const dateStr = format(parseISO(escala.dataescala), 'yyyy-MM-dd');
         const status = statusData?.find((s: any) => s.id_escala === escala.idescala);
         
         if (!dateMap.has(dateStr)) {
-          dateMap.set(dateStr, { presenca: 0, atestado: 0, falta: 0, faltaJustificada: 0 });
+          dateMap.set(dateStr, { presenca: 0, atraso: 0, falta: 0 });
         }
         
         const dayData = dateMap.get(dateStr)!;
         if (status?.status === 1) dayData.presenca++;
-        if (status?.status === 5) dayData.atestado++;
+        if (status?.status === 2) dayData.atraso++;
         if (status?.status === 3) dayData.falta++;
-        if (status?.status === 4) dayData.faltaJustificada++;
       });
 
       const timeSeriesData = Array.from(dateMap.entries())
