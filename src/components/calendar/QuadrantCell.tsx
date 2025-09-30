@@ -62,12 +62,12 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
         return (
           <div
             key={index}
-            className={`flex flex-col items-center justify-center px-0.5 py-1 ${quadrant.color} rounded-sm`}
+            className={`flex flex-col items-center justify-center px-0.5 py-1 ${quadrant.color} rounded-sm overflow-hidden`}
           >
-            <div className="text-xs sm:text-sm md:text-base font-bold leading-none truncate max-w-full">
+            <div className="text-xs sm:text-sm md:text-base font-bold leading-none whitespace-nowrap">
               {getDisplayValue(quadrant.value, hours)}
             </div>
-            <div className="text-[8px] sm:text-[9px] md:text-[10px] font-medium mt-0.5 truncate max-w-full">
+            <div className="text-[8px] sm:text-[9px] md:text-[10px] font-medium mt-0.5 whitespace-nowrap">
               {quadrant.label}
             </div>
           </div>
