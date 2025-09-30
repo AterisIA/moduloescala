@@ -81,12 +81,12 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
         className="grid min-h-0" 
         style={{ 
           gridTemplateColumns: isQuadrantMode 
-            ? 'minmax(160px, 280px) minmax(300px, 1fr)'
+            ? 'minmax(160px, 280px) minmax(400px, 400px)'
             : 'minmax(160px, 280px) repeat(24, minmax(56px, 1fr))',
           '--col-fixed': 'minmax(160px, 280px)',
           '--cols': isQuadrantMode ? '1' : '24',
           '--col-day': 'minmax(56px, 1fr)',
-          minWidth: 'max-content'
+          minWidth: isQuadrantMode ? `${280 + 400}px` : 'max-content'
         } as React.CSSProperties}
       >
         {/* Header with hours */}
