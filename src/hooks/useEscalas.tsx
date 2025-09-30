@@ -200,50 +200,228 @@ export function useEscalas() {
 
   const fetchAggregatedData = async (filterType: FilterType, startDate: Date, endDate: Date) => {
     try {
-      // For now, return mock data structure - will implement with proper database queries
       const entities: EntityQuadrantData[] = [];
+      
+      // Fetch StatusPresenca with escala data
+      const statusResult = await (supabase as any)
+        .from('StatusPresenca')
+        .select(`
+          id,
+          status,
+          id_escala,
+          escala!inner (
+            idescala,
+            dataescala,
+            id_coordenador,
+            id_plantao
+          )
+        `);
+      
+      const statusData = statusResult.data;
+      const statusError = statusResult.error;
+
+      if (statusError) {
+        console.error('Error fetching StatusPresenca:', statusError);
+        throw statusError;
+      }
+
+      console.log('StatusPresenca raw data:', statusData);
       
       if (filterType === 'Coordenadores') {
         // Fetch coordenadores
         const coordResult = await (supabase as any).from('coordenador').select('*');
         const coordData = coordResult.data as CoordenadorData[] | null;
         
+        // Create map to accumulate quadrant data
+        const coordQuadrantsMap = new Map<string, Map<string, QuadrantData>>();
+        
+        // Initialize all coordinators
         coordData?.forEach(coord => {
+          coordQuadrantsMap.set(coord.id_coordenador, new Map());
+        });
+
+        // Process StatusPresenca data
+        statusData?.forEach((sp: any) => {
+          const escala = sp.escala;
+          if (!escala || !escala.id_coordenador) return;
+          
+          const escalaDate = new Date(escala.dataescala);
+          if (escalaDate < startDate || escalaDate > endDate) return;
+          
+          const dateKey = escala.dataescala.split('T')[0]; // YYYY-MM-DD
+          const coordMap = coordQuadrantsMap.get(escala.id_coordenador);
+          
+          if (coordMap) {
+            if (!coordMap.has(dateKey)) {
+              coordMap.set(dateKey, {
+                presenca: 0,
+                atraso: 0,
+                falta: 0,
+                faltaJustificada: 0,
+                atestado: 0
+              });
+            }
+            
+            const quadrant = coordMap.get(dateKey)!;
+            
+            // Map status values: 1=presenca, 2=atraso, 3=falta, 4=faltaJustificada, 5=atestado
+            switch (sp.status) {
+              case 1: quadrant.presenca++; break;
+              case 2: quadrant.atraso++; break;
+              case 3: quadrant.falta++; break;
+              case 4: quadrant.faltaJustificada++; break;
+              case 5: quadrant.atestado++; break;
+            }
+          }
+        });
+
+        // Build entities array
+        coordData?.forEach(coord => {
+          const quadrants = coordQuadrantsMap.get(coord.id_coordenador) || new Map();
           entities.push({
             id: coord.id_coordenador,
             name: coord.nome,
             type: filterType,
-            quadrants: new Map()
+            quadrants
           });
         });
+        
       } else if (filterType === 'Plantões') {
         // Fetch plantões
         const plantaoResult = await (supabase as any).from('plantao').select('*');
         const plantaoData = plantaoResult.data as PlantaoData[] | null;
         
+        // Fetch empresa names for plantões
+        const empresaResult = await (supabase as any).from('empresa').select('*');
+        const empresaData = empresaResult.data as EmpresaData[] | null;
+        const empresaMap = new Map<string, string>();
+        empresaData?.forEach(emp => empresaMap.set(emp.id_empresa, emp.nome));
+        
+        // Create map to accumulate quadrant data
+        const plantaoQuadrantsMap = new Map<string, Map<string, QuadrantData>>();
+        
+        // Initialize all plantões
         plantaoData?.forEach(plantao => {
+          plantaoQuadrantsMap.set(plantao.id_plantao, new Map());
+        });
+
+        // Process StatusPresenca data
+        statusData?.forEach((sp: any) => {
+          const escala = sp.escala;
+          if (!escala || !escala.id_plantao) return;
+          
+          const escalaDate = new Date(escala.dataescala);
+          if (escalaDate < startDate || escalaDate > endDate) return;
+          
+          const dateKey = escala.dataescala.split('T')[0];
+          const plantaoMap = plantaoQuadrantsMap.get(escala.id_plantao);
+          
+          if (plantaoMap) {
+            if (!plantaoMap.has(dateKey)) {
+              plantaoMap.set(dateKey, {
+                presenca: 0,
+                atraso: 0,
+                falta: 0,
+                faltaJustificada: 0,
+                atestado: 0
+              });
+            }
+            
+            const quadrant = plantaoMap.get(dateKey)!;
+            
+            switch (sp.status) {
+              case 1: quadrant.presenca++; break;
+              case 2: quadrant.atraso++; break;
+              case 3: quadrant.falta++; break;
+              case 4: quadrant.faltaJustificada++; break;
+              case 5: quadrant.atestado++; break;
+            }
+          }
+        });
+
+        // Build entities array
+        plantaoData?.forEach(plantao => {
+          const quadrants = plantaoQuadrantsMap.get(plantao.id_plantao) || new Map();
+          const empresaNome = empresaMap.get(plantao.id_empresa) || '';
           entities.push({
             id: plantao.id_plantao,
-            name: plantao.nome,
+            name: `${plantao.nome} - ${empresaNome}`,
             type: filterType,
-            quadrants: new Map()
+            quadrants
           });
         });
+        
       } else if (filterType === 'Empresas') {
         // Fetch empresas
         const empresaResult = await (supabase as any).from('empresa').select('*');
         const empresaData = empresaResult.data as EmpresaData[] | null;
         
+        // Fetch plantões to link empresas
+        const plantaoResult = await (supabase as any).from('plantao').select('*');
+        const plantaoData = plantaoResult.data as PlantaoData[] | null;
+        
+        // Map plantao to empresa
+        const plantaoToEmpresaMap = new Map<string, string>();
+        plantaoData?.forEach(p => plantaoToEmpresaMap.set(p.id_plantao, p.id_empresa));
+        
+        // Create map to accumulate quadrant data
+        const empresaQuadrantsMap = new Map<string, Map<string, QuadrantData>>();
+        
+        // Initialize all empresas
         empresaData?.forEach(empresa => {
+          empresaQuadrantsMap.set(empresa.id_empresa, new Map());
+        });
+
+        // Process StatusPresenca data
+        statusData?.forEach((sp: any) => {
+          const escala = sp.escala;
+          if (!escala || !escala.id_plantao) return;
+          
+          const escalaDate = new Date(escala.dataescala);
+          if (escalaDate < startDate || escalaDate > endDate) return;
+          
+          const empresaId = plantaoToEmpresaMap.get(escala.id_plantao);
+          if (!empresaId) return;
+          
+          const dateKey = escala.dataescala.split('T')[0];
+          const empresaMap = empresaQuadrantsMap.get(empresaId);
+          
+          if (empresaMap) {
+            if (!empresaMap.has(dateKey)) {
+              empresaMap.set(dateKey, {
+                presenca: 0,
+                atraso: 0,
+                falta: 0,
+                faltaJustificada: 0,
+                atestado: 0
+              });
+            }
+            
+            const quadrant = empresaMap.get(dateKey)!;
+            
+            switch (sp.status) {
+              case 1: quadrant.presenca++; break;
+              case 2: quadrant.atraso++; break;
+              case 3: quadrant.falta++; break;
+              case 4: quadrant.faltaJustificada++; break;
+              case 5: quadrant.atestado++; break;
+            }
+          }
+        });
+
+        // Build entities array
+        empresaData?.forEach(empresa => {
+          const quadrants = empresaQuadrantsMap.get(empresa.id_empresa) || new Map();
           entities.push({
             id: empresa.id_empresa,
             name: empresa.nome,
             type: filterType,
-            quadrants: new Map()
+            quadrants
           });
         });
       }
 
+      console.log('Aggregated entities with quadrants:', entities);
       return entities;
     } catch (err) {
       console.error('Error fetching aggregated data:', err);
