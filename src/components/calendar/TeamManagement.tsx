@@ -153,6 +153,34 @@ export function TeamManagement() {
   };
   const isQuadrantMode = selectedDepartment !== "Terceirizados";
   
+  // Recarrega dados agregados quando data ou visualização mudarem
+  useEffect(() => {
+    const reloadAggregated = async () => {
+      if (selectedDepartment === "Terceirizados") return;
+      setLoadingAggregated(true);
+      const startDate = new Date(currentDate);
+      const endDate = new Date(currentDate);
+      
+      if (viewType === 'daily') {
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (viewType === 'weekly') {
+        startDate.setDate(currentDate.getDate() - currentDate.getDay());
+        endDate.setDate(startDate.getDate() + 6);
+      } else if (viewType === 'monthly') {
+        startDate.setDate(1);
+        endDate.setMonth(endDate.getMonth() + 1, 0);
+      } else if (viewType === 'yearly') {
+        startDate.setMonth(0, 1);
+        endDate.setMonth(11, 31);
+      }
+      const entities = await fetchAggregatedData(selectedDepartment as any, startDate, endDate);
+      setAggregatedEntities(entities);
+      setLoadingAggregated(false);
+    };
+    reloadAggregated();
+  }, [selectedDepartment, currentDate, viewType]);
+  
   const filteredEmployees = escalasEmployees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.position.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
