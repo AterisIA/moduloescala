@@ -37,41 +37,55 @@ export function TeamManagement() {
 
     // Sincronizar largura do scroll
     const updateScrollWidth = () => {
-      const scrollWidth = mainScroll.scrollWidth;
-      const scrollContent = topScroll.firstElementChild as HTMLElement;
-      if (scrollContent) {
-        scrollContent.style.width = `${scrollWidth}px`;
+      const content = mainScroll.querySelector('.calendar-main > div > div > div');
+      if (content) {
+        const scrollWidth = content.scrollWidth;
+        const scrollContent = topScroll.firstElementChild as HTMLElement;
+        if (scrollContent) {
+          scrollContent.style.width = `${scrollWidth}px`;
+        }
       }
     };
 
-    // Delay para garantir que o DOM foi renderizado
-    const timer = setTimeout(updateScrollWidth, 100);
+    // Atualizar múltiplas vezes para garantir sincronização
+    const timers = [
+      setTimeout(updateScrollWidth, 0),
+      setTimeout(updateScrollWidth, 100),
+      setTimeout(updateScrollWidth, 300),
+      setTimeout(updateScrollWidth, 500)
+    ];
     
-    const resizeObserver = new ResizeObserver(updateScrollWidth);
-    resizeObserver.observe(mainScroll);
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollWidth();
+    });
+    
+    const content = mainScroll.querySelector('.calendar-main > div > div > div');
+    if (content) {
+      resizeObserver.observe(content);
+    }
 
     const handleTopScroll = () => {
-      if (mainScroll.scrollLeft !== topScroll.scrollLeft) {
+      if (Math.abs(mainScroll.scrollLeft - topScroll.scrollLeft) > 1) {
         mainScroll.scrollLeft = topScroll.scrollLeft;
       }
     };
 
     const handleMainScroll = () => {
-      if (topScroll.scrollLeft !== mainScroll.scrollLeft) {
+      if (Math.abs(topScroll.scrollLeft - mainScroll.scrollLeft) > 1) {
         topScroll.scrollLeft = mainScroll.scrollLeft;
       }
     };
 
-    topScroll.addEventListener('scroll', handleTopScroll);
-    mainScroll.addEventListener('scroll', handleMainScroll);
+    topScroll.addEventListener('scroll', handleTopScroll, { passive: true });
+    mainScroll.addEventListener('scroll', handleMainScroll, { passive: true });
 
     return () => {
-      clearTimeout(timer);
+      timers.forEach(timer => clearTimeout(timer));
       topScroll.removeEventListener('scroll', handleTopScroll);
       mainScroll.removeEventListener('scroll', handleMainScroll);
       resizeObserver.disconnect();
     };
-  }, [viewType]);
+  }, [viewType, searchTerm, selectedDepartment]);
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -176,10 +190,10 @@ export function TeamManagement() {
       {/* Top horizontal scrollbar */}
       <div 
         ref={topScrollRef}
-        className="overflow-x-auto overflow-y-hidden h-3 bg-muted/30 border-b"
-        style={{ scrollbarWidth: 'thin' }}
+        className="overflow-x-auto overflow-y-hidden bg-muted/30 border-b"
+        style={{ height: '12px' }}
       >
-        <div style={{ width: '200%', height: '1px' }} />
+        <div style={{ height: '1px', minWidth: '100%' }} />
       </div>
 
       {/* Main content area */}
