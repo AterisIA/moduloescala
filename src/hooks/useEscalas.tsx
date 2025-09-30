@@ -202,11 +202,50 @@ export function useEscalas() {
     try {
       console.log('fetchAggregatedData called with:', { filterType, startDate, endDate });
       
-      // Format dates for SQL (YYYY-MM-DD)
+      // Step 1: Fetch all entities first
+      const entitiesMap = new Map<string, EntityQuadrantData>();
+      
+      if (filterType === 'Coordenadores') {
+        const coordResult = await (supabase as any).from('coordenador').select('*');
+        const coordData = coordResult.data as CoordenadorData[] | null;
+        coordData?.forEach(coord => {
+          entitiesMap.set(coord.id_coordenador, {
+            id: coord.id_coordenador,
+            name: coord.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      } else if (filterType === 'Plantões') {
+        const plantaoResult = await (supabase as any).from('plantao').select('*');
+        const plantaoData = plantaoResult.data as PlantaoData[] | null;
+        plantaoData?.forEach(plantao => {
+          entitiesMap.set(plantao.id_plantao, {
+            id: plantao.id_plantao,
+            name: plantao.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      } else if (filterType === 'Empresas') {
+        const empresaResult = await (supabase as any).from('empresa').select('*');
+        const empresaData = empresaResult.data as EmpresaData[] | null;
+        empresaData?.forEach(empresa => {
+          entitiesMap.set(empresa.id_empresa, {
+            id: empresa.id_empresa,
+            name: empresa.nome,
+            type: filterType,
+            quadrants: new Map()
+          });
+        });
+      }
+      
+      console.log('Loaded entities:', entitiesMap.size);
+      
+      // Step 2: Fetch quadrant data from RPC
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
       
-      // Call RPC function to get aggregated quadrant counts
       const { data, error } = await supabase.rpc('get_quadrant_counts', {
         p_filter: filterType,
         p_start: startDateStr,
@@ -215,45 +254,32 @@ export function useEscalas() {
       
       if (error) {
         console.error('Error calling get_quadrant_counts:', error);
-        return [];
+      } else {
+        console.log('RPC returned data:', data);
+        
+        // Step 3: Populate quadrant data into entities
+        data?.forEach((row: any) => {
+          const entityId = row.entity_id;
+          const dateKey = row.dt; // YYYY-MM-DD format
+          
+          if (entitiesMap.has(entityId)) {
+            const entity = entitiesMap.get(entityId)!;
+            
+            const quadrantData: QuadrantData = {
+              presenca: row.presenca || 0,
+              atraso: row.atraso || 0,
+              falta: row.falta || 0,
+              faltaJustificada: row.fj_at || 0,
+              atestado: 0
+            };
+            
+            entity.quadrants.set(dateKey, quadrantData);
+          }
+        });
       }
       
-      console.log('RPC returned data:', data);
-      
-      // Transform RPC results into EntityQuadrantData
-      const entitiesMap = new Map<string, EntityQuadrantData>();
-      
-      data?.forEach((row: any) => {
-        const entityId = row.entity_id;
-        const entityName = row.entity_name;
-        const dateKey = row.dt; // YYYY-MM-DD format
-        
-        // Get or create entity
-        if (!entitiesMap.has(entityId)) {
-          entitiesMap.set(entityId, {
-            id: entityId,
-            name: entityName,
-            type: filterType,
-            quadrants: new Map<string, QuadrantData>()
-          });
-        }
-        
-        const entity = entitiesMap.get(entityId)!;
-        
-        // Create QuadrantData for this date
-        const quadrantData: QuadrantData = {
-          presenca: row.presenca || 0,
-          atraso: row.atraso || 0,
-          falta: row.falta || 0,
-          faltaJustificada: row.fj_at || 0, // Combined status 4 and 5
-          atestado: 0 // Not used separately anymore
-        };
-        
-        entity.quadrants.set(dateKey, quadrantData);
-      });
-      
       const entities = Array.from(entitiesMap.values());
-      console.log('Transformed entities:', entities);
+      console.log('Final entities with quadrants:', entities);
       
       return entities;
     } catch (err) {
