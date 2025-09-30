@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { QuadrantCell } from "./QuadrantCell";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Filter } from "lucide-react";
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -19,9 +21,12 @@ interface CalendarGridProps {
   viewType: ViewType;
   isQuadrantMode?: boolean;
   aggregatedEntities?: EntityQuadrantData[];
+  selectedDepartment: string;
+  onDepartmentChange: (department: string) => void;
+  departments: string[];
 }
 
-export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [] }: CalendarGridProps) {
+export function CalendarGrid({ currentDate, employees, schedules, selectedDepartments, viewType, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments }: CalendarGridProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -96,9 +101,25 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
       >
         {/* Header with dates */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
-          <div className="p-2">
-            <span className="hidden md:inline">Escalas da Semana</span>
-            <span className="md:hidden">Escalas</span>
+          <div className="p-2 space-y-2">
+            <div>
+              <span className="hidden md:inline">Escalas da Semana</span>
+              <span className="md:hidden">Escalas</span>
+            </div>
+            
+            {/* Department Filter */}
+            <div className="w-full">
+              <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+                <SelectTrigger className="w-full h-8 text-xs">
+                  <Filter className="h-3 w-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os departamentos</SelectItem>
+                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         {dates.map(date => (

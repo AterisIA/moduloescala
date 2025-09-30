@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { ViewType } from "@/types/calendar";
 import { CalendarNavigation } from "./CalendarNavigation";
 import { CalendarViewTabs } from "./CalendarViewTabs";
@@ -189,38 +189,11 @@ export function TeamManagement() {
             <CalendarViewTabs viewType={viewType} onViewChange={setViewType} />
           </div>
 
-          {/* Search and Filters */}
+          {/* Search */}
           <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input placeholder="Buscar funcionários..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-            
-            {/* Mobile: show filter button, Desktop: show select */}
-            <div className="sm:hidden">
-              <Select value={selectedDepartment} onValueChange={handleDepartmentFilter}>
-                <SelectTrigger className="w-full touch-target">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar departamentos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="hidden sm:block">
-              <Select value={selectedDepartment} onValueChange={handleDepartmentFilter}>
-                <SelectTrigger className="w-40">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
@@ -247,6 +220,9 @@ export function TeamManagement() {
               selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
+              selectedDepartment={selectedDepartment}
+              onDepartmentChange={handleDepartmentFilter}
+              departments={departments}
             />}
             
             {viewType === 'weekly' && <CalendarGrid 
@@ -257,6 +233,9 @@ export function TeamManagement() {
               viewType={viewType}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
+              selectedDepartment={selectedDepartment}
+              onDepartmentChange={handleDepartmentFilter}
+              departments={departments}
             />}
             
             {viewType === 'monthly' && <MonthlyView 
@@ -266,6 +245,9 @@ export function TeamManagement() {
               selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
+              selectedDepartment={selectedDepartment}
+              onDepartmentChange={handleDepartmentFilter}
+              departments={departments}
             />}
             
             {viewType === 'yearly' && <YearlyView 
@@ -275,6 +257,9 @@ export function TeamManagement() {
               selectedDepartments={selectedDepartment === "all" ? [] : [selectedDepartment]}
               isQuadrantMode={isQuadrantMode}
               aggregatedEntities={filteredEntities}
+              selectedDepartment={selectedDepartment}
+              onDepartmentChange={handleDepartmentFilter}
+              departments={departments}
             />}
           </CardContent>
         </Card>

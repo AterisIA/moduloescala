@@ -19,6 +19,8 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QuadrantCell } from "./QuadrantCell";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Filter } from "lucide-react";
 
 interface YearlyViewProps {
   currentDate: Date;
@@ -27,9 +29,12 @@ interface YearlyViewProps {
   selectedDepartments: string[];
   isQuadrantMode?: boolean;
   aggregatedEntities?: EntityQuadrantData[];
+  selectedDepartment: string;
+  onDepartmentChange: (department: string) => void;
+  departments: string[];
 }
 
-export function YearlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [] }: YearlyViewProps) {
+export function YearlyView({ currentDate, employees, schedules, selectedDepartments, isQuadrantMode = false, aggregatedEntities = [], selectedDepartment, onDepartmentChange, departments }: YearlyViewProps) {
   const filteredEmployees = employees.filter(emp => 
     selectedDepartments.length === 0 || selectedDepartments.includes(emp.department)
   );
@@ -136,9 +141,25 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
         style={{ gridTemplateColumns: `250px repeat(${totalColumns}, minmax(66px, 1fr))` }}
       >
         {/* Header Row 1: Month names and week labels */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
-          <div>Escalas do Ano</div>
-          <div className="text-xs text-muted-foreground mt-1">{format(currentDate, 'yyyy')}</div>
+        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10 space-y-2">
+          <div>
+            <div>Escalas do Ano</div>
+            <div className="text-xs text-muted-foreground mt-1">{format(currentDate, 'yyyy')}</div>
+          </div>
+          
+          {/* Department Filter */}
+          <div className="w-full">
+            <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+              <SelectTrigger className="w-full h-8 text-xs">
+                <Filter className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os departamentos</SelectItem>
+                {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         {monthNames.map((monthName) => (
