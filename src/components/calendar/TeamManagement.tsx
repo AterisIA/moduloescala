@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +25,53 @@ export function TeamManagement() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const departments = ["Terceirizados", "Coordenadores", "Plantões", "Empresas"];
+  
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const topScroll = topScrollRef.current;
+    const mainScroll = mainScrollRef.current;
+    
+    if (!topScroll || !mainScroll) return;
+
+    // Sincronizar largura do scroll
+    const updateScrollWidth = () => {
+      const scrollWidth = mainScroll.scrollWidth;
+      const scrollContent = topScroll.firstElementChild as HTMLElement;
+      if (scrollContent) {
+        scrollContent.style.width = `${scrollWidth}px`;
+      }
+    };
+
+    // Delay para garantir que o DOM foi renderizado
+    const timer = setTimeout(updateScrollWidth, 100);
+    
+    const resizeObserver = new ResizeObserver(updateScrollWidth);
+    resizeObserver.observe(mainScroll);
+
+    const handleTopScroll = () => {
+      if (mainScroll.scrollLeft !== topScroll.scrollLeft) {
+        mainScroll.scrollLeft = topScroll.scrollLeft;
+      }
+    };
+
+    const handleMainScroll = () => {
+      if (topScroll.scrollLeft !== mainScroll.scrollLeft) {
+        topScroll.scrollLeft = mainScroll.scrollLeft;
+      }
+    };
+
+    topScroll.addEventListener('scroll', handleTopScroll);
+    mainScroll.addEventListener('scroll', handleMainScroll);
+
+    return () => {
+      clearTimeout(timer);
+      topScroll.removeEventListener('scroll', handleTopScroll);
+      mainScroll.removeEventListener('scroll', handleMainScroll);
+      resizeObserver.disconnect();
+    };
+  }, [viewType]);
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -126,8 +173,17 @@ export function TeamManagement() {
         </div>
       </header>
 
+      {/* Top horizontal scrollbar */}
+      <div 
+        ref={topScrollRef}
+        className="overflow-x-auto overflow-y-hidden h-3 bg-muted/30 border-b"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        <div style={{ width: '200%', height: '1px' }} />
+      </div>
+
       {/* Main content area */}
-      <main className="calendar-main overflow-auto">
+      <main ref={mainScrollRef} className="calendar-main overflow-auto">
         <Card className="border-0 rounded-none">
           <CardContent className="p-0">
             {/* Calendar Views */}
