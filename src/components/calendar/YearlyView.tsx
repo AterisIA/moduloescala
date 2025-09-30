@@ -136,10 +136,13 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
   const totalColumns = monthNames.length + yearWeeks.length;
 
   return (
-    <div className="calendar-scroll-container overflow-auto">
+    <div className="calendar-scroll-container overflow-x-auto overflow-y-auto">
       <div 
-        className="grid gap-1 min-w-fit"
-        style={{ gridTemplateColumns: `250px repeat(${totalColumns}, minmax(66px, 1fr))` }}
+        className="grid gap-1"
+        style={{ 
+          gridTemplateColumns: `250px repeat(${totalColumns}, minmax(70px, 1fr))`,
+          minWidth: 'max-content'
+        }}
       >
         {/* Header Row 1: Month names and week labels */}
         <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">

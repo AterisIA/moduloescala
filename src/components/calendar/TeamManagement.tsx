@@ -272,7 +272,7 @@ export function TeamManagement() {
       <div 
         ref={topScrollRef}
         className="overflow-x-auto overflow-y-hidden bg-muted/30 border-b"
-        style={{ height: '14px' }}
+        style={{ height: '16px' }}
       >
         <div className="top-scroll-content" style={{ height: '1px', minWidth: '100%' }} />
       </div>
