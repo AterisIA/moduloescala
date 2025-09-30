@@ -18,6 +18,8 @@ export function TeamManagement() {
   
   const { entities, loading, error } = usePresenceStats(viewMode, currentDate, viewType);
   
+  console.log('TeamManagement state:', { currentDate, viewType, viewMode, entities, loading, error });
+  
   const topScrollRef = useRef<HTMLDivElement>(null);
   const mainScrollRef = useRef<HTMLDivElement>(null);
 

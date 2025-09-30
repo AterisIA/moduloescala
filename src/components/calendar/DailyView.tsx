@@ -11,9 +11,18 @@ interface DailyViewProps {
 }
 
 export function DailyView({ currentDate, entities, viewMode }: DailyViewProps) {
+  console.log('DailyView props:', { currentDate, entities, viewMode });
+  
   // Generate hours from 00 to 23
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dateKey = format(currentDate, 'yyyy-MM-dd');
+  
+  // Defensive check for viewMode
+  const safeViewMode = viewMode || 'terceirizados';
+  const viewModeLabel = safeViewMode === 'terceirizados' ? 'Terceirizados' : 
+                        safeViewMode === 'coordenadores' ? 'Coordenadores' : 
+                        safeViewMode === 'plantao' ? 'Plantões' : 'Empresas';
+  const viewModeShort = safeViewMode.charAt(0).toUpperCase() + safeViewMode.slice(1);
 
   return (
     <div className="calendar-scroll-container h-full overflow-auto">
@@ -29,8 +38,8 @@ export function DailyView({ currentDate, entities, viewMode }: DailyViewProps) {
         {/* Header with hours */}
         <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
           <div className="p-2">
-            <div className="hidden md:block">{viewMode === 'terceirizados' ? 'Terceirizados' : viewMode === 'coordenadores' ? 'Coordenadores' : viewMode === 'plantao' ? 'Plantões' : 'Empresas'}</div>
-            <div className="md:hidden">{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}</div>
+            <div className="hidden md:block">{viewModeLabel}</div>
+            <div className="md:hidden">{viewModeShort}</div>
             <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
               {format(currentDate, "dd 'de' MMMM", { locale: ptBR })}
             </div>
