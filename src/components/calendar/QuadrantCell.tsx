@@ -35,7 +35,7 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
     }
   ];
   
-  const getDisplayValue = (value: number) => {
+  const getDisplayValue = (value: number, hours?: number) => {
     if (displayMode === 'percentage') {
       if (total === 0) return '0%';
       const percentage = Math.round((value / total) * 100);
@@ -43,9 +43,9 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
     }
     
     if (displayMode === 'hours') {
-      // Assumindo 8 horas por registro
-      const hours = value * 8;
-      return `${hours}h`;
+      // Use real hours from database or fallback to count * 8
+      const realHours = hours || (value * 8);
+      return `${Math.round(realHours)}h`;
     }
     
     return value;
@@ -53,19 +53,26 @@ export function QuadrantCell({ data, className = "", isMonochrome = false, displ
 
   return (
     <div className={`grid grid-cols-2 gap-0.5 w-full h-full min-h-[60px] ${className}`}>
-      {quadrants.map((quadrant, index) => (
-        <div
-          key={index}
-          className={`flex flex-col items-center justify-center p-1 ${quadrant.color} rounded-sm`}
-        >
-          <div className="text-lg font-bold leading-none">
-            {getDisplayValue(quadrant.value)}
+      {quadrants.map((quadrant, index) => {
+        const hours = index === 0 ? data.presencaHoras :
+                     index === 1 ? data.atrasoHoras :
+                     index === 2 ? data.faltaJustificadaHoras :
+                     (data.faltaHoras || 0) + (data.atestadoHoras || 0);
+        
+        return (
+          <div
+            key={index}
+            className={`flex flex-col items-center justify-center p-1 ${quadrant.color} rounded-sm`}
+          >
+            <div className="text-lg font-bold leading-none">
+              {getDisplayValue(quadrant.value, hours)}
+            </div>
+            <div className="text-[10px] font-medium mt-0.5">
+              {quadrant.label}
+            </div>
           </div>
-          <div className="text-[10px] font-medium mt-0.5">
-            {quadrant.label}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

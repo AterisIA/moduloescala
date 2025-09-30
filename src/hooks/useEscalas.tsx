@@ -246,14 +246,14 @@ export function useEscalas() {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
       
-      const { data, error } = await supabase.rpc('get_quadrant_counts', {
+      const { data, error } = await supabase.rpc('get_quadrant_counts_with_hours', {
         p_filter: filterType,
         p_start: startDateStr,
         p_end: endDateStr
       });
       
       if (error) {
-        console.error('Error calling get_quadrant_counts:', error);
+        console.error('Error calling get_quadrant_counts_with_hours:', error);
       } else {
         console.log('RPC returned data:', data);
         
@@ -270,7 +270,12 @@ export function useEscalas() {
               atraso: row.atraso || 0,
               falta: row.falta || 0,
               faltaJustificada: row.fj_at || 0,
-              atestado: 0
+              atestado: 0,
+              presencaHoras: parseFloat(row.presenca_horas) || 0,
+              atrasoHoras: parseFloat(row.atraso_horas) || 0,
+              faltaHoras: parseFloat(row.falta_horas) || 0,
+              faltaJustificadaHoras: parseFloat(row.fj_at_horas) || 0,
+              atestadoHoras: 0
             };
             
             entity.quadrants.set(dateKey, quadrantData);

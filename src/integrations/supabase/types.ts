@@ -998,6 +998,22 @@ export type Database = {
           presenca: number
         }[]
       }
+      get_quadrant_counts_with_hours: {
+        Args: { p_end: string; p_filter: string; p_start: string }
+        Returns: {
+          atraso: number
+          atraso_horas: number
+          dt: string
+          entity_id: string
+          entity_name: string
+          falta: number
+          falta_horas: number
+          fj_at: number
+          fj_at_horas: number
+          presenca: number
+          presenca_horas: number
+        }[]
+      }
       get_user_menu_permissions: {
         Args: { p_user_id: string }
         Returns: {
