@@ -246,6 +246,21 @@ export type Database = {
           },
         ]
       }
+      DisparoRelatorio: {
+        Row: {
+          horario: string | null
+          id: number
+        }
+        Insert: {
+          horario?: string | null
+          id?: number
+        }
+        Update: {
+          horario?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
       Docs_Contr: {
         Row: {
           bt_blur: string | null
@@ -871,6 +886,14 @@ export type Database = {
       delete_module: {
         Args: { module_id: string }
         Returns: boolean
+      }
+      disparar_relatorio: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      disparar_relatorio_webhook: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       dispatch_comunicacoes: {
         Args: Record<PropertyKey, never>
