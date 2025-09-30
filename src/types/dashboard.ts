@@ -1,6 +1,9 @@
+export type DashboardViewType = 'all' | 'coordenador' | 'empresa' | 'plantao';
+
 export interface DashboardFilters {
   startDate: Date;
   endDate: Date;
+  viewType: DashboardViewType;
 }
 
 export interface CommunicationResponse {

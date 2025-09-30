@@ -121,30 +121,137 @@ export const useDashboardData = (filters: DashboardFilters) => {
       
       const { data: escalasData } = await supabase
         .from('escala')
-        .select('idescala, nomepessoaescala')
+        .select('idescala, nomepessoaescala, id_coordenador, id_plantao')
         .in('idescala', uniqueEscalaIds);
 
-      // Entity ranking (by idescala)
-      const escalaMap = new Map<number, { name: string; confirmados: number; total: number }>();
-      
-      respostas.forEach((resposta: any) => {
-        if (!escalaMap.has(resposta.idescala)) {
-          const escalaInfo = escalasData?.find(e => (e as any).idescala === resposta.idescala);
-          escalaMap.set(resposta.idescala, {
-            name: escalaInfo ? (escalaInfo as any).nomepessoaescala : `Escala ${resposta.idescala}`,
-            confirmados: 0,
-            total: 0
-          });
-        }
-        
-        const escalaData = escalaMap.get(resposta.idescala)!;
-        escalaData.total++;
-        if (resposta.status === '1') escalaData.confirmados++;
-      });
+      // Fetch related entities based on view type
+      let coordenadoresData: any[] = [];
+      let plantoesData: any[] = [];
+      let empresasData: any[] = [];
 
-      const ranking = Array.from(escalaMap.entries())
+      if (filters.viewType === 'coordenador') {
+        const coordIds = [...new Set(escalasData?.map(e => (e as any).id_coordenador).filter(Boolean))];
+        if (coordIds.length > 0) {
+          const { data } = await supabase
+            .from('coordenador')
+            .select('id_coordenador, nome')
+            .in('id_coordenador', coordIds);
+          coordenadoresData = data || [];
+        }
+      } else if (filters.viewType === 'plantao') {
+        const plantaoIds = [...new Set(escalasData?.map(e => (e as any).id_plantao).filter(Boolean))];
+        if (plantaoIds.length > 0) {
+          const { data } = await supabase
+            .from('plantao')
+            .select('id_plantao, nome')
+            .in('id_plantao', plantaoIds);
+          plantoesData = data || [];
+        }
+      } else if (filters.viewType === 'empresa') {
+        const plantaoIds = [...new Set(escalasData?.map(e => (e as any).id_plantao).filter(Boolean))];
+        if (plantaoIds.length > 0) {
+          const { data: plantoes } = await supabase
+            .from('plantao')
+            .select('id_plantao, id_empresa')
+            .in('id_plantao', plantaoIds);
+          
+          const empresaIds = [...new Set(plantoes?.map(p => (p as any).id_empresa).filter(Boolean))];
+          if (empresaIds.length > 0) {
+            const { data } = await supabase
+              .from('empresa')
+              .select('id_empresa, nome')
+              .in('id_empresa', empresaIds);
+            empresasData = data || [];
+          }
+          plantoesData = plantoes || [];
+        }
+      }
+
+      // Entity ranking based on view type
+      let entityMap: Map<string, { name: string; confirmados: number; total: number }>;
+
+      if (filters.viewType === 'coordenador') {
+        entityMap = new Map();
+        respostas.forEach((resposta: any) => {
+          const escala = escalasData?.find(e => (e as any).idescala === resposta.idescala);
+          if (escala && (escala as any).id_coordenador) {
+            const coordId = (escala as any).id_coordenador;
+            if (!entityMap.has(coordId)) {
+              const coord = coordenadoresData.find(c => c.id_coordenador === coordId);
+              entityMap.set(coordId, {
+                name: coord?.nome || 'Coordenador Desconhecido',
+                confirmados: 0,
+                total: 0
+              });
+            }
+            const data = entityMap.get(coordId)!;
+            data.total++;
+            if (resposta.status === '1') data.confirmados++;
+          }
+        });
+      } else if (filters.viewType === 'plantao') {
+        entityMap = new Map();
+        respostas.forEach((resposta: any) => {
+          const escala = escalasData?.find(e => (e as any).idescala === resposta.idescala);
+          if (escala && (escala as any).id_plantao) {
+            const plantaoId = (escala as any).id_plantao;
+            if (!entityMap.has(plantaoId)) {
+              const plantao = plantoesData.find(p => p.id_plantao === plantaoId);
+              entityMap.set(plantaoId, {
+                name: plantao?.nome || 'Plantão Desconhecido',
+                confirmados: 0,
+                total: 0
+              });
+            }
+            const data = entityMap.get(plantaoId)!;
+            data.total++;
+            if (resposta.status === '1') data.confirmados++;
+          }
+        });
+      } else if (filters.viewType === 'empresa') {
+        entityMap = new Map();
+        respostas.forEach((resposta: any) => {
+          const escala = escalasData?.find(e => (e as any).idescala === resposta.idescala);
+          if (escala && (escala as any).id_plantao) {
+            const plantao = plantoesData.find(p => p.id_plantao === (escala as any).id_plantao);
+            if (plantao && plantao.id_empresa) {
+              const empresaId = plantao.id_empresa;
+              if (!entityMap.has(empresaId)) {
+                const empresa = empresasData.find(e => e.id_empresa === empresaId);
+                entityMap.set(empresaId, {
+                  name: empresa?.nome || 'Empresa Desconhecida',
+                  confirmados: 0,
+                  total: 0
+                });
+              }
+              const data = entityMap.get(empresaId)!;
+              data.total++;
+              if (resposta.status === '1') data.confirmados++;
+            }
+          }
+        });
+      } else {
+        // 'all' - group by escala (default)
+        entityMap = new Map();
+        respostas.forEach((resposta: any) => {
+          const escalaId = resposta.idescala.toString();
+          if (!entityMap.has(escalaId)) {
+            const escalaInfo = escalasData?.find(e => (e as any).idescala === resposta.idescala);
+            entityMap.set(escalaId, {
+              name: escalaInfo ? (escalaInfo as any).nomepessoaescala : `Escala ${resposta.idescala}`,
+              confirmados: 0,
+              total: 0
+            });
+          }
+          const data = entityMap.get(escalaId)!;
+          data.total++;
+          if (resposta.status === '1') data.confirmados++;
+        });
+      }
+
+      const ranking = Array.from(entityMap.entries())
         .map(([id, data]) => ({
-          id,
+          id: parseInt(id) || 0,
           name: data.name,
           confirmados: data.confirmados,
           total: data.total,
@@ -156,11 +263,16 @@ export const useDashboardData = (filters: DashboardFilters) => {
       setEntityRanking(ranking);
 
       // Top performers (based on confirmation rate)
-      const topPerformersData = Array.from(escalaMap.entries())
+      const entityTypeLabel = 
+        filters.viewType === 'coordenador' ? 'Coordenador' :
+        filters.viewType === 'plantao' ? 'Plantão' :
+        filters.viewType === 'empresa' ? 'Empresa' : 'Escala';
+
+      const topPerformersData = Array.from(entityMap.entries())
         .map(([id, data]) => ({
           id: id.toString(),
           name: data.name,
-          entity: 'Escala',
+          entity: entityTypeLabel,
           presencaRate: data.total > 0 ? (data.confirmados / data.total) * 100 : 0,
           totalDays: data.total,
           presentDays: data.confirmados
@@ -210,7 +322,7 @@ export const useDashboardData = (filters: DashboardFilters) => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filters.startDate, filters.endDate]);
+  }, [filters.startDate, filters.endDate, filters.viewType]);
 
   const refetch = () => {
     fetchDashboardData();

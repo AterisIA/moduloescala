@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 const Dashboard = () => {
   const [filters, setFilters] = useState<Filters>({
     startDate: subDays(new Date(), 30),
-    endDate: new Date()
+    endDate: new Date(),
+    viewType: 'all'
   });
 
   const {

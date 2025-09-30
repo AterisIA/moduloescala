@@ -1,9 +1,10 @@
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardFilters as Filters } from "@/types/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,25 @@ interface DashboardFiltersProps {
 export const DashboardFilters = ({ filters, onFiltersChange }: DashboardFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 p-4 bg-card rounded-lg border shadow-sm">
+      <div className="flex-1">
+        <label className="text-sm font-medium mb-2 block">Visualização</label>
+        <Select 
+          value={filters.viewType} 
+          onValueChange={(value) => onFiltersChange({ ...filters, viewType: value as any })}
+        >
+          <SelectTrigger className="w-full">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as Escalas</SelectItem>
+            <SelectItem value="coordenador">Por Coordenador</SelectItem>
+            <SelectItem value="empresa">Por Empresa</SelectItem>
+            <SelectItem value="plantao">Por Plantão</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex-1">
         <label className="text-sm font-medium mb-2 block">Data Início</label>
         <Popover>
