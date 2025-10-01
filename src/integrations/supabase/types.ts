@@ -187,18 +187,57 @@ export type Database = {
         }
         Relationships: []
       }
+      contatos_terceirizacao: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coordenador: {
         Row: {
           id_coordenador: string
           nome: string
+          telefone: number | null
         }
         Insert: {
           id_coordenador?: string
           nome: string
+          telefone?: number | null
         }
         Update: {
           id_coordenador?: string
           nome?: string
+          telefone?: number | null
         }
         Relationships: []
       }
@@ -252,6 +291,7 @@ export type Database = {
           disparado_em: string | null
           horario: string
           id: number
+          id_coordenador: string | null
           id_disparo_relatorio: number
         }
         Insert: {
@@ -259,6 +299,7 @@ export type Database = {
           disparado_em?: string | null
           horario: string
           id?: number
+          id_coordenador?: string | null
           id_disparo_relatorio: number
         }
         Update: {
@@ -266,6 +307,7 @@ export type Database = {
           disparado_em?: string | null
           horario?: string
           id?: number
+          id_coordenador?: string | null
           id_disparo_relatorio?: number
         }
         Relationships: []
@@ -669,6 +711,42 @@ export type Database = {
         }
         Relationships: []
       }
+      relatorio_coordenador_log: {
+        Row: {
+          id_coordenador: string
+          id_disparo: string
+          payload: Json | null
+          response_body: string | null
+          response_status: number | null
+          scheduled_at: string
+          scheduled_local: string
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          id_coordenador: string
+          id_disparo: string
+          payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          scheduled_at: string
+          scheduled_local: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          id_coordenador?: string
+          id_disparo?: string
+          payload?: Json | null
+          response_body?: string | null
+          response_status?: number | null
+          scheduled_at?: string
+          scheduled_local?: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       resposta_comunicacao: {
         Row: {
           dtcomunicacao: string | null
@@ -827,7 +905,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_last_resposta_por_escala: {
+        Row: {
+          idescala: number | null
+          status_ultimo: number | null
+          ts_ultimo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resposta_comunicacao_idescala_fkey"
+            columns: ["idescala"]
+            isOneToOne: false
+            referencedRelation: "escala"
+            referencedColumns: ["idescala"]
+          },
+        ]
+      }
     }
     Functions: {
       associate_user_to_contact: {
@@ -923,7 +1016,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      dispatch_disparo_relatorio: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       dispatch_ping_due_communications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      dispatch_relatorio_coordenadores: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
