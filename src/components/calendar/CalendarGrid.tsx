@@ -117,7 +117,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           <div 
             key={date.toISOString()} 
             className={`calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b ${
-              isToday(date) ? 'bg-[hsl(var(--today))] text-white' : 
+              isToday(date) ? 'bg-primary text-primary-foreground' : 
               isPastDay(date) ? 'text-[hsl(var(--past-day))]' : 'text-foreground'
             }`}
           >
