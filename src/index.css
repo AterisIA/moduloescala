@@ -77,8 +77,8 @@ All colors MUST be HSL.
     --schedule-red: 0 90% 65%; /* work indicator - more vibrant */
     --schedule-gray: 215 25% 52%; /* rest indicator - more vibrant */
     --schedule-blue: 221 88% 58%; /* vacation indicator - more vibrant */
-    --today: 142 75% 50%; /* destaque para hoje */
-    --today-bg: 142 75% 50%; /* today background */
+    --today: 220 80% 45%; /* destaque para hoje - azul escuro vibrante */
+    --today-bg: 220 80% 45%; /* today background */
     --past-day: 215 25% 52%; /* dias passados */
 
     /* Responsive calendar variables */
