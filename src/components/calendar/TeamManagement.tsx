@@ -266,43 +266,47 @@ export function TeamManagement() {
               <Input placeholder="Buscar funcionários..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             
-            <Toggle
-              pressed={isMonochrome}
-              onPressedChange={setIsMonochrome}
-              aria-label="Alternar modo de cores"
-              className="shrink-0"
-            >
-              <Palette className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{isMonochrome ? "Monocromático" : "Colorido"}</span>
-              <span className="sm:hidden">{isMonochrome ? "Mono" : "Cor"}</span>
-            </Toggle>
-            
-            <Toggle
-              pressed={displayMode !== 'absolute'}
-              onPressedChange={() => {
-                setDisplayMode(prev => {
-                  if (prev === 'absolute') return 'percentage';
-                  if (prev === 'percentage') return 'hours';
-                  return 'absolute';
-                });
-              }}
-              aria-label="Alternar modo de exibição"
-              className="shrink-0"
-            >
-              {displayMode === 'absolute' && <Hash className="h-4 w-4 mr-2" />}
-              {displayMode === 'percentage' && <Percent className="h-4 w-4 mr-2" />}
-              {displayMode === 'hours' && <Clock className="h-4 w-4 mr-2" />}
-              <span className="hidden sm:inline">
-                {displayMode === 'absolute' && 'Números'}
-                {displayMode === 'percentage' && 'Percentual'}
-                {displayMode === 'hours' && 'Horas'}
-              </span>
-              <span className="sm:hidden">
-                {displayMode === 'absolute' && '#'}
-                {displayMode === 'percentage' && '%'}
-                {displayMode === 'hours' && 'h'}
-              </span>
-            </Toggle>
+            {selectedDepartment !== "Terceirizados" && (
+              <>
+                <Toggle
+                  pressed={isMonochrome}
+                  onPressedChange={setIsMonochrome}
+                  aria-label="Alternar modo de cores"
+                  className="shrink-0"
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{isMonochrome ? "Monocromático" : "Colorido"}</span>
+                  <span className="sm:hidden">{isMonochrome ? "Mono" : "Cor"}</span>
+                </Toggle>
+                
+                <Toggle
+                  pressed={displayMode !== 'absolute'}
+                  onPressedChange={() => {
+                    setDisplayMode(prev => {
+                      if (prev === 'absolute') return 'percentage';
+                      if (prev === 'percentage') return 'hours';
+                      return 'absolute';
+                    });
+                  }}
+                  aria-label="Alternar modo de exibição"
+                  className="shrink-0"
+                >
+                  {displayMode === 'absolute' && <Hash className="h-4 w-4 mr-2" />}
+                  {displayMode === 'percentage' && <Percent className="h-4 w-4 mr-2" />}
+                  {displayMode === 'hours' && <Clock className="h-4 w-4 mr-2" />}
+                  <span className="hidden sm:inline">
+                    {displayMode === 'absolute' && 'Números'}
+                    {displayMode === 'percentage' && 'Percentual'}
+                    {displayMode === 'hours' && 'Horas'}
+                  </span>
+                  <span className="sm:hidden">
+                    {displayMode === 'absolute' && '#'}
+                    {displayMode === 'percentage' && '%'}
+                    {displayMode === 'hours' && 'h'}
+                  </span>
+                </Toggle>
+              </>
+            )}
           </div>
         </div>
       </header>
