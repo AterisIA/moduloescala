@@ -260,13 +260,19 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
       };
 
       // Preparar dados de geo para envio
-      const geoData = geoLocation ? {
+      const geoData = geoLocation && geoLocation.status === 'ok' ? {
         lat: geoLocation.lat,
         lng: geoLocation.lng,
         accuracy: geoLocation.accuracy,
         timestamp: geoLocation.timestamp,
         status: geoLocation.status
-      } : null;
+      } : (geoLocation ? {
+        lat: null,
+        lng: null,
+        accuracy: null,
+        timestamp: null,
+        status: geoLocation.status
+      } : null);
 
       console.log("[Ponto] Chamando punch function com geo:", geoData);
       
