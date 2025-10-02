@@ -94,6 +94,47 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_logs: {
+        Row: {
+          created_at: string | null
+          device_info: Json | null
+          id: string
+          kiosk_id: string
+          punched_at: string
+          selfie_path: string
+          tipo: string
+          token_window: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: Json | null
+          id?: string
+          kiosk_id: string
+          punched_at?: string
+          selfie_path: string
+          tipo: string
+          token_window: string
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: Json | null
+          id?: string
+          kiosk_id?: string
+          punched_at?: string
+          selfie_path?: string
+          tipo?: string
+          token_window?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_logs_kiosk_id_fkey"
+            columns: ["kiosk_id"]
+            isOneToOne: false
+            referencedRelation: "kiosks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cadastros_evento: {
         Row: {
           codigo_funcionario: string
@@ -606,6 +647,36 @@ export type Database = {
           id?: string
           nome?: string
           telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      kiosks: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          id: string
+          local: string
+          nome: string
+          segredo_base32: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          local: string
+          nome: string
+          segredo_base32: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          id?: string
+          local?: string
+          nome?: string
+          segredo_base32?: string
           updated_at?: string | null
         }
         Relationships: []
