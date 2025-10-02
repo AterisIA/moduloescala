@@ -43,31 +43,12 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
         audio: false,
       });
 
-      console.log("[FaceEnroll] Permissão concedida, configurando stream...");
+      console.log("[FaceEnroll] Permissão concedida, mantendo stream e exibindo vídeo...");
       streamRef.current = stream;
+      // Renderizar o vídeo primeiro
+      setStep("capture1");
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
-        
-        // Tentar reproduzir imediatamente
-        try {
-          await videoRef.current.play();
-          console.log("[FaceEnroll] Câmera iniciada com sucesso");
-          setStep("capture1");
-        } catch (playError) {
-          console.error("[FaceEnroll] Erro ao reproduzir vídeo:", playError);
-          setError("Erro ao iniciar vídeo da câmera. Tente novamente.");
-          stopCamera();
-          setStep("idle");
-        }
-      } else {
-        console.error("[FaceEnroll] videoRef.current não existe");
-        setError("Erro ao acessar elemento de vídeo");
-        stopCamera();
-        setStep("idle");
-      }
+      // O binding do stream para o <video> ocorrerá no useEffect abaixo
     } catch (err: any) {
       console.error("[FaceEnroll] Erro ao acessar câmera:", err);
       setError(`Erro ao acessar câmera: ${err.message || 'Permita o acesso'}`);
@@ -172,6 +153,33 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   };
 
   const isCapturing = ["capture1", "capture2", "capture3"].includes(step);
+
+  // Vincular stream ao elemento de vídeo quando o vídeo estiver na tela
+  useEffect(() => {
+    if (!isCapturing) return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+
+    try {
+      if (video.srcObject !== stream) {
+        // @ts-ignore
+        video.srcObject = stream;
+      }
+      video.muted = true;
+      // @ts-ignore - playsInline é atributo, mas reforçamos aqui
+      video.playsInline = true;
+      video
+        .play()
+        .then(() => console.log("[FaceEnroll] Vídeo reproduzindo"))
+        .catch((err) => {
+          console.error("[FaceEnroll] Falha ao dar play no vídeo:", err);
+          setError("Não foi possível iniciar o vídeo da câmera.");
+        });
+    } catch (e) {
+      console.error("[FaceEnroll] Erro ao vincular stream ao vídeo:", e);
+    }
+  }, [isCapturing]);
 
   return (
     <div className="space-y-4">

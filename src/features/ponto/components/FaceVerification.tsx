@@ -34,28 +34,12 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         audio: false,
       });
 
-      console.log("[FaceVerify] Permissão concedida, configurando stream...");
+      console.log("[FaceVerify] Permissão concedida, exibindo vídeo...");
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
-        
-        // Tentar reproduzir imediatamente
-        try {
-          await videoRef.current.play();
-          console.log("[FaceVerify] Câmera iniciada com sucesso");
-          setStep("ready");
-          setError("");
-        } catch (playError) {
-          console.error("[FaceVerify] Erro ao reproduzir vídeo:", playError);
-          setError("Erro ao iniciar vídeo da câmera. Tente novamente.");
-        }
-      } else {
-        console.error("[FaceVerify] videoRef.current não existe");
-        setError("Erro ao acessar elemento de vídeo");
-      }
+      // Renderizar o vídeo primeiro
+      setStep("ready");
+      setError("");
+      // O binding do stream para o <video> ocorrerá no useEffect abaixo
     } catch (err: any) {
       console.error("[FaceVerify] Erro:", err);
       setError(`Erro ao acessar câmera: ${err.message || 'Permita o acesso'}`);
@@ -70,6 +54,32 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     }
   };
 
+  // Vincular stream ao elemento de vídeo quando o vídeo estiver na tela
+  useEffect(() => {
+    if (!(step === "ready" || step === "capturing")) return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+
+    try {
+      if (video.srcObject !== stream) {
+        // @ts-ignore
+        video.srcObject = stream;
+      }
+      video.muted = true;
+      // @ts-ignore
+      video.playsInline = true;
+      video
+        .play()
+        .then(() => console.log("[FaceVerify] Vídeo reproduzindo"))
+        .catch((err) => {
+          console.error("[FaceVerify] Falha ao dar play no vídeo:", err);
+          setError("Não foi possível iniciar o vídeo da câmera.");
+        });
+    } catch (e) {
+      console.error("[FaceVerify] Erro ao vincular stream ao vídeo:", e);
+    }
+  }, [step]);
   const captureImage = (): string | null => {
     if (!videoRef.current || !canvasRef.current) return null;
 
