@@ -307,29 +307,49 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       console.log('[FaceVerify] Iniciando geocodificação do endereço:', address);
       console.log('[FaceVerify] Localização atual:', { currentLat, currentLng });
       
-      // Geocodificar o endereço usando Nominatim (OpenStreetMap)
-      const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=br`;
-      console.log('[FaceVerify] URL de geocodificação:', geocodeUrl);
-      
-      const geocodeResponse = await fetch(geocodeUrl, {
-        headers: {
-          'User-Agent': 'ModuloEscala/1.0'
+      // Tentar diferentes formatos do endereço para melhorar a taxa de sucesso
+      const addressVariants = [
+        address, // Endereço completo
+        address.replace(/,\s*\d{5}-\d{3}/, ''), // Sem CEP
+        address.split(',')[0] + ', ' + address.split('-').pop()?.trim(), // Rua + Cidade
+        address.split('-').pop()?.trim() + ', Brasil', // Apenas cidade + país
+      ].filter(Boolean);
+
+      let geocodeData: any[] = [];
+      let successfulAddress = '';
+
+      // Tentar cada variante do endereço
+      for (const variant of addressVariants) {
+        console.log('[FaceVerify] Tentando geocodificar:', variant);
+        
+        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variant!)}&limit=1&countrycodes=br`;
+        
+        const geocodeResponse = await fetch(geocodeUrl, {
+          headers: {
+            'User-Agent': 'ModuloEscala/1.0'
+          }
+        });
+
+        if (!geocodeResponse.ok) {
+          console.error('[FaceVerify] Resposta não OK:', geocodeResponse.status);
+          continue;
         }
-      });
 
-      if (!geocodeResponse.ok) {
-        console.error('[FaceVerify] Resposta não OK:', geocodeResponse.status);
-        throw new Error('Falha ao geocodificar endereço');
+        const data = await geocodeResponse.json();
+        console.log('[FaceVerify] Dados recebidos para', variant, ':', data);
+        
+        if (data && data.length > 0) {
+          geocodeData = data;
+          successfulAddress = variant!;
+          break; // Encontrou resultado, sair do loop
+        }
       }
-
-      const geocodeData = await geocodeResponse.json();
-      console.log('[FaceVerify] Dados de geocodificação recebidos:', geocodeData);
       
       if (!geocodeData || geocodeData.length === 0) {
-        console.warn('[FaceVerify] Endereço não encontrado:', address);
+        console.warn('[FaceVerify] Endereço não encontrado após todas as tentativas:', address);
         toast({
-          title: "Endereço não encontrado",
-          description: "Não foi possível geocodificar o endereço cadastrado.",
+          title: "Endereço não geocodificado",
+          description: "Não foi possível determinar coordenadas do endereço. Verificação de local desabilitada.",
           variant: "destructive",
         });
         return {
@@ -343,25 +363,28 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       const addressLng = parseFloat(geocodeData[0].lon);
       const displayName = geocodeData[0].display_name;
 
-      console.log('[FaceVerify] Coordenadas do endereço:', { addressLat, addressLng, displayName });
+      console.log('[FaceVerify] Geocodificação bem-sucedida!');
+      console.log('[FaceVerify] Endereço usado:', successfulAddress);
+      console.log('[FaceVerify] Coordenadas encontradas:', { addressLat, addressLng });
+      console.log('[FaceVerify] Nome do local:', displayName);
 
       // Calcular distância usando fórmula de Haversine
       const distance = calculateDistance(currentLat, currentLng, addressLat, addressLng);
       
       const isInLocation = distance <= 200; // 200 metros de raio
 
-      console.log('[FaceVerify] Verificação de localização:', {
+      console.log('[FaceVerify] Resultado da verificação:', {
         currentLat,
         currentLng,
         addressLat,
         addressLng,
-        distance,
+        distance: Math.round(distance) + 'm',
         isInLocation,
-        raioMaximo: 200
+        raioMaximo: '200m'
       });
 
       toast({
-        title: isInLocation ? "No local de trabalho ✅" : "Fora do local ❌",
+        title: isInLocation ? "✅ No local de trabalho" : "❌ Fora do local",
         description: `Distância: ${Math.round(distance)}m do endereço cadastrado`,
         variant: isInLocation ? "default" : "destructive",
       });
