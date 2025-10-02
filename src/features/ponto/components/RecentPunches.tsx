@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, MapPin, User } from "lucide-react";
+import { Loader2, MapPin, User, CheckCircle2, XCircle } from "lucide-react";
 
 interface Punch {
   id: string;
@@ -25,6 +25,8 @@ interface Punch {
   face_users?: {
     nome: string;
     matricula: string | null;
+    latitude: number | null;
+    longitude: number | null;
   } | null;
 }
 
@@ -39,7 +41,7 @@ export function RecentPunches() {
         .select(`
           *,
           kiosks (nome, local),
-          face_users (nome, matricula)
+          face_users (nome, matricula, latitude, longitude)
         `)
         .order("punched_at", { ascending: false })
         .limit(20);
@@ -59,6 +61,56 @@ export function RecentPunches() {
       .from("attendance-selfies")
       .getPublicUrl(path);
     return data.publicUrl;
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
+  };
+
+  const getLocationBadge = (punch: Punch) => {
+    if (!punch.geo_lat || !punch.geo_lng) {
+      return <Badge variant="outline" className="text-xs">Sem GPS</Badge>;
+    }
+
+    if (!punch.face_users?.latitude || !punch.face_users?.longitude) {
+      return <Badge variant="secondary" className="text-xs">Sem cadastro</Badge>;
+    }
+
+    const distance = calculateDistance(
+      punch.geo_lat,
+      punch.geo_lng,
+      punch.face_users.latitude,
+      punch.face_users.longitude
+    );
+
+    const isWithinRadius = distance <= 200;
+
+    if (isWithinRadius) {
+      return (
+        <Badge variant="default" className="text-xs flex items-center gap-1 bg-green-600">
+          <CheckCircle2 className="h-3 w-3" />
+          Dentro do raio ({Math.round(distance)}m)
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="destructive" className="text-xs flex items-center gap-1">
+          <XCircle className="h-3 w-3" />
+          Fora do raio ({Math.round(distance)}m)
+        </Badge>
+      );
+    }
   };
 
   const getGeoStatusBadge = (status: string | null) => {
@@ -153,6 +205,7 @@ export function RecentPunches() {
                     <td className="p-3">
                       {punch.geo_lat && punch.geo_lng ? (
                         <div className="space-y-1">
+                          {getLocationBadge(punch)}
                           {getGeoStatusBadge(punch.geo_status)}
                           <div className="text-xs text-muted-foreground">
                             ±{Math.round(punch.geo_accuracy || 0)}m
