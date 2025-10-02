@@ -32,35 +32,45 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   }, []);
 
   const startCamera = async () => {
+    console.log("[FaceEnroll] Iniciando câmera...");
     setStep("loading");
     setError("");
     
     try {
+      console.log("[FaceEnroll] Solicitando permissão da câmera...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
         audio: false,
       });
 
+      console.log("[FaceEnroll] Permissão concedida, configurando stream...");
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
         
-        // Garantir que o vídeo inicie
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().then(() => {
-            console.log("[FaceEnroll] Câmera iniciada");
-            setStep("capture1");
-          }).catch((playError) => {
-            console.error("[FaceEnroll] Erro ao reproduzir vídeo:", playError);
-            setError("Erro ao iniciar vídeo da câmera");
-            stopCamera();
-          });
-        };
+        // Tentar reproduzir imediatamente
+        try {
+          await videoRef.current.play();
+          console.log("[FaceEnroll] Câmera iniciada com sucesso");
+          setStep("capture1");
+        } catch (playError) {
+          console.error("[FaceEnroll] Erro ao reproduzir vídeo:", playError);
+          setError("Erro ao iniciar vídeo da câmera. Tente novamente.");
+          stopCamera();
+          setStep("idle");
+        }
+      } else {
+        console.error("[FaceEnroll] videoRef.current não existe");
+        setError("Erro ao acessar elemento de vídeo");
+        stopCamera();
+        setStep("idle");
       }
     } catch (err: any) {
       console.error("[FaceEnroll] Erro ao acessar câmera:", err);
-      setError("Erro ao acessar câmera. Permita o acesso nas configurações do navegador.");
+      setError(`Erro ao acessar câmera: ${err.message || 'Permita o acesso'}`);
       setStep("idle");
     }
   };

@@ -26,32 +26,39 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
   }, []);
 
   const initializeCamera = async () => {
+    console.log("[FaceVerify] Iniciando câmera...");
     try {
+      console.log("[FaceVerify] Solicitando permissão da câmera...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
         audio: false,
       });
 
+      console.log("[FaceVerify] Permissão concedida, configurando stream...");
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
         
-        // Garantir que o vídeo inicie
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().then(() => {
-            console.log("[FaceVerify] Câmera iniciada");
-            setStep("ready");
-            setError("");
-          }).catch((playError) => {
-            console.error("[FaceVerify] Erro ao reproduzir vídeo:", playError);
-            setError("Erro ao iniciar vídeo da câmera");
-          });
-        };
+        // Tentar reproduzir imediatamente
+        try {
+          await videoRef.current.play();
+          console.log("[FaceVerify] Câmera iniciada com sucesso");
+          setStep("ready");
+          setError("");
+        } catch (playError) {
+          console.error("[FaceVerify] Erro ao reproduzir vídeo:", playError);
+          setError("Erro ao iniciar vídeo da câmera. Tente novamente.");
+        }
+      } else {
+        console.error("[FaceVerify] videoRef.current não existe");
+        setError("Erro ao acessar elemento de vídeo");
       }
     } catch (err: any) {
       console.error("[FaceVerify] Erro:", err);
-      setError(err.message || "Erro ao inicializar câmera");
+      setError(`Erro ao acessar câmera: ${err.message || 'Permita o acesso'}`);
       setStep("ready");
     }
   };
