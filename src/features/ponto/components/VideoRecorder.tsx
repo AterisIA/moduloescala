@@ -15,6 +15,7 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -25,18 +26,46 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
 
     const startCamera = async () => {
       try {
+        console.log("[Ponto] Solicitando acesso à câmera frontal...");
+        
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: 640, height: 480 },
+          video: { 
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
           audio: false,
         });
 
+        console.log("[Ponto] Acesso à câmera concedido");
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().then(() => {
+              console.log("[Ponto] Vídeo iniciado");
+              setLoading(false);
+            }).catch(err => {
+              console.error("[Ponto] Erro ao iniciar vídeo:", err);
+              setError("Erro ao iniciar câmera. Recarregue a página.");
+              setLoading(false);
+            });
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("[Ponto] Erro ao acessar câmera:", err);
-        setError("Não foi possível acessar a câmera");
+        setLoading(false);
+        
+        if (err.name === "NotAllowedError") {
+          setError("Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador.");
+        } else if (err.name === "NotFoundError") {
+          setError("Nenhuma câmera encontrada no dispositivo.");
+        } else if (err.name === "NotReadableError") {
+          setError("Câmera está sendo usada por outro aplicativo.");
+        } else {
+          setError(`Erro ao acessar câmera: ${err.message}`);
+        }
       }
     };
 
@@ -163,12 +192,20 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
         </Alert>
       )}
 
-      <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+      {loading && (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Iniciando câmera...</span>
+        </div>
+      )}
+
+      <div className={`relative rounded-lg overflow-hidden bg-black aspect-video ${loading ? 'hidden' : ''}`}>
         <video
           ref={videoRef}
           className="w-full h-full object-cover mirror"
           playsInline
           muted
+          autoPlay
         />
         
         {countdown > 0 && countdown < 3 && (
@@ -189,26 +226,30 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
         )}
       </div>
 
-      <Alert>
-        <Camera className="h-4 w-4" />
-        <AlertDescription>
-          Mexa a cabeça lentamente durante a gravação (3 segundos)
-        </AlertDescription>
-      </Alert>
+      {!loading && (
+        <>
+          <Alert>
+            <Camera className="h-4 w-4" />
+            <AlertDescription>
+              Mexa a cabeça lentamente durante a gravação (3 segundos)
+            </AlertDescription>
+          </Alert>
 
-      <div className="flex gap-2">
-        <Button
-          onClick={startRecording}
-          disabled={isRecording || isProcessing || countdown > 0}
-          className="flex-1"
-        >
-          {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isProcessing ? "Processando..." : "Iniciar Gravação"}
-        </Button>
-        <Button variant="outline" onClick={onCancel} disabled={isRecording || isProcessing}>
-          Cancelar
-        </Button>
-      </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={startRecording}
+              disabled={isRecording || isProcessing || countdown > 0 || loading}
+              className="flex-1"
+            >
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isProcessing ? "Processando..." : "Iniciar Gravação"}
+            </Button>
+            <Button variant="outline" onClick={onCancel} disabled={isRecording || isProcessing}>
+              Cancelar
+            </Button>
+          </div>
+        </>
+      )}
 
       <style>{`
         .mirror {

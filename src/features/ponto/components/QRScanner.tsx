@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Camera } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import jsQR from "jsqr";
 
 interface QRScannerProps {
@@ -12,6 +12,8 @@ export function QRScanner({ onScanned }: QRScannerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string>("");
   const [scanning, setScanning] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const scannedRef = useRef(false);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -19,38 +21,76 @@ export function QRScanner({ onScanned }: QRScannerProps) {
 
     const startCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
+        console.log("[Ponto] Solicitando acesso à câmera...");
+        
+        // Tentar diferentes configurações de câmera
+        const constraints = {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log("[Ponto] Acesso à câmera concedido");
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setScanning(true);
-          scanQR();
+          
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().then(() => {
+              console.log("[Ponto] Vídeo iniciado");
+              setLoading(false);
+              setScanning(true);
+              scanQR();
+            }).catch(err => {
+              console.error("[Ponto] Erro ao iniciar vídeo:", err);
+              setError("Erro ao iniciar câmera. Recarregue a página.");
+              setLoading(false);
+            });
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("[Ponto] Erro ao acessar câmera:", err);
-        setError("Não foi possível acessar a câmera");
+        setLoading(false);
+        
+        if (err.name === "NotAllowedError") {
+          setError("Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador.");
+        } else if (err.name === "NotFoundError") {
+          setError("Nenhuma câmera encontrada no dispositivo.");
+        } else if (err.name === "NotReadableError") {
+          setError("Câmera está sendo usada por outro aplicativo.");
+        } else {
+          setError(`Erro ao acessar câmera: ${err.message}`);
+        }
       }
     };
 
     const scanQR = () => {
-      if (!videoRef.current || !canvasRef.current) return;
+      if (!videoRef.current || !canvasRef.current || scannedRef.current) return;
 
+      const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
-      if (!context) return;
+      
+      if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        animationId = requestAnimationFrame(scanQR);
+        return;
+      }
 
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-      context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
 
-      if (code) {
+      if (code && !scannedRef.current) {
         console.log("[Ponto] QR Code detectado:", code.data);
+        scannedRef.current = true;
         onScanned(code.data);
         return;
       }
@@ -78,24 +118,35 @@ export function QRScanner({ onScanned }: QRScannerProps) {
         </Alert>
       ) : (
         <>
-          <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+          {loading && (
+            <div className="flex items-center justify-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Iniciando câmera...</span>
+            </div>
+          )}
+          
+          <div className={`relative rounded-lg overflow-hidden bg-black aspect-video ${loading ? 'hidden' : ''}`}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
               playsInline
               muted
+              autoPlay
             />
             {scanning && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="border-4 border-primary w-64 h-64 rounded-lg animate-pulse" />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="border-4 border-primary w-64 h-64 rounded-lg animate-pulse shadow-lg" />
               </div>
             )}
           </div>
           <canvas ref={canvasRef} className="hidden" />
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Camera className="h-4 w-4" />
-            <span>Aponte a câmera para o QR Code</span>
-          </div>
+          
+          {!loading && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Camera className="h-4 w-4" />
+              <span>Aponte a câmera para o QR Code</span>
+            </div>
+          )}
         </>
       )}
     </div>
