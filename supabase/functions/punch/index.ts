@@ -74,9 +74,9 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse body
-    const { token, selfie_path, device_info } = await req.json();
+    const { token, selfie_path, device_info, geo } = await req.json();
 
-    console.log("[punch] Dados recebidos:", { selfie_path, device_info });
+    console.log("[punch] Dados recebidos:", { selfie_path, device_info, geo });
 
     if (!token) {
       return new Response(
@@ -242,7 +242,55 @@ serve(async (req) => {
       ? "ENTRADA" 
       : "SAÍDA";
 
-    // Gravar log
+    // Validar e processar geolocalização
+    let geoData: any = {
+      geo_lat: null,
+      geo_lng: null,
+      geo_accuracy: null,
+      geo_timestamp: null,
+      geo_status: geo?.status || null,
+      geo_provider: 'html5',
+    };
+
+    if (geo && geo.status === 'ok' && geo.lat !== null && geo.lng !== null) {
+      // Validar plausibilidade
+      const lat = parseFloat(geo.lat);
+      const lng = parseFloat(geo.lng);
+      const accuracy = parseFloat(geo.accuracy);
+      const geoTimestamp = parseInt(geo.timestamp);
+
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        console.warn('[punch] Coordenadas inválidas:', { lat, lng });
+        geoData.geo_status = 'error';
+      } else if (isNaN(accuracy) || accuracy > 1000) {
+        console.warn('[punch] Precisão baixa:', accuracy);
+        geoData.geo_lat = lat;
+        geoData.geo_lng = lng;
+        geoData.geo_accuracy = accuracy;
+        geoData.geo_timestamp = new Date(geoTimestamp).toISOString();
+        geoData.geo_status = 'low-accuracy';
+      } else {
+        // Verificar se timestamp não é muito antigo (5 minutos)
+        const now = Date.now();
+        const ageMs = now - geoTimestamp;
+        if (ageMs > 5 * 60 * 1000) {
+          console.warn('[punch] Geolocalização antiga:', ageMs / 1000, 'segundos');
+          geoData.geo_status = 'stale';
+        }
+
+        geoData.geo_lat = lat;
+        geoData.geo_lng = lng;
+        geoData.geo_accuracy = accuracy;
+        geoData.geo_timestamp = new Date(geoTimestamp).toISOString();
+        if (!geoData.geo_status || geoData.geo_status === 'ok') {
+          geoData.geo_status = 'ok';
+        }
+      }
+    }
+
+    console.log('[punch] Dados de geo a serem salvos:', geoData);
+
+    // Gravar log com geolocalização
     const { data: log, error: insertError } = await supabase
       .from("attendance_logs")
       .insert({
@@ -251,6 +299,7 @@ serve(async (req) => {
         selfie_path,
         device_info,
         token_window: payload.w,
+        ...geoData,
       })
       .select()
       .single();

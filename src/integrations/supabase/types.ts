@@ -98,6 +98,12 @@ export type Database = {
         Row: {
           created_at: string | null
           device_info: Json | null
+          geo_accuracy: number | null
+          geo_lat: number | null
+          geo_lng: number | null
+          geo_provider: string | null
+          geo_status: string | null
+          geo_timestamp: string | null
           id: string
           kiosk_id: string
           punched_at: string
@@ -108,6 +114,12 @@ export type Database = {
         Insert: {
           created_at?: string | null
           device_info?: Json | null
+          geo_accuracy?: number | null
+          geo_lat?: number | null
+          geo_lng?: number | null
+          geo_provider?: string | null
+          geo_status?: string | null
+          geo_timestamp?: string | null
           id?: string
           kiosk_id: string
           punched_at?: string
@@ -118,6 +130,12 @@ export type Database = {
         Update: {
           created_at?: string | null
           device_info?: Json | null
+          geo_accuracy?: number | null
+          geo_lat?: number | null
+          geo_lng?: number | null
+          geo_provider?: string | null
+          geo_status?: string | null
+          geo_timestamp?: string | null
           id?: string
           kiosk_id?: string
           punched_at?: string

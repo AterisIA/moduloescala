@@ -1,13 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface VideoRecorderProps {
   token: string;
   onComplete: (success: boolean, data?: any) => void;
   onCancel: () => void;
+}
+
+interface GeoLocation {
+  lat: number | null;
+  lng: number | null;
+  accuracy: number | null;
+  timestamp: number | null;
+  status: "ok" | "denied" | "timeout" | "unavailable" | "error";
 }
 
 export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProps) {
@@ -16,6 +25,8 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [geoLocation, setGeoLocation] = useState<GeoLocation | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -78,8 +89,90 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
     };
   }, []);
 
+  const captureGeolocation = async (): Promise<GeoLocation> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.log("[Ponto] Geolocalização não disponível");
+        resolve({
+          lat: null,
+          lng: null,
+          accuracy: null,
+          timestamp: null,
+          status: "unavailable"
+        });
+        return;
+      }
+
+      setGeoLoading(true);
+      console.log("[Ponto] Solicitando geolocalização...");
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("[Ponto] Geolocalização obtida:", position.coords);
+          setGeoLoading(false);
+          
+          const geo: GeoLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp,
+            status: "ok"
+          };
+          
+          setGeoLocation(geo);
+          toast({
+            title: "Localização capturada",
+            description: `Precisão: ${Math.round(position.coords.accuracy)}m`,
+          });
+          
+          resolve(geo);
+        },
+        (error) => {
+          console.error("[Ponto] Erro ao obter geolocalização:", error);
+          setGeoLoading(false);
+          
+          let status: GeoLocation["status"] = "error";
+          let message = "Não foi possível obter sua localização.";
+          
+          if (error.code === error.PERMISSION_DENIED) {
+            status = "denied";
+            message = "Permissão de localização negada. O ponto será registrado sem localização.";
+          } else if (error.code === error.TIMEOUT) {
+            status = "timeout";
+            message = "Tempo esgotado ao obter localização. O ponto será registrado sem localização.";
+          }
+          
+          const geo: GeoLocation = {
+            lat: null,
+            lng: null,
+            accuracy: null,
+            timestamp: null,
+            status
+          };
+          
+          setGeoLocation(geo);
+          toast({
+            title: "Localização não disponível",
+            description: message,
+            variant: "destructive",
+          });
+          
+          resolve(geo);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
+  };
+
   const startRecording = async () => {
     if (!videoRef.current?.srcObject) return;
+
+    // Capturar geolocalização antes de iniciar gravação
+    await captureGeolocation();
 
     setCountdown(3);
     const countdownInterval = setInterval(() => {
@@ -157,13 +250,14 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
         videoHeight: 480,
       };
 
-      console.log("[Ponto] Chamando punch function");
+      console.log("[Ponto] Chamando punch function com geo:", geoLocation);
       
       const { data, error: punchError } = await supabase.functions.invoke("punch", {
         body: {
           token,
           selfie_path: path,
           device_info: deviceInfo,
+          geo: geoLocation,
         },
       });
 
@@ -229,22 +323,43 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
       {!loading && (
         <>
           <Alert>
+            <MapPin className="h-4 w-4" />
+            <AlertDescription>
+              Para registrar sua localização, permita o acesso quando solicitado. 
+              Se não permitir, o ponto será registrado sem localização.
+            </AlertDescription>
+          </Alert>
+
+          <Alert>
             <Camera className="h-4 w-4" />
             <AlertDescription>
               Mexa a cabeça lentamente durante a gravação (3 segundos)
             </AlertDescription>
           </Alert>
 
+          {geoLocation && (
+            <Alert variant={geoLocation.status === "ok" ? "default" : "destructive"}>
+              <MapPin className="h-4 w-4" />
+              <AlertDescription>
+                {geoLocation.status === "ok" 
+                  ? `Localização: ${geoLocation.lat?.toFixed(5)}, ${geoLocation.lng?.toFixed(5)} (±${Math.round(geoLocation.accuracy || 0)}m)`
+                  : `Status: ${geoLocation.status}`
+                }
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex gap-2">
             <Button
               onClick={startRecording}
-              disabled={isRecording || isProcessing || countdown > 0 || loading}
+              disabled={isRecording || isProcessing || countdown > 0 || loading || geoLoading}
               className="flex-1"
             >
+              {geoLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isProcessing ? "Processando..." : "Iniciar Gravação"}
+              {geoLoading ? "Obtendo localização..." : isProcessing ? "Processando..." : "Iniciar Gravação"}
             </Button>
-            <Button variant="outline" onClick={onCancel} disabled={isRecording || isProcessing}>
+            <Button variant="outline" onClick={onCancel} disabled={isRecording || isProcessing || geoLoading}>
               Cancelar
             </Button>
           </div>
