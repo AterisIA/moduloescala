@@ -250,14 +250,23 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
         videoHeight: 480,
       };
 
-      console.log("[Ponto] Chamando punch function com geo:", geoLocation);
+      // Preparar dados de geo para envio
+      const geoData = geoLocation ? {
+        lat: geoLocation.lat,
+        lng: geoLocation.lng,
+        accuracy: geoLocation.accuracy,
+        timestamp: geoLocation.timestamp,
+        status: geoLocation.status
+      } : null;
+
+      console.log("[Ponto] Chamando punch function com geo:", geoData);
       
       const { data, error: punchError } = await supabase.functions.invoke("punch", {
         body: {
           token,
           selfie_path: path,
           device_info: deviceInfo,
-          geo: geoLocation,
+          geo: geoData,
         },
       });
 
