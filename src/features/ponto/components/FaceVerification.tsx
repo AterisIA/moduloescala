@@ -7,7 +7,15 @@ import { toast } from "@/hooks/use-toast";
 
 interface FaceVerificationProps {
   token: string;
-  onComplete: (success: boolean, data?: any) => void;
+  onComplete: (success: boolean, data?: {
+    match: boolean;
+    face_user_id?: string;
+    nome?: string;
+    similarity_score?: number;
+    latitude?: number;
+    longitude?: number;
+    message?: string;
+  }) => void;
   onCancel: () => void;
 }
 
@@ -230,61 +238,20 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       console.log("[FaceVerify] Resultado:", verifyData);
 
       if (verifyData.match) {
-        // Match encontrado - chamar punch
-        const geoData = geo.status === "ok" ? {
-          lat: geo.lat,
-          lng: geo.lng,
-          accuracy: geo.accuracy,
-          timestamp: geo.timestamp,
-          status: geo.status
-        } : {
-          status: geo.status
-        };
-
-        console.log("[FaceVerify] Enviando punch com geo:", geoData);
-
-        const { data: punchData, error: punchError } = await supabase.functions.invoke("punch", {
-          body: {
-            token,
-            face_user_id: verifyData.face_user_id,
-            face_confidence: verifyData.similarity_score,
-            device_info: {
-              userAgent: navigator.userAgent,
-            },
-            geo: geoData,
-          },
-        });
-
-        if (punchError) throw punchError;
-
-        if (!punchData?.ok) {
-          throw new Error(punchData?.message || "Erro ao registrar ponto");
-        }
-
-        console.log("[FaceVerify] Ponto registrado:", punchData);
-
-        // Verificar localização se houver coordenadas cadastradas
-        let locationResult: LocationCheckResult | null = null;
-        if (verifyData.latitude && verifyData.longitude && geo.status === "ok" && geo.lat && geo.lng) {
-          console.log('[FaceVerify] Verificando localização por coordenadas...');
-          locationResult = checkLocationByCoordinates(
-            geo.lat,
-            geo.lng,
-            verifyData.latitude,
-            verifyData.longitude
-          );
-          setLocationCheck(locationResult);
-        }
-
+        // Match encontrado - retornar dados de verificação para próxima etapa (liveness)
+        console.log("[FaceVerify] Match encontrado, retornando dados de verificação");
         onComplete(true, {
-          ...punchData,
+          match: true,
+          face_user_id: verifyData.face_user_id,
           nome: verifyData.nome,
-          confidence: verifyData.similarity_score,
-          locationCheck: locationResult,
+          similarity_score: verifyData.similarity_score,
+          latitude: verifyData.latitude,
+          longitude: verifyData.longitude,
         });
       } else {
         // Sem match
         onComplete(false, {
+          match: false,
           message: "Rosto não reconhecido. Realize seu cadastro primeiro.",
         });
       }
@@ -292,6 +259,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     } catch (err: any) {
       console.error("[FaceVerify] Erro:", err);
       onComplete(false, {
+        match: false,
         message: err.message || "Erro ao verificar rosto",
       });
     } finally {

@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRScanner } from "../components/QRScanner";
 import { FaceVerification } from "../components/FaceVerification";
+import { VideoRecorder } from "../components/VideoRecorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, User } from "lucide-react";
 
-type Step = "scan" | "verify" | "success" | "error";
+type Step = "scan" | "verify" | "liveness" | "success" | "error";
 
 interface PunchResult {
   tipo: string;
@@ -20,11 +21,22 @@ interface PunchResult {
   };
 }
 
+interface VerificationData {
+  match: boolean;
+  face_user_id?: string;
+  nome?: string;
+  similarity_score?: number;
+  latitude?: number;
+  longitude?: number;
+  message?: string;
+}
+
 export default function BaterPonto() {
   const [step, setStep] = useState<Step>("scan");
   const [token, setToken] = useState<string>("");
   const [result, setResult] = useState<PunchResult | null>(null);
   const [error, setError] = useState<string>("");
+  const [verificationData, setVerificationData] = useState<VerificationData | null>(null);
 
   const handleQRScanned = (scannedToken: string) => {
     console.log("[Ponto] QR escaneado:", scannedToken);
@@ -32,9 +44,25 @@ export default function BaterPonto() {
     setStep("verify");
   };
 
-  const handleFaceVerified = async (success: boolean, data?: PunchResult) => {
+  const handleFaceVerified = async (success: boolean, data?: VerificationData) => {
+    if (success && data?.match) {
+      console.log("[Ponto] Face verificada, indo para liveness check");
+      setVerificationData(data);
+      setStep("liveness");
+    } else {
+      setError(data?.message || "Rosto não reconhecido");
+      setStep("error");
+    }
+  };
+
+  const handleLivenessComplete = async (success: boolean, data?: PunchResult) => {
     if (success && data) {
-      setResult(data);
+      console.log("[Ponto] Liveness e ponto registrado");
+      setResult({
+        ...data,
+        nome: verificationData?.nome,
+        confidence: verificationData?.similarity_score,
+      });
       setStep("success");
     } else {
       setError(data?.message || "Erro ao registrar ponto");
@@ -47,6 +75,7 @@ export default function BaterPonto() {
     setToken("");
     setResult(null);
     setError("");
+    setVerificationData(null);
   };
 
   return (
@@ -61,12 +90,14 @@ export default function BaterPonto() {
           <CardTitle>
             {step === "scan" && "Escaneie o QR Code"}
             {step === "verify" && "Verificação Facial"}
+            {step === "liveness" && "Verificação de Vida"}
             {step === "success" && "Ponto Registrado!"}
             {step === "error" && "Erro ao Registrar"}
           </CardTitle>
           <CardDescription>
             {step === "scan" && "Aponte a câmera para o QR Code do kiosque"}
             {step === "verify" && "Olhe diretamente para a câmera para verificação"}
+            {step === "liveness" && "Gire a cabeça lentamente durante a gravação"}
             {step === "success" && "Seu ponto foi registrado com sucesso"}
             {step === "error" && "Ocorreu um erro ao processar sua batida"}
           </CardDescription>
@@ -78,6 +109,14 @@ export default function BaterPonto() {
             <FaceVerification 
               token={token} 
               onComplete={handleFaceVerified}
+              onCancel={handleReset}
+            />
+          )}
+
+          {step === "liveness" && (
+            <VideoRecorder 
+              token={token}
+              onComplete={handleLivenessComplete}
               onCancel={handleReset}
             />
           )}

@@ -11,6 +11,12 @@ interface VideoRecorderProps {
   onCancel: () => void;
 }
 
+interface LocationCheckResult {
+  isInLocation: boolean;
+  distance: number;
+  address: string;
+}
+
 interface GeoLocation {
   lat: number | null;
   lng: number | null;
@@ -27,6 +33,7 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
   const [loading, setLoading] = useState(true);
   const [geoLocation, setGeoLocation] = useState<GeoLocation | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [locationCheck, setLocationCheck] = useState<LocationCheckResult | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -277,7 +284,24 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
       }
 
       console.log("[Ponto] Ponto registrado com sucesso:", data);
-      onComplete(true, data);
+      
+      // Verificar localização se houver coordenadas
+      let locationResult: LocationCheckResult | null = null;
+      if (data.face_user?.latitude && data.face_user?.longitude && geoLocation?.status === "ok" && geoLocation.lat && geoLocation.lng) {
+        console.log('[Ponto] Verificando localização por coordenadas...');
+        locationResult = checkLocationByCoordinates(
+          geoLocation.lat,
+          geoLocation.lng,
+          data.face_user.latitude,
+          data.face_user.longitude
+        );
+        setLocationCheck(locationResult);
+      }
+
+      onComplete(true, {
+        ...data,
+        locationCheck: locationResult,
+      });
       
     } catch (err: any) {
       console.error("[Ponto] Erro ao processar vídeo:", err);
@@ -285,6 +309,52 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const checkLocationByCoordinates = (
+    currentLat: number,
+    currentLng: number,
+    savedLat: number,
+    savedLng: number
+  ): LocationCheckResult => {
+    console.log('[Ponto] Coordenadas atuais:', { currentLat, currentLng });
+    console.log('[Ponto] Coordenadas cadastradas:', { savedLat, savedLng });
+
+    const distance = calculateDistance(currentLat, currentLng, savedLat, savedLng);
+    const isInLocation = distance <= 200;
+
+    console.log('[Ponto] Resultado da verificação:', {
+      distance: Math.round(distance) + 'm',
+      isInLocation,
+      raioMaximo: '200m'
+    });
+
+    toast({
+      title: isInLocation ? "✅ No local de trabalho" : "❌ Fora do local",
+      description: `Distância: ${Math.round(distance)}m do local cadastrado`,
+      variant: isInLocation ? "default" : "destructive",
+    });
+
+    return {
+      isInLocation,
+      distance,
+      address: `${savedLat}, ${savedLng}`
+    };
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3;
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
   };
 
   return (
@@ -354,6 +424,26 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
                   ? `Localização: ${geoLocation.lat?.toFixed(5)}, ${geoLocation.lng?.toFixed(5)} (±${Math.round(geoLocation.accuracy || 0)}m)`
                   : `Status: ${geoLocation.status}`
                 }
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {locationCheck && (
+            <Alert variant={locationCheck.isInLocation ? "default" : "destructive"}>
+              <MapPin className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Verificação de Local:</strong><br />
+                {locationCheck.isInLocation ? (
+                  <>
+                    ✅ <strong>No local de trabalho</strong><br />
+                    Distância: {locationCheck.distance.toFixed(0)}m do endereço cadastrado
+                  </>
+                ) : (
+                  <>
+                    ❌ <strong>Fora do local de trabalho</strong><br />
+                    Distância: {locationCheck.distance.toFixed(0)}m do endereço cadastrado (máx: 200m)
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           )}
