@@ -263,13 +263,15 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
         console.log("[FaceVerify] Ponto registrado:", punchData);
 
-        // Verificar localização se houver endereço profissional
+        // Verificar localização se houver coordenadas cadastradas
         let locationResult: LocationCheckResult | null = null;
-        if (verifyData.endereco_profissional && geo.status === "ok" && geo.lat && geo.lng) {
-          locationResult = await checkLocationMatch(
+        if (verifyData.latitude && verifyData.longitude && geo.status === "ok" && geo.lat && geo.lng) {
+          console.log('[FaceVerify] Verificando localização por coordenadas...');
+          locationResult = checkLocationByCoordinates(
             geo.lat,
             geo.lng,
-            verifyData.endereco_profissional
+            verifyData.latitude,
+            verifyData.longitude
           );
           setLocationCheck(locationResult);
         }
@@ -297,116 +299,40 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     }
   };
 
-  // Função para geocodificar endereço e calcular distância
-  const checkLocationMatch = async (
+  /**
+   * Verifica se o usuário está no local de trabalho comparando coordenadas diretas
+   */
+  const checkLocationByCoordinates = (
     currentLat: number,
     currentLng: number,
-    address: string
-  ): Promise<LocationCheckResult> => {
-    try {
-      console.log('[FaceVerify] Iniciando geocodificação do endereço:', address);
-      console.log('[FaceVerify] Localização atual:', { currentLat, currentLng });
-      
-      // Tentar diferentes formatos do endereço para melhorar a taxa de sucesso
-      const addressVariants = [
-        address, // Endereço completo
-        address.replace(/,\s*\d{5}-\d{3}/, ''), // Sem CEP
-        address.split(',')[0] + ', ' + address.split('-').pop()?.trim(), // Rua + Cidade
-        address.split('-').pop()?.trim() + ', Brasil', // Apenas cidade + país
-      ].filter(Boolean);
+    savedLat: number,
+    savedLng: number
+  ): LocationCheckResult => {
+    console.log('[FaceVerify] Coordenadas atuais:', { currentLat, currentLng });
+    console.log('[FaceVerify] Coordenadas cadastradas:', { savedLat, savedLng });
 
-      let geocodeData: any[] = [];
-      let successfulAddress = '';
+    // Calcular distância usando fórmula de Haversine
+    const distance = calculateDistance(currentLat, currentLng, savedLat, savedLng);
+    
+    const isInLocation = distance <= 200; // 200 metros de raio
 
-      // Tentar cada variante do endereço
-      for (const variant of addressVariants) {
-        console.log('[FaceVerify] Tentando geocodificar:', variant);
-        
-        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(variant!)}&limit=1&countrycodes=br`;
-        
-        const geocodeResponse = await fetch(geocodeUrl, {
-          headers: {
-            'User-Agent': 'ModuloEscala/1.0'
-          }
-        });
+    console.log('[FaceVerify] Resultado da verificação:', {
+      distance: Math.round(distance) + 'm',
+      isInLocation,
+      raioMaximo: '200m'
+    });
 
-        if (!geocodeResponse.ok) {
-          console.error('[FaceVerify] Resposta não OK:', geocodeResponse.status);
-          continue;
-        }
+    toast({
+      title: isInLocation ? "✅ No local de trabalho" : "❌ Fora do local",
+      description: `Distância: ${Math.round(distance)}m do local cadastrado`,
+      variant: isInLocation ? "default" : "destructive",
+    });
 
-        const data = await geocodeResponse.json();
-        console.log('[FaceVerify] Dados recebidos para', variant, ':', data);
-        
-        if (data && data.length > 0) {
-          geocodeData = data;
-          successfulAddress = variant!;
-          break; // Encontrou resultado, sair do loop
-        }
-      }
-      
-      if (!geocodeData || geocodeData.length === 0) {
-        console.warn('[FaceVerify] Endereço não encontrado após todas as tentativas:', address);
-        toast({
-          title: "Endereço não geocodificado",
-          description: "Não foi possível determinar coordenadas do endereço. Verificação de local desabilitada.",
-          variant: "destructive",
-        });
-        return {
-          isInLocation: false,
-          distance: -1,
-          address
-        };
-      }
-
-      const addressLat = parseFloat(geocodeData[0].lat);
-      const addressLng = parseFloat(geocodeData[0].lon);
-      const displayName = geocodeData[0].display_name;
-
-      console.log('[FaceVerify] Geocodificação bem-sucedida!');
-      console.log('[FaceVerify] Endereço usado:', successfulAddress);
-      console.log('[FaceVerify] Coordenadas encontradas:', { addressLat, addressLng });
-      console.log('[FaceVerify] Nome do local:', displayName);
-
-      // Calcular distância usando fórmula de Haversine
-      const distance = calculateDistance(currentLat, currentLng, addressLat, addressLng);
-      
-      const isInLocation = distance <= 200; // 200 metros de raio
-
-      console.log('[FaceVerify] Resultado da verificação:', {
-        currentLat,
-        currentLng,
-        addressLat,
-        addressLng,
-        distance: Math.round(distance) + 'm',
-        isInLocation,
-        raioMaximo: '200m'
-      });
-
-      toast({
-        title: isInLocation ? "✅ No local de trabalho" : "❌ Fora do local",
-        description: `Distância: ${Math.round(distance)}m do endereço cadastrado`,
-        variant: isInLocation ? "default" : "destructive",
-      });
-
-      return {
-        isInLocation,
-        distance,
-        address
-      };
-    } catch (err) {
-      console.error('[FaceVerify] Erro ao verificar localização:', err);
-      toast({
-        title: "Erro na verificação",
-        description: "Não foi possível verificar a localização",
-        variant: "destructive",
-      });
-      return {
-        isInLocation: false,
-        distance: -1,
-        address
-      };
-    }
+    return {
+      isInLocation,
+      distance,
+      address: `${savedLat}, ${savedLng}`
+    };
   };
 
   // Fórmula de Haversine para calcular distância entre dois pontos

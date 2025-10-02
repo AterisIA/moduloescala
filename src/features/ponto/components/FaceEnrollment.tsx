@@ -17,7 +17,7 @@ type CaptureStep = "idle" | "loading" | "capture1" | "capture2" | "capture3" | "
 export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
-  const [enderecoProfissional, setEnderecoProfissional] = useState("");
+  const [coordenadas, setCoordenadas] = useState(""); // Formato: "latitude, longitude"
   const [step, setStep] = useState<CaptureStep>("idle");
   const [error, setError] = useState("");
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -112,11 +112,30 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
     try {
       console.log("[FaceEnroll] Enviando para enroll-face");
 
+      // Parsear coordenadas (formato: "lat, lng")
+      let latitude = null;
+      let longitude = null;
+      
+      if (coordenadas && coordenadas.trim()) {
+        const parts = coordenadas.split(',').map(p => p.trim());
+        if (parts.length === 2) {
+          latitude = parseFloat(parts[0]);
+          longitude = parseFloat(parts[1]);
+          
+          if (isNaN(latitude) || isNaN(longitude)) {
+            throw new Error('Coordenadas inválidas. Use o formato: -23.432280, -46.826523');
+          }
+        } else {
+          throw new Error('Coordenadas inválidas. Use o formato: latitude, longitude');
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("enroll-face", {
         body: {
           nome: nome.trim(),
           matricula: matricula.trim() || null,
-          endereco_profissional: enderecoProfissional.trim() || null,
+          latitude,
+          longitude,
           images: images,
         },
       });
@@ -222,13 +241,16 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
           </div>
 
           <div>
-            <Label htmlFor="endereco">Endereço Profissional</Label>
+            <Label htmlFor="coordenadas">Coordenadas do Local de Trabalho</Label>
             <Input
-              id="endereco"
-              value={enderecoProfissional}
-              onChange={(e) => setEnderecoProfissional(e.target.value)}
-              placeholder="Rua, número, bairro, cidade (opcional)"
+              id="coordenadas"
+              value={coordenadas}
+              onChange={(e) => setCoordenadas(e.target.value)}
+              placeholder="Ex: -23.432280, -46.826523"
             />
+            <p className="text-xs text-muted-foreground">
+              Formato: latitude, longitude (separados por vírgula)
+            </p>
           </div>
 
           <Alert>

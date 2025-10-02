@@ -175,7 +175,7 @@ serve(async (req) => {
     // Buscar todos os cadastros faciais
     const { data: faceUsers, error: faceError } = await supabase
       .from('face_users')
-      .select('id, nome, matricula, endereco_profissional, description, image_paths');
+      .select('id, nome, matricula, latitude, longitude, description, image_paths');
 
     if (faceError) {
       console.error('[Verify] Erro ao buscar cadastros:', faceError);
@@ -320,7 +320,9 @@ Seja rigoroso na comparação. Confidence deve ser 0.85+ para match=true.`
         match: true,
         face_user_id: bestMatch.id,
         nome: bestMatch.nome,
-        endereco_profissional: matchedUser?.endereco_profissional || null,
+        matricula: matchedUser?.matricula || null,
+        latitude: matchedUser?.latitude || null,
+        longitude: matchedUser?.longitude || null,
         similarity_score: bestMatch.score
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

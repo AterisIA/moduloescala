@@ -652,6 +652,8 @@ export type Database = {
           facial_features: Json | null
           id: string
           image_paths: string[] | null
+          latitude: number | null
+          longitude: number | null
           matricula: string | null
           nome: string
         }
@@ -662,6 +664,8 @@ export type Database = {
           facial_features?: Json | null
           id?: string
           image_paths?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
           matricula?: string | null
           nome: string
         }
@@ -672,6 +676,8 @@ export type Database = {
           facial_features?: Json | null
           id?: string
           image_paths?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
           matricula?: string | null
           nome?: string
         }
