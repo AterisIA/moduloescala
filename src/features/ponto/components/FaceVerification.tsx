@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface FaceVerificationProps {
   token: string;
@@ -10,9 +11,19 @@ interface FaceVerificationProps {
   onCancel: () => void;
 }
 
+interface GeoLocation {
+  lat: number | null;
+  lng: number | null;
+  accuracy: number | null;
+  timestamp: number | null;
+  status: "ok" | "denied" | "timeout" | "unavailable" | "error";
+}
+
 export function FaceVerification({ token, onComplete, onCancel }: FaceVerificationProps) {
   const [step, setStep] = useState<"loading" | "ready" | "capturing" | "verifying">("loading");
   const [error, setError] = useState("");
+  const [geoLocation, setGeoLocation] = useState<GeoLocation | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -80,6 +91,86 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       console.error("[FaceVerify] Erro ao vincular stream ao vídeo:", e);
     }
   }, [step]);
+
+  const captureGeolocation = async (): Promise<GeoLocation> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.log("[FaceVerify] Geolocalização não disponível");
+        resolve({
+          lat: null,
+          lng: null,
+          accuracy: null,
+          timestamp: null,
+          status: "unavailable"
+        });
+        return;
+      }
+
+      setGeoLoading(true);
+      console.log("[FaceVerify] Solicitando geolocalização...");
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("[FaceVerify] Geolocalização obtida:", position.coords);
+          setGeoLoading(false);
+          
+          const geo: GeoLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp,
+            status: "ok"
+          };
+          
+          setGeoLocation(geo);
+          toast({
+            title: "Localização capturada",
+            description: `Precisão: ${Math.round(position.coords.accuracy)}m`,
+          });
+          
+          resolve(geo);
+        },
+        (error) => {
+          console.error("[FaceVerify] Erro ao obter geolocalização:", error);
+          setGeoLoading(false);
+          
+          let status: GeoLocation["status"] = "error";
+          let message = "Não foi possível obter sua localização.";
+          
+          if (error.code === error.PERMISSION_DENIED) {
+            status = "denied";
+            message = "Permissão de localização negada. O ponto será registrado sem localização.";
+          } else if (error.code === error.TIMEOUT) {
+            status = "timeout";
+            message = "Tempo esgotado ao obter localização. O ponto será registrado sem localização.";
+          }
+          
+          const geo: GeoLocation = {
+            lat: null,
+            lng: null,
+            accuracy: null,
+            timestamp: null,
+            status
+          };
+          
+          setGeoLocation(geo);
+          toast({
+            title: "Localização não disponível",
+            description: message,
+            variant: "destructive",
+          });
+          
+          resolve(geo);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
+  };
+
   const captureImage = (): string | null => {
     if (!videoRef.current || !canvasRef.current) return null;
 
@@ -100,6 +191,9 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     setError("");
 
     try {
+      // Capturar geolocalização primeiro
+      const geo = await captureGeolocation();
+
       const imageData = captureImage();
 
       if (!imageData) {
@@ -130,6 +224,18 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
       if (verifyData.match) {
         // Match encontrado - chamar punch
+        const geoData = geo.status === "ok" ? {
+          lat: geo.lat,
+          lng: geo.lng,
+          accuracy: geo.accuracy,
+          timestamp: geo.timestamp,
+          status: geo.status
+        } : {
+          status: geo.status
+        };
+
+        console.log("[FaceVerify] Enviando punch com geo:", geoData);
+
         const { data: punchData, error: punchError } = await supabase.functions.invoke("punch", {
           body: {
             token,
@@ -138,6 +244,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
             device_info: {
               userAgent: navigator.userAgent,
             },
+            geo: geoData,
           },
         });
 
@@ -198,22 +305,41 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
           </div>
 
           <Alert>
+            <MapPin className="h-4 w-4" />
+            <AlertDescription>
+              Para registrar sua localização, permita o acesso quando solicitado.
+            </AlertDescription>
+          </Alert>
+
+          <Alert>
             <Camera className="h-4 w-4" />
             <AlertDescription>
               Olhe diretamente para a câmera e clique em "Verificar Identidade"
             </AlertDescription>
           </Alert>
 
+          {geoLocation && (
+            <Alert variant={geoLocation.status === "ok" ? "default" : "destructive"}>
+              <MapPin className="h-4 w-4" />
+              <AlertDescription>
+                {geoLocation.status === "ok" 
+                  ? `Localização: ${geoLocation.lat?.toFixed(5)}, ${geoLocation.lng?.toFixed(5)} (±${Math.round(geoLocation.accuracy || 0)}m)`
+                  : `Status: ${geoLocation.status}`
+                }
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex gap-2">
             <Button
               onClick={handleCapture}
-              disabled={step === "capturing"}
+              disabled={step === "capturing" || geoLoading}
               className="flex-1"
             >
-              {step === "capturing" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {step === "capturing" ? "Capturando..." : "Verificar Identidade"}
+              {(step === "capturing" || geoLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {geoLoading ? "Obtendo localização..." : step === "capturing" ? "Capturando..." : "Verificar Identidade"}
             </Button>
-            <Button variant="outline" onClick={onCancel} disabled={step === "capturing"}>
+            <Button variant="outline" onClick={onCancel} disabled={step === "capturing" || geoLoading}>
               Cancelar
             </Button>
           </div>
