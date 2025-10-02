@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import * as faceapi from "face-api.js";
 
 interface FaceVerificationProps {
   token: string;
@@ -14,7 +13,6 @@ interface FaceVerificationProps {
 export function FaceVerification({ token, onComplete, onCancel }: FaceVerificationProps) {
   const [step, setStep] = useState<"loading" | "ready" | "capturing" | "verifying">("loading");
   const [error, setError] = useState("");
-  const [modelsLoaded, setModelsLoaded] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,20 +27,6 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
   const initializeCamera = async () => {
     try {
-      // Carregar modelos
-      console.log("[FaceVerify] Carregando modelos...");
-      const MODEL_URL = '/models';
-      
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      ]);
-      
-      setModelsLoaded(true);
-      console.log("[FaceVerify] Modelos carregados");
-
-      // Iniciar câmera
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
         audio: false,
@@ -57,7 +41,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       setStep("ready");
     } catch (err: any) {
       console.error("[FaceVerify] Erro:", err);
-      setError(err.message || "Erro ao inicializar");
+      setError(err.message || "Erro ao inicializar câmera");
       setStep("ready");
     }
   };
@@ -69,43 +53,31 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     }
   };
 
-  const handleCapture = async () => {
-    if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
+  const captureImage = (): string | null => {
+    if (!videoRef.current || !canvasRef.current) return null;
 
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.8);
+  };
+
+  const handleCapture = async () => {
     setStep("capturing");
     setError("");
 
     try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas context não disponível");
+      const imageData = captureImage();
 
-      ctx.drawImage(video, 0, 0);
-
-      // Detectar rosto e gerar embedding
-      const detection = await faceapi
-        .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      // Limpar canvas imediatamente
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (!detection) {
-        setError("Nenhum rosto detectado. Centralize seu rosto na câmera.");
-        setStep("ready");
-        return;
+      if (!imageData) {
+        throw new Error("Erro ao capturar imagem");
       }
-
-      const embedding = Array.from(detection.descriptor);
-
-      // Normalizar L2
-      const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-      const normalizedEmbedding = norm === 0 ? embedding : embedding.map(v => v / norm);
 
       setStep("verifying");
 
@@ -114,7 +86,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-face", {
         body: {
           token,
-          embedding: normalizedEmbedding,
+          image: imageData,
           device_info: {
             userAgent: navigator.userAgent,
           },
@@ -135,7 +107,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
           body: {
             token,
             face_user_id: verifyData.face_user_id,
-            face_confidence: verifyData.confidence,
+            face_confidence: verifyData.similarity_score,
             device_info: {
               userAgent: navigator.userAgent,
             },
@@ -152,7 +124,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         onComplete(true, {
           ...punchData,
           nome: verifyData.nome,
-          confidence: verifyData.confidence,
+          confidence: verifyData.similarity_score,
         });
       } else {
         // Sem match
@@ -201,18 +173,18 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
           <Alert>
             <Camera className="h-4 w-4" />
             <AlertDescription>
-              Olhe diretamente para a câmera e clique em "Verificar Rosto"
+              Olhe diretamente para a câmera e clique em "Verificar Identidade"
             </AlertDescription>
           </Alert>
 
           <div className="flex gap-2">
             <Button
               onClick={handleCapture}
-              disabled={step === "capturing" || !modelsLoaded}
+              disabled={step === "capturing"}
               className="flex-1"
             >
               {step === "capturing" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {step === "capturing" ? "Capturando..." : "Verificar Rosto"}
+              {step === "capturing" ? "Capturando..." : "Verificar Identidade"}
             </Button>
             <Button variant="outline" onClick={onCancel} disabled={step === "capturing"}>
               Cancelar
@@ -224,7 +196,8 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       {step === "verifying" && (
         <div className="flex flex-col items-center justify-center p-12 space-y-4">
           <Loader2 className="h-12 w-12 animate-spin" />
-          <p>Verificando rosto...</p>
+          <p>Verificando identidade com IA...</p>
+          <p className="text-sm text-muted-foreground">Isso pode levar alguns segundos</p>
         </div>
       )}
 

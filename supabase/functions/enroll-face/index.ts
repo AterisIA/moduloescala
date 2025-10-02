@@ -6,21 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Normalizar vetor L2
-function normalizeVector(vec: number[]): number[] {
-  const norm = Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
-  return norm === 0 ? vec : vec.map(v => v / norm);
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { nome, matricula, embedding } = await req.json();
+    const { nome, matricula, images } = await req.json();
 
-    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, embeddingSize: embedding?.length });
+    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, imageCount: images?.length });
 
     // Validações
     if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
@@ -34,47 +28,119 @@ serve(async (req) => {
       });
     }
 
-    if (!embedding || !Array.isArray(embedding) || embedding.length < 64) {
+    if (!images || !Array.isArray(images) || images.length !== 3) {
       return new Response(JSON.stringify({ 
         ok: false,
-        code: 'INVALID_EMBEDDING', 
-        message: 'Embedding inválido (mínimo 64 dimensões)' 
+        code: 'INVALID_IMAGES', 
+        message: 'São necessárias exatamente 3 imagens' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Normalizar embedding
-    const normalizedEmbedding = normalizeVector(embedding);
-    
     // Inicializar Supabase
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Salvar cadastro facial
+    // Fazer upload das 3 imagens
+    const imagePaths: string[] = [];
+    const userId = crypto.randomUUID();
+    
+    for (let i = 0; i < images.length; i++) {
+      const base64Data = images[i].split(',')[1]; // Remove "data:image/...;base64,"
+      const imageData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      
+      const path = `${userId}/image-${i + 1}.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('face-images')
+        .upload(path, imageData, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('[Enroll] Erro no upload:', uploadError);
+        throw new Error(`Erro ao fazer upload da imagem ${i + 1}`);
+      }
+
+      imagePaths.push(path);
+    }
+
+    console.log('[Enroll] Imagens salvas:', imagePaths);
+
+    // Usar Lovable AI para extrair características faciais
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY não configurada');
+    }
+
+    console.log('[Enroll] Analisando características faciais com IA...');
+
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analise estas 3 fotos da mesma pessoa e descreva DETALHADAMENTE as características faciais únicas que podem ser usadas para identificação: formato do rosto, olhos, nariz, boca, sobrancelhas, orelhas, cabelo, marcas distintivas, etc. Seja extremamente específico e detalhado.'
+              },
+              ...images.map(img => ({
+                type: 'image_url',
+                image_url: { url: img }
+              }))
+            ]
+          }
+        ],
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('[Enroll] Erro na IA:', errorText);
+      throw new Error('Erro ao analisar características faciais');
+    }
+
+    const aiData = await aiResponse.json();
+    const facialDescription = aiData.choices[0].message.content;
+
+    console.log('[Enroll] Características extraídas');
+
+    // Salvar cadastro
     const { data, error } = await supabase
       .from('face_users')
       .insert({
+        id: userId,
         nome: nome.trim(),
         matricula: matricula?.trim() || null,
-        embedding: normalizedEmbedding
+        image_paths: imagePaths,
+        description: facialDescription,
+        facial_features: {
+          analyzed_at: new Date().toISOString(),
+          model: 'google/gemini-2.5-flash'
+        }
       })
       .select()
       .single();
 
     if (error) {
       console.error('[Enroll] Erro ao salvar:', error);
-      return new Response(JSON.stringify({ 
-        ok: false,
-        code: 'DB_ERROR',
-        message: 'Erro ao salvar cadastro' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      // Limpar imagens em caso de erro
+      for (const path of imagePaths) {
+        await supabase.storage.from('face-images').remove([path]);
+      }
+      throw new Error('Erro ao salvar cadastro');
     }
 
     console.log('[Enroll] Cadastro criado:', data.id);

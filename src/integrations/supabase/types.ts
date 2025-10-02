@@ -599,30 +599,33 @@ export type Database = {
       face_recognition_logs: {
         Row: {
           captured_at: string | null
-          confidence: number | null
           face_user_id: string | null
           id: string
           kiosk_id: string | null
           matched: boolean
           note: string | null
+          similarity_score: number | null
+          verification_image_path: string | null
         }
         Insert: {
           captured_at?: string | null
-          confidence?: number | null
           face_user_id?: string | null
           id?: string
           kiosk_id?: string | null
           matched?: boolean
           note?: string | null
+          similarity_score?: number | null
+          verification_image_path?: string | null
         }
         Update: {
           captured_at?: string | null
-          confidence?: number | null
           face_user_id?: string | null
           id?: string
           kiosk_id?: string | null
           matched?: boolean
           note?: string | null
+          similarity_score?: number | null
+          verification_image_path?: string | null
         }
         Relationships: [
           {
@@ -644,22 +647,28 @@ export type Database = {
       face_users: {
         Row: {
           created_at: string | null
-          embedding: number[]
+          description: string | null
+          facial_features: Json | null
           id: string
+          image_paths: string[] | null
           matricula: string | null
           nome: string
         }
         Insert: {
           created_at?: string | null
-          embedding: number[]
+          description?: string | null
+          facial_features?: Json | null
           id?: string
+          image_paths?: string[] | null
           matricula?: string | null
           nome: string
         }
         Update: {
           created_at?: string | null
-          embedding?: number[]
+          description?: string | null
+          facial_features?: Json | null
           id?: string
+          image_paths?: string[] | null
           matricula?: string | null
           nome?: string
         }
