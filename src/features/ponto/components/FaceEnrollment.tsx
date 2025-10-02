@@ -32,23 +32,36 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   }, []);
 
   const startCamera = async () => {
+    setStep("loading");
+    setError("");
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
         audio: false,
       });
 
+      streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        
+        // Garantir que o vídeo inicie
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            console.log("[FaceEnroll] Câmera iniciada");
+            setStep("capture1");
+          }).catch((playError) => {
+            console.error("[FaceEnroll] Erro ao reproduzir vídeo:", playError);
+            setError("Erro ao iniciar vídeo da câmera");
+            stopCamera();
+          });
+        };
       }
-      
-      streamRef.current = stream;
-      setStep("capture1");
-      setError("");
     } catch (err: any) {
       console.error("[FaceEnroll] Erro ao acessar câmera:", err);
       setError("Erro ao acessar câmera. Permita o acesso nas configurações do navegador.");
+      setStep("idle");
     }
   };
 
@@ -156,6 +169,13 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {step === "loading" && (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Iniciando câmera...</p>
+        </div>
       )}
 
       {step === "idle" && (

@@ -32,13 +32,23 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         audio: false,
       });
 
+      streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        
+        // Garantir que o vídeo inicie
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            console.log("[FaceVerify] Câmera iniciada");
+            setStep("ready");
+            setError("");
+          }).catch((playError) => {
+            console.error("[FaceVerify] Erro ao reproduzir vídeo:", playError);
+            setError("Erro ao iniciar vídeo da câmera");
+          });
+        };
       }
-      
-      streamRef.current = stream;
-      setStep("ready");
     } catch (err: any) {
       console.error("[FaceVerify] Erro:", err);
       setError(err.message || "Erro ao inicializar câmera");
