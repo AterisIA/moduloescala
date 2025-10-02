@@ -583,6 +583,33 @@ export type Database = {
           },
         ]
       }
+      funcionarios_ie: {
+        Row: {
+          cargo: string
+          created_at: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cargo: string
+          created_at?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cargo?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           created_at: string | null
