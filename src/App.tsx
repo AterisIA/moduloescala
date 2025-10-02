@@ -13,6 +13,10 @@ import Presenca from "./pages/Presenca";
 import Relatorio from "./pages/Relatorio";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import { lazy } from "react";
+
+const GestaoPonto = lazy(() => import("./features/ponto/pages/GestaoPonto"));
+const BaterPonto = lazy(() => import("./features/ponto/pages/BaterPonto"));
 
 const queryClient = new QueryClient();
 
@@ -31,6 +35,8 @@ const App = () => (
           <Route path="/presenca" element={<Layout><Presenca /></Layout>} />
           <Route path="/relatorio" element={<Layout><Relatorio /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/gestao-ponto" element={<Layout><GestaoPonto /></Layout>} />
+          <Route path="/bater-ponto" element={<Layout><BaterPonto /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

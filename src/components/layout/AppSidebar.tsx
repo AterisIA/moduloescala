@@ -6,7 +6,9 @@ import {
   UserCheck, 
   BarChart3,
   Building2,
-  LayoutDashboard
+  LayoutDashboard,
+  Clock,
+  QrCode
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -65,6 +67,18 @@ const navigation = [
     href: "/relatorio",
     icon: BarChart3,
     description: "Resumo do dia"
+  },
+  {
+    name: "Gestão de Ponto",
+    href: "/gestao-ponto",
+    icon: Clock,
+    description: "Gerenciar kiosques e batidas"
+  },
+  {
+    name: "Bater Ponto",
+    href: "/bater-ponto",
+    icon: QrCode,
+    description: "Registrar entrada/saída"
   }
 ];
 
