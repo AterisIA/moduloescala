@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRScanner } from "../components/QRScanner";
-import { VideoRecorder } from "../components/VideoRecorder";
+import { FaceVerification } from "../components/FaceVerification";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, User } from "lucide-react";
 
-type Step = "scan" | "record" | "success" | "error";
+type Step = "scan" | "verify" | "success" | "error";
 
 interface PunchResult {
   tipo: string;
   punched_at: string;
+  nome?: string;
+  confidence?: number;
   message?: string;
 }
 
@@ -22,10 +24,10 @@ export default function BaterPonto() {
   const handleQRScanned = (scannedToken: string) => {
     console.log("[Ponto] QR escaneado:", scannedToken);
     setToken(scannedToken);
-    setStep("record");
+    setStep("verify");
   };
 
-  const handleVideoRecorded = async (success: boolean, data?: PunchResult) => {
+  const handleFaceVerified = async (success: boolean, data?: PunchResult) => {
     if (success && data) {
       setResult(data);
       setStep("success");
@@ -46,20 +48,20 @@ export default function BaterPonto() {
     <div className="container mx-auto p-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Bater Ponto</h1>
-        <p className="text-muted-foreground">Escaneie o QR Code e registre sua entrada/saída</p>
+        <p className="text-muted-foreground">Escaneie o QR Code e verifique seu rosto</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>
             {step === "scan" && "Escaneie o QR Code"}
-            {step === "record" && "Grave seu vídeo de confirmação"}
+            {step === "verify" && "Verificação Facial"}
             {step === "success" && "Ponto Registrado!"}
             {step === "error" && "Erro ao Registrar"}
           </CardTitle>
           <CardDescription>
             {step === "scan" && "Aponte a câmera para o QR Code do kiosque"}
-            {step === "record" && "Mexa a cabeça lentamente durante a gravação"}
+            {step === "verify" && "Olhe diretamente para a câmera para verificação"}
             {step === "success" && "Seu ponto foi registrado com sucesso"}
             {step === "error" && "Ocorreu um erro ao processar sua batida"}
           </CardDescription>
@@ -67,10 +69,10 @@ export default function BaterPonto() {
         <CardContent>
           {step === "scan" && <QRScanner onScanned={handleQRScanned} />}
           
-          {step === "record" && (
-            <VideoRecorder 
+          {step === "verify" && (
+            <FaceVerification 
               token={token} 
-              onComplete={handleVideoRecorded}
+              onComplete={handleFaceVerified}
               onCancel={handleReset}
             />
           )}
@@ -80,8 +82,21 @@ export default function BaterPonto() {
               <Alert className="border-green-500">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                 <AlertDescription>
+                  {result.nome && (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4" />
+                        <strong>{result.nome}</strong>
+                      </div>
+                    </>
+                  )}
                   <strong>Tipo:</strong> {result.tipo}<br />
-                  <strong>Horário:</strong> {new Date(result.punched_at).toLocaleString('pt-BR')}
+                  <strong>Horário:</strong> {new Date(result.punched_at).toLocaleString('pt-BR')}<br />
+                  {result.confidence && (
+                    <>
+                      <strong>Confiança:</strong> {(result.confidence * 100).toFixed(1)}%
+                    </>
+                  )}
                 </AlertDescription>
               </Alert>
               <button 

@@ -98,6 +98,8 @@ export type Database = {
         Row: {
           created_at: string | null
           device_info: Json | null
+          face_confidence: number | null
+          face_user_id: string | null
           geo_accuracy: number | null
           geo_lat: number | null
           geo_lng: number | null
@@ -107,13 +109,15 @@ export type Database = {
           id: string
           kiosk_id: string
           punched_at: string
-          selfie_path: string
+          selfie_path: string | null
           tipo: string
           token_window: string
         }
         Insert: {
           created_at?: string | null
           device_info?: Json | null
+          face_confidence?: number | null
+          face_user_id?: string | null
           geo_accuracy?: number | null
           geo_lat?: number | null
           geo_lng?: number | null
@@ -123,13 +127,15 @@ export type Database = {
           id?: string
           kiosk_id: string
           punched_at?: string
-          selfie_path: string
+          selfie_path?: string | null
           tipo: string
           token_window: string
         }
         Update: {
           created_at?: string | null
           device_info?: Json | null
+          face_confidence?: number | null
+          face_user_id?: string | null
           geo_accuracy?: number | null
           geo_lat?: number | null
           geo_lng?: number | null
@@ -139,11 +145,18 @@ export type Database = {
           id?: string
           kiosk_id?: string
           punched_at?: string
-          selfie_path?: string
+          selfie_path?: string | null
           tipo?: string
           token_window?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_logs_face_user_id_fkey"
+            columns: ["face_user_id"]
+            isOneToOne: false
+            referencedRelation: "face_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_logs_kiosk_id_fkey"
             columns: ["kiosk_id"]
@@ -580,6 +593,75 @@ export type Database = {
           idescala?: number
           nomepessoaescala?: string
           telefone?: string | null
+        }
+        Relationships: []
+      }
+      face_recognition_logs: {
+        Row: {
+          captured_at: string | null
+          confidence: number | null
+          face_user_id: string | null
+          id: string
+          kiosk_id: string | null
+          matched: boolean
+          note: string | null
+        }
+        Insert: {
+          captured_at?: string | null
+          confidence?: number | null
+          face_user_id?: string | null
+          id?: string
+          kiosk_id?: string | null
+          matched?: boolean
+          note?: string | null
+        }
+        Update: {
+          captured_at?: string | null
+          confidence?: number | null
+          face_user_id?: string | null
+          id?: string
+          kiosk_id?: string | null
+          matched?: boolean
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "face_recognition_logs_face_user_id_fkey"
+            columns: ["face_user_id"]
+            isOneToOne: false
+            referencedRelation: "face_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "face_recognition_logs_kiosk_id_fkey"
+            columns: ["kiosk_id"]
+            isOneToOne: false
+            referencedRelation: "kiosks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      face_users: {
+        Row: {
+          created_at: string | null
+          embedding: number[]
+          id: string
+          matricula: string | null
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          embedding: number[]
+          id?: string
+          matricula?: string | null
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: number[]
+          id?: string
+          matricula?: string | null
+          nome?: string
         }
         Relationships: []
       }

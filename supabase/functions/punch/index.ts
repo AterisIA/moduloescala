@@ -74,9 +74,15 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse body
-    const { token, selfie_path, device_info, geo } = await req.json();
+    const { token, selfie_path, face_user_id, face_confidence, device_info, geo } = await req.json();
 
-    console.log("[punch] Dados recebidos:", { selfie_path, device_info, geo });
+    console.log("[punch] Dados recebidos:", { 
+      selfie_path, 
+      face_user_id, 
+      face_confidence, 
+      device_info, 
+      geo 
+    });
 
     if (!token) {
       return new Response(
@@ -92,12 +98,13 @@ serve(async (req) => {
       );
     }
 
-    if (!selfie_path) {
+    // Aceitar selfie_path OU face_user_id (modo facial)
+    if (!selfie_path && !face_user_id) {
       return new Response(
         JSON.stringify({
           ok: false,
-          code: "MISSING_SELFIE_PATH",
-          message: "selfie_path é obrigatório",
+          code: "MISSING_IDENTIFICATION",
+          message: "selfie_path ou face_user_id é obrigatório",
         }),
         {
           status: 400,
@@ -184,26 +191,30 @@ serve(async (req) => {
       );
     }
 
-    // Verificar se arquivo existe no storage
-    const { data: fileData, error: fileError } = await supabase.storage
-      .from("attendance-selfies")
-      .list(selfie_path.split("/")[0], {
-        search: selfie_path.split("/")[1],
-      });
+    // Verificar se arquivo existe no storage (somente se modo vídeo)
+    if (selfie_path) {
+      const { data: fileData, error: fileError } = await supabase.storage
+        .from("attendance-selfies")
+        .list(selfie_path.split("/")[0], {
+          search: selfie_path.split("/")[1],
+        });
 
-    if (fileError || !fileData || fileData.length === 0) {
-      console.error("[punch] Arquivo não encontrado:", fileError);
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          code: "SELFIE_NOT_FOUND",
-          message: "Arquivo de vídeo não encontrado",
-        }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      if (fileError || !fileData || fileData.length === 0) {
+        console.error("[punch] Arquivo não encontrado:", fileError);
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            code: "SELFIE_NOT_FOUND",
+            message: "Arquivo de vídeo não encontrado",
+          }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    } else {
+      console.log("[punch] Modo reconhecimento facial - sem selfie");
     }
 
     // Verificar replay (mesma janela temporal)
@@ -290,13 +301,15 @@ serve(async (req) => {
 
     console.log('[punch] Dados de geo a serem salvos:', geoData);
 
-    // Gravar log com geolocalização
+    // Gravar log com geolocalização e dados de reconhecimento facial
     const { data: log, error: insertError } = await supabase
       .from("attendance_logs")
       .insert({
         kiosk_id: payload.k,
         tipo,
-        selfie_path,
+        selfie_path: selfie_path || null,
+        face_user_id: face_user_id || null,
+        face_confidence: face_confidence || null,
         device_info,
         token_window: payload.w,
         ...geoData,
