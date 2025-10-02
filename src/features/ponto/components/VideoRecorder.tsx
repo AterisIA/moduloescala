@@ -13,7 +13,7 @@ interface VideoRecorderProps {
 export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   
@@ -208,7 +208,7 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
           autoPlay
         />
         
-        {countdown > 0 && countdown < 3 && (
+        {countdown > 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <div className="text-6xl font-bold text-white animate-pulse">
               {countdown}
