@@ -334,12 +334,28 @@ serve(async (req) => {
 
     console.log("[punch] Batida registrada com sucesso:", log.id);
 
+    // Buscar dados do face_user se houver face_user_id
+    let faceUserData = null;
+    if (face_user_id) {
+      const { data: faceUser } = await supabase
+        .from("face_users")
+        .select("id, nome, matricula, latitude, longitude")
+        .eq("id", face_user_id)
+        .single();
+      
+      if (faceUser) {
+        faceUserData = faceUser;
+        console.log("[punch] Dados do face_user incluídos na resposta");
+      }
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
         tipo,
         punched_at: log.punched_at,
         message: `${tipo} registrada com sucesso`,
+        face_user: faceUserData,
       }),
       {
         status: 200,

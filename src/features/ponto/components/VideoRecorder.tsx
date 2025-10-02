@@ -7,6 +7,8 @@ import { toast } from "@/hooks/use-toast";
 
 interface VideoRecorderProps {
   token: string;
+  faceUserId?: string;
+  faceConfidence?: number;
   onComplete: (success: boolean, data?: any) => void;
   onCancel: () => void;
 }
@@ -25,7 +27,7 @@ interface GeoLocation {
   status: "ok" | "denied" | "timeout" | "unavailable" | "error";
 }
 
-export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProps) {
+export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, onCancel }: VideoRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -272,6 +274,8 @@ export function VideoRecorder({ token, onComplete, onCancel }: VideoRecorderProp
         body: {
           token,
           selfie_path: path,
+          face_user_id: faceUserId,
+          face_confidence: faceConfidence,
           device_info: deviceInfo,
           geo: geoData,
         },

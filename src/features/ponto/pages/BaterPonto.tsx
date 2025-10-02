@@ -113,9 +113,11 @@ export default function BaterPonto() {
             />
           )}
 
-          {step === "liveness" && (
+          {step === "liveness" && verificationData && (
             <VideoRecorder 
               token={token}
+              faceUserId={verificationData.face_user_id}
+              faceConfidence={verificationData.similarity_score}
               onComplete={handleLivenessComplete}
               onCancel={handleReset}
             />
