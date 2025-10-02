@@ -40,6 +40,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const geoRef = useRef<GeoLocation | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -129,6 +130,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
           };
           
           setGeoLocation(geo);
+          geoRef.current = geo;
           toast({
             title: "Localização capturada",
             description: `Precisão: ${Math.round(position.coords.accuracy)}m`,
@@ -160,6 +162,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
           };
           
           setGeoLocation(geo);
+          geoRef.current = geo;
           toast({
             title: "Localização não disponível",
             description: message,
@@ -259,20 +262,23 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
         videoHeight: 480,
       };
 
-      // Preparar dados de geo para envio
-      const geoData = geoLocation && geoLocation.status === 'ok' ? {
-        lat: geoLocation.lat,
-        lng: geoLocation.lng,
-        accuracy: geoLocation.accuracy,
-        timestamp: geoLocation.timestamp,
-        status: geoLocation.status
-      } : (geoLocation ? {
-        lat: null,
-        lng: null,
-        accuracy: null,
-        timestamp: null,
-        status: geoLocation.status
-      } : null);
+      // Preparar dados de geo para envio (usar ref para evitar race de state)
+      const src = geoRef.current;
+      const geoData = src && src.status
+        ? (src.status === 'ok' ? {
+            lat: src.lat,
+            lng: src.lng,
+            accuracy: src.accuracy,
+            timestamp: src.timestamp,
+            status: src.status
+          } : {
+            lat: null,
+            lng: null,
+            accuracy: null,
+            timestamp: null,
+            status: src.status
+          })
+        : null;
 
       console.log("[Ponto] Chamando punch function com geo:", geoData);
       
