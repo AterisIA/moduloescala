@@ -1,1 +1,7 @@
 project_id = "rxfrintflnnfgpwjlzmp"
+
+[functions.qr-token]
+verify_jwt = false
+
+[functions.punch]
+verify_jwt = false
