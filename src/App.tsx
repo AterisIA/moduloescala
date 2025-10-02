@@ -13,10 +13,8 @@ import Presenca from "./pages/Presenca";
 import Relatorio from "./pages/Relatorio";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import { lazy } from "react";
-
-const GestaoPonto = lazy(() => import("./features/ponto/pages/GestaoPonto"));
-const BaterPonto = lazy(() => import("./features/ponto/pages/BaterPonto"));
+import GestaoPonto from "./features/ponto/pages/GestaoPonto";
+import BaterPonto from "./features/ponto/pages/BaterPonto";
 
 const queryClient = new QueryClient();
 
