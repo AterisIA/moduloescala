@@ -17,6 +17,7 @@ type CaptureStep = "idle" | "loading" | "capture1" | "capture2" | "capture3" | "
 export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
+  const [enderecoProfissional, setEnderecoProfissional] = useState("");
   const [step, setStep] = useState<CaptureStep>("idle");
   const [error, setError] = useState("");
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -115,6 +116,7 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
         body: {
           nome: nome.trim(),
           matricula: matricula.trim() || null,
+          endereco_profissional: enderecoProfissional.trim() || null,
           images: images,
         },
       });
@@ -216,6 +218,16 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
               value={matricula}
               onChange={(e) => setMatricula(e.target.value)}
               placeholder="Número da matrícula (opcional)"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="endereco">Endereço Profissional</Label>
+            <Input
+              id="endereco"
+              value={enderecoProfissional}
+              onChange={(e) => setEnderecoProfissional(e.target.value)}
+              placeholder="Rua, número, bairro, cidade (opcional)"
             />
           </div>
 

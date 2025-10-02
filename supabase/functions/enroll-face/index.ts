@@ -12,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { nome, matricula, images } = await req.json();
+    const { nome, matricula, endereco_profissional, images } = await req.json();
 
-    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, imageCount: images?.length });
+    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, endereco_profissional, imageCount: images?.length });
 
     // Validações
     if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
@@ -124,6 +124,7 @@ serve(async (req) => {
         id: userId,
         nome: nome.trim(),
         matricula: matricula?.trim() || null,
+        endereco_profissional: endereco_profissional?.trim() || null,
         image_paths: imagePaths,
         description: facialDescription,
         facial_features: {

@@ -19,11 +19,18 @@ interface GeoLocation {
   status: "ok" | "denied" | "timeout" | "unavailable" | "error";
 }
 
+interface LocationCheckResult {
+  isInLocation: boolean;
+  distance: number;
+  address: string;
+}
+
 export function FaceVerification({ token, onComplete, onCancel }: FaceVerificationProps) {
   const [step, setStep] = useState<"loading" | "ready" | "capturing" | "verifying">("loading");
   const [error, setError] = useState("");
   const [geoLocation, setGeoLocation] = useState<GeoLocation | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [locationCheck, setLocationCheck] = useState<LocationCheckResult | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -255,10 +262,23 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         }
 
         console.log("[FaceVerify] Ponto registrado:", punchData);
+
+        // Verificar localização se houver endereço profissional
+        let locationResult: LocationCheckResult | null = null;
+        if (verifyData.endereco_profissional && geo.status === "ok" && geo.lat && geo.lng) {
+          locationResult = await checkLocationMatch(
+            geo.lat,
+            geo.lng,
+            verifyData.endereco_profissional
+          );
+          setLocationCheck(locationResult);
+        }
+
         onComplete(true, {
           ...punchData,
           nome: verifyData.nome,
           confidence: verifyData.similarity_score,
+          locationCheck: locationResult,
         });
       } else {
         // Sem match
@@ -275,6 +295,86 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     } finally {
       stopCamera();
     }
+  };
+
+  // Função para geocodificar endereço e calcular distância
+  const checkLocationMatch = async (
+    currentLat: number,
+    currentLng: number,
+    address: string
+  ): Promise<LocationCheckResult> => {
+    try {
+      // Geocodificar o endereço usando Nominatim (OpenStreetMap)
+      const geocodeResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'ModuloEscala/1.0'
+          }
+        }
+      );
+
+      if (!geocodeResponse.ok) {
+        throw new Error('Falha ao geocodificar endereço');
+      }
+
+      const geocodeData = await geocodeResponse.json();
+      
+      if (!geocodeData || geocodeData.length === 0) {
+        console.warn('[FaceVerify] Endereço não encontrado:', address);
+        return {
+          isInLocation: false,
+          distance: -1,
+          address
+        };
+      }
+
+      const addressLat = parseFloat(geocodeData[0].lat);
+      const addressLng = parseFloat(geocodeData[0].lon);
+
+      // Calcular distância usando fórmula de Haversine
+      const distance = calculateDistance(currentLat, currentLng, addressLat, addressLng);
+      
+      const isInLocation = distance <= 200; // 200 metros de raio
+
+      console.log('[FaceVerify] Verificação de localização:', {
+        currentLat,
+        currentLng,
+        addressLat,
+        addressLng,
+        distance,
+        isInLocation
+      });
+
+      return {
+        isInLocation,
+        distance,
+        address
+      };
+    } catch (err) {
+      console.error('[FaceVerify] Erro ao verificar localização:', err);
+      return {
+        isInLocation: false,
+        distance: -1,
+        address
+      };
+    }
+  };
+
+  // Fórmula de Haversine para calcular distância entre dois pontos
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Raio da Terra em metros
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distância em metros
   };
 
   return (
@@ -326,6 +426,30 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
                   ? `Localização: ${geoLocation.lat?.toFixed(5)}, ${geoLocation.lng?.toFixed(5)} (±${Math.round(geoLocation.accuracy || 0)}m)`
                   : `Status: ${geoLocation.status}`
                 }
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {locationCheck && (
+            <Alert variant={locationCheck.isInLocation ? "default" : "destructive"}>
+              <MapPin className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Verificação de Local:</strong><br />
+                {locationCheck.isInLocation ? (
+                  <>
+                    ✅ <strong>No local de trabalho</strong><br />
+                    Distância: {locationCheck.distance.toFixed(0)}m do endereço cadastrado
+                  </>
+                ) : (
+                  <>
+                    ❌ <strong>Fora do local de trabalho</strong><br />
+                    {locationCheck.distance >= 0 ? (
+                      <>Distância: {locationCheck.distance.toFixed(0)}m do endereço cadastrado (máx: 200m)</>
+                    ) : (
+                      <>Não foi possível verificar o endereço cadastrado</>
+                    )}
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           )}

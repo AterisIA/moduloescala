@@ -13,6 +13,11 @@ interface PunchResult {
   nome?: string;
   confidence?: number;
   message?: string;
+  locationCheck?: {
+    isInLocation: boolean;
+    distance: number;
+    address: string;
+  };
 }
 
 export default function BaterPonto() {
@@ -94,7 +99,16 @@ export default function BaterPonto() {
                   <strong>Horário:</strong> {new Date(result.punched_at).toLocaleString('pt-BR')}<br />
                   {result.confidence && (
                     <>
-                      <strong>Confiança:</strong> {(result.confidence * 100).toFixed(1)}%
+                      <strong>Confiança:</strong> {(result.confidence * 100).toFixed(1)}%<br />
+                    </>
+                  )}
+                  {result.locationCheck && (
+                    <>
+                      <strong>Local:</strong> {result.locationCheck.isInLocation ? (
+                        <span className="text-green-600">✅ No local ({result.locationCheck.distance.toFixed(0)}m)</span>
+                      ) : (
+                        <span className="text-red-600">❌ Fora do local ({result.locationCheck.distance >= 0 ? `${result.locationCheck.distance.toFixed(0)}m` : 'endereço não encontrado'})</span>
+                      )}
                     </>
                   )}
                 </AlertDescription>
