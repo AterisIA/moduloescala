@@ -304,24 +304,34 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
     address: string
   ): Promise<LocationCheckResult> => {
     try {
+      console.log('[FaceVerify] Iniciando geocodificação do endereço:', address);
+      console.log('[FaceVerify] Localização atual:', { currentLat, currentLng });
+      
       // Geocodificar o endereço usando Nominatim (OpenStreetMap)
-      const geocodeResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'ModuloEscala/1.0'
-          }
+      const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=br`;
+      console.log('[FaceVerify] URL de geocodificação:', geocodeUrl);
+      
+      const geocodeResponse = await fetch(geocodeUrl, {
+        headers: {
+          'User-Agent': 'ModuloEscala/1.0'
         }
-      );
+      });
 
       if (!geocodeResponse.ok) {
+        console.error('[FaceVerify] Resposta não OK:', geocodeResponse.status);
         throw new Error('Falha ao geocodificar endereço');
       }
 
       const geocodeData = await geocodeResponse.json();
+      console.log('[FaceVerify] Dados de geocodificação recebidos:', geocodeData);
       
       if (!geocodeData || geocodeData.length === 0) {
         console.warn('[FaceVerify] Endereço não encontrado:', address);
+        toast({
+          title: "Endereço não encontrado",
+          description: "Não foi possível geocodificar o endereço cadastrado.",
+          variant: "destructive",
+        });
         return {
           isInLocation: false,
           distance: -1,
@@ -331,6 +341,9 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
       const addressLat = parseFloat(geocodeData[0].lat);
       const addressLng = parseFloat(geocodeData[0].lon);
+      const displayName = geocodeData[0].display_name;
+
+      console.log('[FaceVerify] Coordenadas do endereço:', { addressLat, addressLng, displayName });
 
       // Calcular distância usando fórmula de Haversine
       const distance = calculateDistance(currentLat, currentLng, addressLat, addressLng);
@@ -343,7 +356,14 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         addressLat,
         addressLng,
         distance,
-        isInLocation
+        isInLocation,
+        raioMaximo: 200
+      });
+
+      toast({
+        title: isInLocation ? "No local de trabalho ✅" : "Fora do local ❌",
+        description: `Distância: ${Math.round(distance)}m do endereço cadastrado`,
+        variant: isInLocation ? "default" : "destructive",
       });
 
       return {
@@ -353,6 +373,11 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       };
     } catch (err) {
       console.error('[FaceVerify] Erro ao verificar localização:', err);
+      toast({
+        title: "Erro na verificação",
+        description: "Não foi possível verificar a localização",
+        variant: "destructive",
+      });
       return {
         isInLocation: false,
         distance: -1,
