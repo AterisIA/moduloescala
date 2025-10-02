@@ -265,10 +265,10 @@ serve(async (req) => {
 
     if (geo && geo.status === 'ok' && geo.lat !== null && geo.lng !== null) {
       // Validar plausibilidade
-      const lat = parseFloat(geo.lat);
-      const lng = parseFloat(geo.lng);
-      const accuracy = parseFloat(geo.accuracy);
-      const geoTimestamp = parseInt(geo.timestamp);
+      const lat = typeof geo.lat === 'number' ? geo.lat : parseFloat(geo.lat);
+      const lng = typeof geo.lng === 'number' ? geo.lng : parseFloat(geo.lng);
+      const accuracy = typeof geo.accuracy === 'number' ? geo.accuracy : parseFloat(geo.accuracy);
+      const geoTimestamp = typeof geo.timestamp === 'number' ? geo.timestamp : parseInt(geo.timestamp);
 
       if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
         console.warn('[punch] Coordenadas inválidas:', { lat, lng });
