@@ -6,20 +6,23 @@ import { PresenceLineChart } from "@/components/dashboard/Charts/PresenceLineCha
 import { StatusPieChart } from "@/components/dashboard/Charts/StatusPieChart";
 import { EntityBarChart } from "@/components/dashboard/Charts/EntityBarChart";
 import { TopPerformersTable } from "@/components/dashboard/DataTables/TopPerformersTable";
+import { StatusMatrixView } from "@/components/dashboard/StatusMatrixView";
 
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { DashboardFilters as Filters } from "@/types/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, LayoutGrid, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const [filters, setFilters] = useState<Filters>({
     startDate: subDays(new Date(), 30),
     endDate: new Date(),
-    viewType: 'all'
+    viewType: 'coordenador'
   });
+  const [viewMode, setViewMode] = useState<'charts' | 'matrix'>('charts');
 
   const {
     loading,
@@ -53,16 +56,38 @@ const Dashboard = () => {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard Avançado</h1>
-        <p className="text-muted-foreground">
-          Histórico de comunicações e desempenho de respostas
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Dashboard Avançado</h1>
+          <p className="text-muted-foreground">
+            Histórico de comunicações e desempenho de respostas
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === 'charts' ? 'default' : 'outline'}
+            onClick={() => setViewMode('charts')}
+            size="sm"
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Gráficos
+          </Button>
+          <Button
+            variant={viewMode === 'matrix' ? 'default' : 'outline'}
+            onClick={() => setViewMode('matrix')}
+            size="sm"
+          >
+            <LayoutGrid className="h-4 w-4 mr-2" />
+            Visão Rápida
+          </Button>
+        </div>
       </div>
 
       <DashboardFilters filters={filters} onFiltersChange={setFilters} />
 
-      {loading ? (
+      {viewMode === 'matrix' ? (
+        <StatusMatrixView filters={filters} />
+      ) : loading ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
