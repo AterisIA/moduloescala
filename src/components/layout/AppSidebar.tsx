@@ -39,6 +39,12 @@ const navigation = [
     description: "Pessoas de limpeza e recepção"
   },
   {
+    name: "Coordenadores",
+    href: "/coordenadores",
+    icon: Users,
+    description: "Gestão de coordenadores"
+  },
+  {
     name: "Verificação de Presença",
     href: "/verificacao",
     icon: CheckCircle,
