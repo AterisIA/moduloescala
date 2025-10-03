@@ -229,14 +229,21 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
         },
       });
 
-      if (verifyError) throw verifyError;
-
-      if (!verifyData?.ok) {
-        throw new Error(verifyData?.message || "Erro na verificação");
+      if (verifyError) {
+        console.error("[FaceVerify] Erro na chamada:", verifyError);
+        throw new Error(verifyError.message || "Erro ao conectar com servidor");
       }
 
-      console.log("[FaceVerify] Resultado:", verifyData);
+      console.log("[FaceVerify] Resultado completo:", verifyData);
 
+      // Se ok=false, significa que houve erro ou acesso negado
+      if (!verifyData?.ok) {
+        const errorMsg = verifyData?.message || "Erro na verificação";
+        console.error("[FaceVerify] Verificação falhou:", verifyData);
+        throw new Error(errorMsg);
+      }
+
+      // Aqui ok=true, verificar se houve match
       if (verifyData.match) {
         // Match encontrado - retornar dados de verificação para próxima etapa (liveness)
         console.log("[FaceVerify] Match encontrado, retornando dados de verificação");

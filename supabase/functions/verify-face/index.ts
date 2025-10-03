@@ -190,13 +190,15 @@ serve(async (req) => {
     }
 
     if (!faceUsers || faceUsers.length === 0) {
-      console.log('[Verify] Nenhum cadastro facial encontrado');
+      console.log('[Verify] Nenhum cadastro facial encontrado - BLOQUEANDO');
       return new Response(JSON.stringify({ 
-        ok: true,
+        ok: false,
+        code: 'NO_FACES_ENROLLED',
         match: false,
         similarity_score: 0,
-        message: 'Nenhum cadastro facial encontrado'
+        message: 'Nenhum rosto cadastrado no sistema'
       }), {
+        status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -328,13 +330,15 @@ Seja rigoroso na comparação. Confidence deve ser 0.85+ para match=true.`
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     } else {
-      console.log('[Verify] Nenhum match encontrado');
+      console.log('[Verify] Nenhum match encontrado - BLOQUEANDO');
       return new Response(JSON.stringify({ 
-        ok: true,
+        ok: false,
+        code: 'FACE_NOT_RECOGNIZED',
         match: false,
         similarity_score: 0,
-        message: 'Rosto não reconhecido'
+        message: 'Rosto não reconhecido. Acesso negado.'
       }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
