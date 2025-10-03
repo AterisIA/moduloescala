@@ -211,8 +211,11 @@ serve(async (req) => {
 
     console.log('[Verify] Comparando com', faceUsers.length, 'cadastros usando IA...');
 
-    // Criar um prompt comparativo para cada usuário
+    // Criar um prompt comparativo para cada usuário (thresholds mais rígidos)
+    const CONFIDENCE_THRESHOLD = 0.95;
+    const MARGIN_THRESHOLD = 0.07; // diferença mínima entre 1º e 2º colocado
     let bestMatch: { id: string; nome: string; score: number } | null = null;
+    let secondBestScore = 0;
 
     for (const user of faceUsers) {
       console.log('[Verify] Comparando com:', user.nome);
@@ -272,14 +275,29 @@ Seja rigoroso na comparação. Confidence deve ser 0.85+ para match=true.`
       const result = JSON.parse(jsonMatch[0]);
       console.log('[Verify] Resultado para', user.nome, ':', result);
 
-      if (result.match && result.confidence >= 0.85) {
-        if (!bestMatch || result.confidence > bestMatch.score) {
+      if (result.match) {
+        const score = Number(result.confidence) || 0;
+        if (!bestMatch || score > bestMatch.score) {
+          if (bestMatch?.score && bestMatch.score > secondBestScore) {
+            secondBestScore = bestMatch.score;
+          }
           bestMatch = {
             id: user.id,
             nome: user.nome,
-            score: result.confidence
+            score
           };
+        } else if (score > secondBestScore) {
+          secondBestScore = score;
         }
+      }
+    }
+
+    // Aplicar thresholds rígidos
+    if (bestMatch) {
+      const margin = bestMatch.score - secondBestScore;
+      if (bestMatch.score < CONFIDENCE_THRESHOLD || margin < MARGIN_THRESHOLD) {
+        console.log('[Verify] Rejeitado por limiar/margem:', { score: bestMatch.score, margin });
+        bestMatch = null;
       }
     }
 

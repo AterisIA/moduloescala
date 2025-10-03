@@ -191,30 +191,90 @@ serve(async (req) => {
       );
     }
 
-    // Verificar se arquivo existe no storage (somente se modo vídeo)
-    if (selfie_path) {
-      const { data: fileData, error: fileError } = await supabase.storage
-        .from("attendance-selfies")
-        .list(selfie_path.split("/")[0], {
-          search: selfie_path.split("/")[1],
-        });
+    // Enforce verificação facial recente quando houver cadastros de rosto
+    const { count: facesCount, error: facesCountError } = await supabase
+      .from('face_users')
+      .select('*', { count: 'exact', head: true });
 
-      if (fileError || !fileData || fileData.length === 0) {
-        console.error("[punch] Arquivo não encontrado:", fileError);
+    if (!facesCountError && (facesCount ?? 0) > 0) {
+      // Existem cadastros faciais: exigir face_user_id e verificação recente
+      if (!face_user_id) {
         return new Response(
           JSON.stringify({
             ok: false,
-            code: "SELFIE_NOT_FOUND",
-            message: "Arquivo de vídeo não encontrado",
+            code: 'FACE_VERIFICATION_REQUIRED',
+            message: 'Verificação facial obrigatória antes de registrar o ponto.'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Validar existência do usuário facial
+      const { data: faceUserExists } = await supabase
+        .from('face_users')
+        .select('id')
+        .eq('id', face_user_id)
+        .single();
+      if (!faceUserExists) {
+        return new Response(
+          JSON.stringify({ ok: false, code: 'FACE_USER_NOT_FOUND', message: 'Cadastro facial não encontrado' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Checar log de verificação facial recente (últimos 2 minutos) neste kiosque
+      const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const { data: recentLog, error: recentErr } = await supabase
+        .from('face_recognition_logs')
+        .select('id, similarity_score, captured_at')
+        .eq('kiosk_id', payload.k)
+        .eq('face_user_id', face_user_id)
+        .eq('matched', true)
+        .gte('captured_at', since)
+        .order('captured_at', { ascending: false })
+        .limit(1);
+
+      if (recentErr || !recentLog || recentLog.length === 0) {
+        return new Response(
+          JSON.stringify({ ok: false, code: 'NO_RECENT_FACE_VERIFICATION', message: 'É necessária verificação facial imediata antes do ponto.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const sim = Number(recentLog[0].similarity_score) || 0;
+      const FACE_THRESHOLD = 0.9;
+      if (sim < FACE_THRESHOLD || (typeof face_confidence === 'number' && face_confidence < FACE_THRESHOLD)) {
+        return new Response(
+          JSON.stringify({ ok: false, code: 'LOW_FACE_CONFIDENCE', message: 'Confiança de reconhecimento insuficiente' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Verificar se arquivo existe no storage (somente se modo vídeo)
+    if (selfie_path) {
+      const { data: fileData, error: fileError } = await supabase.storage
+        .from('attendance-selfies')
+        .list(selfie_path.split('/')[0], {
+          search: selfie_path.split('/')[1],
+        });
+
+      if (fileError || !fileData || fileData.length === 0) {
+        console.error('[punch] Arquivo não encontrado:', fileError);
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            code: 'SELFIE_NOT_FOUND',
+            message: 'Arquivo de vídeo não encontrado',
           }),
           {
             status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           }
         );
       }
     } else {
-      console.log("[punch] Modo reconhecimento facial - sem selfie");
+      console.log('[punch] Modo reconhecimento facial - sem selfie');
     }
 
     // Verificar replay (mesma janela temporal)
