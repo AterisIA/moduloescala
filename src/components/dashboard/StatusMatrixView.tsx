@@ -43,13 +43,13 @@ export const StatusMatrixView = ({ filters }: StatusMatrixViewProps) => {
         .from('resposta_comunicacao')
         .select(`
           *,
-          escala:idescala (
+          escala!idescala (
             *,
-            coordenador:id_coordenador (id_coordenador, nome),
-            plantao:id_plantao (
+            coordenador!id_coordenador (id_coordenador, nome),
+            plantao!id_plantao (
               id_plantao,
               nome,
-              empresa:id_empresa (id_empresa, nome)
+              empresa!id_empresa (id_empresa, nome)
             )
           )
         `)
