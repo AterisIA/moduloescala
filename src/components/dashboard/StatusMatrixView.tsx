@@ -38,21 +38,10 @@ export const StatusMatrixView = ({ filters }: StatusMatrixViewProps) => {
       setLoading(true);
       setError(null);
 
-      // Fetch resposta_comunicacao with related tables
+      // 1. Fetch resposta_comunicacao
       const { data: respostasData, error: respostasError } = await supabase
         .from('resposta_comunicacao')
-        .select(`
-          *,
-          escala!idescala (
-            *,
-            coordenador!id_coordenador (id_coordenador, nome),
-            plantao!id_plantao (
-              id_plantao,
-              nome,
-              empresa!id_empresa (id_empresa, nome)
-            )
-          )
-        `)
+        .select('*')
         .gte('dtcomunicacao', filters.startDate.toISOString())
         .lte('dtcomunicacao', filters.endDate.toISOString());
 
@@ -60,8 +49,101 @@ export const StatusMatrixView = ({ filters }: StatusMatrixViewProps) => {
 
       const respostas = (respostasData as any[]) || [];
 
+      // 2. Get unique escala IDs
+      const escalaIds = [...new Set(respostas.map(r => r.idescala))];
+      
+      if (escalaIds.length === 0) {
+        setMatrixData([]);
+        setPeriods([]);
+        return;
+      }
+
+      // 3. Fetch escalas
+      const { data: escalasData, error: escalasError } = await supabase
+        .from('escala')
+        .select('idescala, nomepessoaescala, id_coordenador, id_plantao, dataescala')
+        .in('idescala', escalaIds);
+
+      if (escalasError) throw escalasError;
+
+      const escalas = (escalasData as any[]) || [];
+
+      // 4. Get unique coordenador and plantao IDs
+      const coordenadorIds = [...new Set(escalas.map(e => e.id_coordenador).filter(Boolean))];
+      const plantaoIds = [...new Set(escalas.map(e => e.id_plantao).filter(Boolean))];
+
+      // 5. Fetch coordenadores
+      const coordenadoresMap = new Map();
+      if (coordenadorIds.length > 0) {
+        const { data: coordenadoresData } = await supabase
+          .from('coordenador')
+          .select('id_coordenador, nome')
+          .in('id_coordenador', coordenadorIds);
+        
+        (coordenadoresData || []).forEach((c: any) => {
+          coordenadoresMap.set(c.id_coordenador, c);
+        });
+      }
+
+      // 6. Fetch plantoes and empresas
+      const plantoesMap = new Map();
+      const empresasMap = new Map();
+      if (plantaoIds.length > 0) {
+        const { data: plantoesData } = await supabase
+          .from('plantao')
+          .select('id_plantao, nome, id_empresa')
+          .in('id_plantao', plantaoIds);
+        
+        const plantoes = plantoesData || [];
+        plantoes.forEach((p: any) => {
+          plantoesMap.set(p.id_plantao, p);
+        });
+
+        const empresaIds = [...new Set(plantoes.map((p: any) => p.id_empresa).filter(Boolean))];
+        if (empresaIds.length > 0) {
+          const { data: empresasData } = await supabase
+            .from('empresa')
+            .select('id_empresa, nome')
+            .in('id_empresa', empresaIds);
+          
+          (empresasData || []).forEach((e: any) => {
+            empresasMap.set(e.id_empresa, e);
+          });
+        }
+      }
+
+      // 7. Merge data
+      const respostasWithEscala = respostas.map(resposta => {
+        const escala = escalas.find(e => e.idescala === resposta.idescala);
+        if (!escala) return { ...resposta, escala: null };
+
+        const coordenador = escala.id_coordenador 
+          ? coordenadoresMap.get(escala.id_coordenador) 
+          : null;
+        
+        const plantao = escala.id_plantao 
+          ? plantoesMap.get(escala.id_plantao) 
+          : null;
+        
+        const empresa = plantao?.id_empresa 
+          ? empresasMap.get(plantao.id_empresa) 
+          : null;
+
+        return {
+          ...resposta,
+          escala: {
+            ...escala,
+            coordenador,
+            plantao: plantao ? {
+              ...plantao,
+              empresa
+            } : null
+          }
+        };
+      });
+
       // Process data based on filter type
-      const processedData = processMatrixData(respostas);
+      const processedData = processMatrixData(respostasWithEscala);
       setMatrixData(processedData.rows);
       setPeriods(processedData.periods);
     } catch (err: any) {
