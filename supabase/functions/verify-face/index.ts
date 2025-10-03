@@ -172,10 +172,10 @@ serve(async (req) => {
       });
     }
 
-    // Buscar todos os cadastros faciais
+    // Buscar cadastros com imagens
     const { data: faceUsers, error: faceError } = await supabase
       .from('face_users')
-      .select('id, nome, matricula, latitude, longitude, descriptor');
+      .select('id, nome, matricula, latitude, longitude, image_paths');
 
     if (faceError) {
       console.error('[Verify] Erro ao buscar cadastros:', faceError);
@@ -203,103 +203,109 @@ serve(async (req) => {
       });
     }
 
-    // Extrair descriptor da imagem de verificação
+    // Comparação DIRETA de imagens com Gemini
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
-    console.log('[Verify] Extraindo descriptor da foto...');
-
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Analise esta foto e retorne um array JSON de 128 números entre -1 e 1 representando as características faciais únicas (embedding facial). Retorne APENAS o array JSON, sem explicações: [0.123, -0.456, ...]'
-              },
-              {
-                type: 'image_url',
-                image_url: { url: image }
-              }
-            ]
-          }
-        ],
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('[Verify] Erro ao extrair descriptor:', errorText);
-      throw new Error('Erro ao extrair descriptor facial');
-    }
-
-    const aiData = await aiResponse.json();
-    const content = aiData.choices[0].message.content;
-    
-    // Extrair array JSON
-    const jsonMatch = content.match(/\[[\s\S]*?\]/);
-    if (!jsonMatch) {
-      throw new Error('Formato de resposta inválido');
-    }
-    
-    const queryDescriptor = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(queryDescriptor) || queryDescriptor.length !== 128) {
-      throw new Error('Descriptor deve ter 128 dimensões');
-    }
-
     console.log('[Verify] Comparando com', faceUsers.length, 'cadastros...');
 
-    // Função para calcular similaridade de cosseno
-    function cosineSimilarity(a: number[], b: number[]): number {
-      let dotProduct = 0;
-      let normA = 0;
-      let normB = 0;
-      
-      for (let i = 0; i < a.length; i++) {
-        dotProduct += a[i] * b[i];
-        normA += a[i] * a[i];
-        normB += b[i] * b[i];
-      }
-      
-      return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-    }
-
-    // Comparar com todos os cadastros
-    const CONFIDENCE_THRESHOLD = 0.85;
+    const CONFIDENCE_THRESHOLD = 0.90;
     const MARGIN_THRESHOLD = 0.05;
     let bestMatch: { id: string; nome: string; score: number } | null = null;
     let secondBestScore = 0;
 
     for (const user of faceUsers) {
-      if (!user.descriptor || !Array.isArray(user.descriptor)) {
-        console.log('[Verify] Usuário sem descriptor:', user.nome);
+      if (!user.image_paths || user.image_paths.length === 0) {
+        console.log('[Verify] Usuário sem imagens:', user.nome);
         continue;
       }
 
-      const similarity = cosineSimilarity(queryDescriptor, user.descriptor);
-      console.log('[Verify] Similaridade com', user.nome, ':', similarity);
+      console.log('[Verify] Comparando com:', user.nome);
 
-      if (similarity > (bestMatch?.score || 0)) {
-        if (bestMatch?.score) {
-          secondBestScore = bestMatch.score;
+      // Buscar URLs das imagens cadastradas
+      const enrolledImageUrls: string[] = [];
+      for (const path of user.image_paths.slice(0, 2)) {
+        const { data: urlData } = await supabase.storage
+          .from('face-images')
+          .createSignedUrl(path, 300);
+        
+        if (urlData?.signedUrl) {
+          enrolledImageUrls.push(urlData.signedUrl);
         }
-        bestMatch = {
-          id: user.id,
-          nome: user.nome,
-          score: similarity
-        };
-      } else if (similarity > secondBestScore) {
-        secondBestScore = similarity;
+      }
+
+      if (enrolledImageUrls.length === 0) {
+        console.log('[Verify] Não foi possível obter imagens de:', user.nome);
+        continue;
+      }
+
+      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Compare a PRIMEIRA imagem (verificação) com as DEMAIS (cadastradas). Mesma pessoa?
+
+Responda JSON: {"match": true/false, "confidence": 0.0-1.0, "reasoning": "..."}
+
+Seja rigoroso. Confidence 0.85+ para match=true.`
+                },
+                {
+                  type: 'image_url',
+                  image_url: { url: image }
+                },
+                ...enrolledImageUrls.map(url => ({
+                  type: 'image_url',
+                  image_url: { url }
+                }))
+              ]
+            }
+          ],
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        console.error('[Verify] Erro IA:', user.nome);
+        continue;
+      }
+
+      const aiData = await aiResponse.json();
+      const resultText = aiData.choices[0].message.content;
+      
+      const jsonMatch = resultText.match(/\{[^}]+\}/);
+      if (!jsonMatch) {
+        console.error('[Verify] Resposta inválida:', user.nome);
+        continue;
+      }
+
+      const result = JSON.parse(jsonMatch[0]);
+      console.log('[Verify] Resultado', user.nome, ':', result);
+
+      if (result.match) {
+        const score = Number(result.confidence) || 0;
+        if (score > (bestMatch?.score || 0)) {
+          if (bestMatch?.score) {
+            secondBestScore = bestMatch.score;
+          }
+          bestMatch = {
+            id: user.id,
+            nome: user.nome,
+            score
+          };
+        } else if (score > secondBestScore) {
+          secondBestScore = score;
+        }
       }
     }
 
@@ -310,7 +316,7 @@ serve(async (req) => {
         console.log('[Verify] Rejeitado - score:', bestMatch.score, 'margin:', margin);
         bestMatch = null;
       } else {
-        console.log('[Verify] Match encontrado:', bestMatch);
+        console.log('[Verify] Match:', bestMatch);
       }
     }
 
