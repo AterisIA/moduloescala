@@ -175,7 +175,7 @@ serve(async (req) => {
     // Buscar todos os cadastros faciais
     const { data: faceUsers, error: faceError } = await supabase
       .from('face_users')
-      .select('id, nome, matricula, latitude, longitude, description, image_paths');
+      .select('id, nome, matricula, latitude, longitude, descriptor');
 
     if (faceError) {
       console.error('[Verify] Erro ao buscar cadastros:', faceError);
@@ -203,101 +203,114 @@ serve(async (req) => {
       });
     }
 
-    // Usar Lovable AI para comparar rostos
+    // Extrair descriptor da imagem de verificação
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
-    console.log('[Verify] Comparando com', faceUsers.length, 'cadastros usando IA...');
+    console.log('[Verify] Extraindo descriptor da foto...');
 
-    // Criar um prompt comparativo para cada usuário (thresholds mais rígidos)
-    const CONFIDENCE_THRESHOLD = 0.95;
-    const MARGIN_THRESHOLD = 0.07; // diferença mínima entre 1º e 2º colocado
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analise esta foto e retorne um array JSON de 128 números entre -1 e 1 representando as características faciais únicas (embedding facial). Retorne APENAS o array JSON, sem explicações: [0.123, -0.456, ...]'
+              },
+              {
+                type: 'image_url',
+                image_url: { url: image }
+              }
+            ]
+          }
+        ],
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('[Verify] Erro ao extrair descriptor:', errorText);
+      throw new Error('Erro ao extrair descriptor facial');
+    }
+
+    const aiData = await aiResponse.json();
+    const content = aiData.choices[0].message.content;
+    
+    // Extrair array JSON
+    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+    if (!jsonMatch) {
+      throw new Error('Formato de resposta inválido');
+    }
+    
+    const queryDescriptor = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(queryDescriptor) || queryDescriptor.length !== 128) {
+      throw new Error('Descriptor deve ter 128 dimensões');
+    }
+
+    console.log('[Verify] Comparando com', faceUsers.length, 'cadastros...');
+
+    // Função para calcular similaridade de cosseno
+    function cosineSimilarity(a: number[], b: number[]): number {
+      let dotProduct = 0;
+      let normA = 0;
+      let normB = 0;
+      
+      for (let i = 0; i < a.length; i++) {
+        dotProduct += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+      }
+      
+      return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    // Comparar com todos os cadastros
+    const CONFIDENCE_THRESHOLD = 0.85;
+    const MARGIN_THRESHOLD = 0.05;
     let bestMatch: { id: string; nome: string; score: number } | null = null;
     let secondBestScore = 0;
 
     for (const user of faceUsers) {
-      console.log('[Verify] Comparando com:', user.nome);
-
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'user',
-              content: `Características faciais da pessoa cadastrada: ${user.description}
-              
-Analise a foto fornecida e determine se é a MESMA pessoa baseado nas características descritas acima.
-
-Responda APENAS com um JSON no formato:
-{"match": true/false, "confidence": 0.0-1.0, "reasoning": "breve explicação"}
-
-Seja rigoroso na comparação. Confidence deve ser 0.85+ para match=true.`
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Foto para verificação:'
-                },
-                {
-                  type: 'image_url',
-                  image_url: { url: image }
-                }
-              ]
-            }
-          ],
-        }),
-      });
-
-      if (!aiResponse.ok) {
-        console.error('[Verify] Erro na IA para', user.nome);
+      if (!user.descriptor || !Array.isArray(user.descriptor)) {
+        console.log('[Verify] Usuário sem descriptor:', user.nome);
         continue;
       }
 
-      const aiData = await aiResponse.json();
-      const resultText = aiData.choices[0].message.content;
-      
-      // Extrair JSON do resultado
-      const jsonMatch = resultText.match(/\{[^}]+\}/);
-      if (!jsonMatch) {
-        console.error('[Verify] Resposta IA inválida para', user.nome);
-        continue;
-      }
+      const similarity = cosineSimilarity(queryDescriptor, user.descriptor);
+      console.log('[Verify] Similaridade com', user.nome, ':', similarity);
 
-      const result = JSON.parse(jsonMatch[0]);
-      console.log('[Verify] Resultado para', user.nome, ':', result);
-
-      if (result.match) {
-        const score = Number(result.confidence) || 0;
-        if (!bestMatch || score > bestMatch.score) {
-          if (bestMatch?.score && bestMatch.score > secondBestScore) {
-            secondBestScore = bestMatch.score;
-          }
-          bestMatch = {
-            id: user.id,
-            nome: user.nome,
-            score
-          };
-        } else if (score > secondBestScore) {
-          secondBestScore = score;
+      if (similarity > (bestMatch?.score || 0)) {
+        if (bestMatch?.score) {
+          secondBestScore = bestMatch.score;
         }
+        bestMatch = {
+          id: user.id,
+          nome: user.nome,
+          score: similarity
+        };
+      } else if (similarity > secondBestScore) {
+        secondBestScore = similarity;
       }
     }
 
-    // Aplicar thresholds rígidos
+    // Aplicar thresholds
     if (bestMatch) {
       const margin = bestMatch.score - secondBestScore;
       if (bestMatch.score < CONFIDENCE_THRESHOLD || margin < MARGIN_THRESHOLD) {
-        console.log('[Verify] Rejeitado por limiar/margem:', { score: bestMatch.score, margin });
+        console.log('[Verify] Rejeitado - score:', bestMatch.score, 'margin:', margin);
         bestMatch = null;
+      } else {
+        console.log('[Verify] Match encontrado:', bestMatch);
       }
     }
 

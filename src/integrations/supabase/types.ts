@@ -648,6 +648,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          descriptor: number[] | null
           endereco_profissional: string | null
           facial_features: Json | null
           id: string
@@ -660,6 +661,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          descriptor?: number[] | null
           endereco_profissional?: string | null
           facial_features?: Json | null
           id?: string
@@ -672,6 +674,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          descriptor?: number[] | null
           endereco_profissional?: string | null
           facial_features?: Json | null
           id?: string
