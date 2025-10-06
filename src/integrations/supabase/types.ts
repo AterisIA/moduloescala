@@ -572,6 +572,7 @@ export type Database = {
           dataescala: string
           finalescala: string | null
           folgas_datas: string[] | null
+          id_contato_terceirizacao: string | null
           id_coordenador: string | null
           id_plantao: string | null
           idescala: number
@@ -583,6 +584,7 @@ export type Database = {
           dataescala: string
           finalescala?: string | null
           folgas_datas?: string[] | null
+          id_contato_terceirizacao?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number
@@ -594,13 +596,22 @@ export type Database = {
           dataescala?: string
           finalescala?: string | null
           folgas_datas?: string[] | null
+          id_contato_terceirizacao?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number
           nomepessoaescala?: string
           telefone?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "escala_id_contato_terceirizacao_fkey"
+            columns: ["id_contato_terceirizacao"]
+            isOneToOne: false
+            referencedRelation: "contatos_terceirizacao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       face_recognition_logs: {
         Row: {

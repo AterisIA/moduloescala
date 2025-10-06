@@ -62,6 +62,7 @@ export default function Escalas() {
     telefone: "",
     id_coordenador: "",
     id_plantao: "",
+    id_contato_terceirizacao: "",
     folgas_datas: [] as string[],
     banco_horas_datas: [] as string[]
   });
@@ -222,6 +223,7 @@ export default function Escalas() {
       telefone: "",
       id_coordenador: "",
       id_plantao: "",
+      id_contato_terceirizacao: "",
       folgas_datas: [],
       banco_horas_datas: []
     });
@@ -302,6 +304,7 @@ export default function Escalas() {
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
         id_coordenador: formData.id_coordenador || null,
         id_plantao: formData.id_plantao || null,
+        id_contato_terceirizacao: formData.id_contato_terceirizacao || null,
         folgas_datas: formData.folgas_datas,
         banco_horas_datas: formData.banco_horas_datas
       };
@@ -425,11 +428,12 @@ export default function Escalas() {
           {isCreating ? <div className="space-y-4">
               <div>
                 <Label htmlFor="nomepessoaescala">Nome da Pessoa *</Label>
-                <Select value={formData.nomepessoaescala} onValueChange={value => {
-                  const contato = contatos.find(c => c.name === value);
+                <Select value={formData.id_contato_terceirizacao} onValueChange={value => {
+                  const contato = contatos.find(c => c.id === value);
                   setFormData(prev => ({
                     ...prev,
-                    nomepessoaescala: value,
+                    id_contato_terceirizacao: value,
+                    nomepessoaescala: contato?.name || "",
                     telefone: contato?.phone || prev.telefone
                   }));
                 }}>
@@ -438,7 +442,7 @@ export default function Escalas() {
                   </SelectTrigger>
                   <SelectContent>
                     {contatos.map(contato => (
-                      <SelectItem key={contato.id} value={contato.name}>
+                      <SelectItem key={contato.id} value={contato.id}>
                         {contato.name}
                       </SelectItem>
                     ))}
