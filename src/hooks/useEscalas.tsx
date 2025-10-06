@@ -13,7 +13,6 @@ interface EscalaData {
   folgas_datas: string[] | null;
   banco_horas_datas: string[] | null;
   folgas_dias_semana: number[] | null;
-  banco_horas_dias_semana: number[] | null;
 }
 
 interface CoordenadorData {
@@ -144,9 +143,12 @@ export function useEscalas() {
         const endDate = escala.finalescala ? new Date(escala.finalescala) : new Date(startDate);
         console.log(`Escala ${escala.idescala} dates:`, { startDate, endDate });
         
-        // Criar sets para dias da semana de folga e banco de horas
+        // Criar sets para dias da semana de folga e datas específicas de banco de horas
         const folgasDiasSemana = new Set<number>(escala.folgas_dias_semana || []);
-        const bancoHorasDiasSemana = new Set<number>(escala.banco_horas_dias_semana || []);
+        const bancoHorasDatas = new Set<string>();
+        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
+          escala.banco_horas_datas.forEach(data => bancoHorasDatas.add(data));
+        }
         
         // Iterar por cada dia do intervalo (inclusive)
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
@@ -175,8 +177,8 @@ export function useEscalas() {
             continue;
           }
 
-          // Verifica se é dia de banco de horas
-          if (bancoHorasDiasSemana.has(dayOfWeek)) {
+          // Verifica se é dia de banco de horas (data específica)
+          if (bancoHorasDatas.has(dateKey)) {
             const schedule = {
               id: `${escala.idescala}_banco_${dateKey}`,
               employeeId,

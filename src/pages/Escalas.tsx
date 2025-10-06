@@ -23,7 +23,6 @@ interface Escala {
   folgas_datas?: string[];
   banco_horas_datas?: string[];
   folgas_dias_semana?: number[];
-  banco_horas_dias_semana?: number[];
 }
 
 interface Coordenador {
@@ -66,8 +65,9 @@ export default function Escalas() {
     id_plantao: "",
     id_contato_terceirizacao: "",
     folgas_dias_semana: [] as number[],
-    banco_horas_dias_semana: [] as number[]
+    banco_horas_datas: [] as string[]
   });
+  const [currentBancoData, setCurrentBancoData] = useState("");
   const {
     toast
   } = useToast();
@@ -225,8 +225,9 @@ export default function Escalas() {
       id_plantao: "",
       id_contato_terceirizacao: "",
       folgas_dias_semana: [],
-      banco_horas_dias_semana: []
+      banco_horas_datas: []
     });
+    setCurrentBancoData("");
     setSelectedEmpresa("");
     setEditingEscala(null);
     setIsCreating(true);
@@ -242,12 +243,20 @@ export default function Escalas() {
     }));
   };
 
-  const handleToggleDiaBancoHoras = (dia: number) => {
+  const handleAddBancoHoras = () => {
+    if (currentBancoData && !formData.banco_horas_datas.includes(currentBancoData)) {
+      setFormData(prev => ({
+        ...prev,
+        banco_horas_datas: [...prev.banco_horas_datas, currentBancoData]
+      }));
+      setCurrentBancoData("");
+    }
+  };
+
+  const handleRemoveBancoHoras = (date: string) => {
     setFormData(prev => ({
       ...prev,
-      banco_horas_dias_semana: prev.banco_horas_dias_semana.includes(dia)
-        ? prev.banco_horas_dias_semana.filter(d => d !== dia)
-        : [...prev.banco_horas_dias_semana, dia]
+      banco_horas_datas: prev.banco_horas_datas.filter(d => d !== date)
     }));
   };
 
@@ -288,7 +297,7 @@ export default function Escalas() {
         id_plantao: formData.id_plantao || null,
         id_contato_terceirizacao: formData.id_contato_terceirizacao || null,
         folgas_dias_semana: formData.folgas_dias_semana,
-        banco_horas_dias_semana: formData.banco_horas_dias_semana
+        banco_horas_datas: formData.banco_horas_datas
       };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -476,31 +485,36 @@ export default function Escalas() {
               </div>
 
               <div>
-                <Label>Dias da Semana de Banco de Horas</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {[
-                    { value: 0, label: 'Dom' },
-                    { value: 1, label: 'Seg' },
-                    { value: 2, label: 'Ter' },
-                    { value: 3, label: 'Qua' },
-                    { value: 4, label: 'Qui' },
-                    { value: 5, label: 'Sex' },
-                    { value: 6, label: 'Sáb' }
-                  ].map(dia => (
-                    <Button
-                      key={dia.value}
-                      type="button"
-                      variant={formData.banco_horas_dias_semana.includes(dia.value) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleToggleDiaBancoHoras(dia.value)}
-                      className="min-w-[60px]"
-                    >
-                      {dia.label}
-                    </Button>
-                  ))}
+                <Label>Dias de Banco de Horas</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="banco_horas" 
+                    type="date" 
+                    value={currentBancoData} 
+                    onChange={e => setCurrentBancoData(e.target.value)} 
+                  />
+                  <Button type="button" onClick={handleAddBancoHoras} variant="outline" size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
+                {formData.banco_horas_datas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.banco_horas_datas.map(date => (
+                      <Badge key={date} variant="secondary" className="gap-1">
+                        {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveBancoHoras(date)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Selecione os dias da semana que serão banco de horas durante o período da escala
+                  Selecione as datas específicas de banco de horas
                 </p>
               </div>
               
