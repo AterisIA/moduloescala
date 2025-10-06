@@ -134,53 +134,63 @@ export function useEscalas() {
         }
 
         // Create schedule from escala
+        // Interpretação: dataescala define o início do intervalo, finalescala define o fim
+        // Cada dia dentro do intervalo terá um bloco de 08:00-17:00
+        // Exceto os dias em folgas_datas (que não devem ser preenchidos com work)
+        
         const startDate = new Date(escala.dataescala);
         const endDate = escala.finalescala ? new Date(escala.finalescala) : new Date(startDate);
         console.log(`Escala ${escala.idescala} dates:`, { startDate, endDate });
         
-        // Handle multi-day schedules properly
+        // Criar set de folgas para lookup rápido
+        const folgasSet = new Set<string>();
+        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
+          escala.folgas_datas.forEach(folga => {
+            folgasSet.add(folga);
+          });
+        }
+        
+        // Criar set de banco de horas para lookup rápido
+        const bancoHorasSet = new Set<string>();
+        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
+          escala.banco_horas_datas.forEach(banco => {
+            bancoHorasSet.add(banco);
+          });
+        }
+        
+        // Iterar por cada dia do intervalo (inclusive)
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
         
         const currentDate = new Date(startDateOnly);
         
         while (currentDate <= endDateOnly) {
-          const isFirstDay = currentDate.getTime() === startDateOnly.getTime();
-          const isLastDay = currentDate.getTime() === endDateOnly.getTime();
-          const isSingleDay = startDateOnly.getTime() === endDateOnly.getTime();
+          const dateKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
           
-          let dayStartTime: string;
-          let dayEndTime: string;
-          
-          if (isSingleDay) {
-            // Single day: use actual start and end times
-            dayStartTime = startDate.toTimeString().substring(0, 5);
-            dayEndTime = endDate.toTimeString().substring(0, 5);
-          } else if (isFirstDay) {
-            // First day: start at actual time, end at 23:59
-            dayStartTime = startDate.toTimeString().substring(0, 5);
-            dayEndTime = "23:59";
-          } else if (isLastDay) {
-            // Last day: start at 00:00, end at actual time
-            dayStartTime = "00:00";
-            dayEndTime = endDate.toTimeString().substring(0, 5);
-          } else {
-            // Middle days: full day
-            dayStartTime = "00:00";
-            dayEndTime = "23:59";
+          // Se é folga, não criar schedule de work (será criado depois como 'rest')
+          if (folgasSet.has(dateKey)) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            continue;
           }
           
+          // Se é banco de horas, não criar schedule de work (será criado depois como 'break')
+          if (bancoHorasSet.has(dateKey)) {
+            currentDate.setDate(currentDate.getDate() + 1);
+            continue;
+          }
+          
+          // Criar schedule com horário fixo 08:00-17:00
           const schedule = {
-            id: `${escala.idescala}_${currentDate.toISOString().split('T')[0]}`,
+            id: `${escala.idescala}_${dateKey}`,
             employeeId,
             date: new Date(currentDate),
-            startTime: dayStartTime,
-            endTime: dayEndTime,
+            startTime: "08:00",
+            endTime: "17:00",
             type: 'work' as const,
             location: undefined
           };
           
-          console.log('Created schedule:', schedule);
+          console.log('Created work schedule:', schedule);
           schedulesArray.push(schedule);
           
           currentDate.setDate(currentDate.getDate() + 1);
