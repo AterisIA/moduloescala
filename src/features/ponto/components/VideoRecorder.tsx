@@ -50,6 +50,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
   const geoRef = useRef<GeoLocation | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
   const headPositionsRef = useRef<Array<{ yaw: number; pitch: number; roll: number }>>([]);
+  const livenessResultRef = useRef<{ hasMovement: boolean; headRotations: number; message: string } | null>(null);
 
   // Carregar modelos do face-api.js
   useEffect(() => {
@@ -239,83 +240,100 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
     }, 1000);
   };
 
-  const detectLivenessMovement = async () => {
-    if (!videoRef.current || !modelsLoaded) return;
-
-    headPositionsRef.current = [];
-    let detections = 0;
-
-    const detectInterval = setInterval(async () => {
-      if (!videoRef.current) return;
-
-      try {
-        const detection = await faceapi
-          .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-          .withFaceLandmarks();
-
-        if (detection) {
-          detections++;
-          const landmarks = detection.landmarks;
-          
-          // Calcular rotação da cabeça aproximada usando landmarks
-          const noseTip = landmarks.getNose()[3];
-          const leftEye = landmarks.getLeftEye()[0];
-          const rightEye = landmarks.getRightEye()[3];
-          
-          const eyeMidpoint = {
-            x: (leftEye.x + rightEye.x) / 2,
-            y: (leftEye.y + rightEye.y) / 2
-          };
-          
-          const yaw = (noseTip.x - eyeMidpoint.x) / 100;
-          const pitch = (noseTip.y - eyeMidpoint.y) / 100;
-          const roll = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
-          
-          headPositionsRef.current.push({ yaw, pitch, roll });
-        }
-      } catch (err) {
-        console.error("[Ponto] Erro na detecção:", err);
-      }
-    }, 300);
-
-    detectionIntervalRef.current = detectInterval as unknown as number;
-
-    // Parar detecção após 3 segundos
-    setTimeout(() => {
-      clearInterval(detectInterval);
-      
-      // Analisar movimento
-      const positions = headPositionsRef.current;
-      if (positions.length < 3) {
-        console.log("[Ponto] Detecções insuficientes:", positions.length);
+  const detectLivenessMovement = (): Promise<{ hasMovement: boolean; headRotations: number; message: string } | null> => {
+    return new Promise((resolve) => {
+      if (!videoRef.current || !modelsLoaded) {
+        resolve(null);
         return;
       }
 
-      // Calcular variação de movimento
-      const yawVariance = calculateVariance(positions.map(p => p.yaw));
-      const pitchVariance = calculateVariance(positions.map(p => p.pitch));
-      const rollVariance = calculateVariance(positions.map(p => p.roll));
-      
-      const totalMovement = yawVariance + pitchVariance + rollVariance;
-      const hasMovement = totalMovement > 0.01; // Threshold para detectar movimento real
-      
-      console.log("[Ponto] Análise de movimento:", {
-        detections,
-        yawVariance: yawVariance.toFixed(4),
-        pitchVariance: pitchVariance.toFixed(4),
-        rollVariance: rollVariance.toFixed(4),
-        totalMovement: totalMovement.toFixed(4),
-        hasMovement
-      });
-      
-      setLivenessCheck({
-        hasMovement,
-        headRotations: detections,
-        message: hasMovement 
-          ? "Movimento detectado - Pessoa real confirmada" 
-          : "Aviso: Pouco movimento detectado"
-      });
-    }, 3000);
+      headPositionsRef.current = [];
+      let detections = 0;
+
+      const detectInterval = setInterval(async () => {
+        if (!videoRef.current) return;
+
+        try {
+          const detection = await faceapi
+            .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks();
+
+          if (detection) {
+            detections++;
+            const landmarks = detection.landmarks;
+            
+            // Calcular rotação da cabeça aproximada usando landmarks
+            const noseTip = landmarks.getNose()[3];
+            const leftEye = landmarks.getLeftEye()[0];
+            const rightEye = landmarks.getRightEye()[3];
+            
+            const eyeMidpoint = {
+              x: (leftEye.x + rightEye.x) / 2,
+              y: (leftEye.y + rightEye.y) / 2
+            };
+            
+            const yaw = (noseTip.x - eyeMidpoint.x) / 100;
+            const pitch = (noseTip.y - eyeMidpoint.y) / 100;
+            const roll = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
+            
+            headPositionsRef.current.push({ yaw, pitch, roll });
+          }
+        } catch (err) {
+          console.error("[Ponto] Erro na detecção:", err);
+        }
+      }, 300);
+
+      detectionIntervalRef.current = detectInterval as unknown as number;
+
+      // Parar detecção após 3 segundos
+      setTimeout(() => {
+        clearInterval(detectInterval);
+        
+        // Analisar movimento
+        const positions = headPositionsRef.current;
+        if (positions.length < 3) {
+          console.log("[Ponto] Detecções insuficientes:", positions.length);
+          const result = {
+            hasMovement: false,
+            headRotations: detections,
+            message: "Detecções insuficientes - mova a cabeça"
+          };
+          livenessResultRef.current = result;
+          setLivenessCheck(result);
+          resolve(result);
+          return;
+        }
+
+        // Calcular variação de movimento
+        const yawVariance = calculateVariance(positions.map(p => p.yaw));
+        const pitchVariance = calculateVariance(positions.map(p => p.pitch));
+        const rollVariance = calculateVariance(positions.map(p => p.roll));
+        
+        const totalMovement = yawVariance + pitchVariance + rollVariance;
+        const hasMovement = totalMovement > 0.01; // Threshold para detectar movimento real
+        
+        console.log("[Ponto] Análise de movimento:", {
+          detections,
+          yawVariance: yawVariance.toFixed(4),
+          pitchVariance: pitchVariance.toFixed(4),
+          rollVariance: rollVariance.toFixed(4),
+          totalMovement: totalMovement.toFixed(4),
+          hasMovement
+        });
+        
+        const result = {
+          hasMovement,
+          headRotations: detections,
+          message: hasMovement 
+            ? "Movimento detectado - Pessoa real confirmada" 
+            : "Aviso: Pouco movimento detectado"
+        };
+        
+        livenessResultRef.current = result;
+        setLivenessCheck(result);
+        resolve(result);
+      }, 3000);
+    });
   };
 
   const calculateVariance = (values: number[]): number => {
@@ -331,6 +349,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
 
     chunksRef.current = [];
     headPositionsRef.current = [];
+    livenessResultRef.current = null;
     setLivenessCheck(null);
     
     const mediaRecorder = new MediaRecorder(stream, {
@@ -343,11 +362,15 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
       }
     };
 
+    let livenessPromise: Promise<any> | null = null;
+
     mediaRecorder.onstop = async () => {
       setIsProcessing(true);
       
-      // Aguardar análise de movimento completar
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Aguardar análise de movimento completar se foi iniciada
+      if (livenessPromise) {
+        await livenessPromise;
+      }
       
       await uploadAndPunch();
     };
@@ -358,7 +381,7 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
 
     // Iniciar detecção de movimento
     if (modelsLoaded) {
-      detectLivenessMovement();
+      livenessPromise = detectLivenessMovement();
     }
 
     // Gravar por 3 segundos
@@ -372,8 +395,10 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
 
   const uploadAndPunch = async () => {
     try {
-      // Verificar liveness antes de prosseguir
-      if (modelsLoaded && livenessCheck && !livenessCheck.hasMovement) {
+      // Verificar liveness antes de prosseguir usando a ref para evitar race condition
+      const livenessResult = livenessResultRef.current;
+      
+      if (modelsLoaded && livenessResult && !livenessResult.hasMovement) {
         toast({
           title: "❌ Validação de Prova de Vida Falhou",
           description: "Não foi detectado movimento suficiente. Por favor, mova a cabeça durante a gravação.",
@@ -385,10 +410,10 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
         return;
       }
 
-      if (modelsLoaded && livenessCheck?.hasMovement) {
+      if (modelsLoaded && livenessResult?.hasMovement) {
         toast({
           title: "✅ Validação de Pessoa Real",
-          description: livenessCheck.message,
+          description: livenessResult.message,
         });
       }
 
