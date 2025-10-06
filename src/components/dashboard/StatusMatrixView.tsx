@@ -282,9 +282,9 @@ export const StatusMatrixView = ({ filters }: StatusMatrixViewProps) => {
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr>
-                <th className="border border-border p-2 text-left bg-muted font-medium">
+                <th className="border border-border p-2 text-left bg-muted font-medium sticky left-0 z-20">
                   {filters.viewType === 'coordenador' && 'Coordenador'}
                   {filters.viewType === 'plantao' && 'Plantão'}
                   {filters.viewType === 'empresa' && 'Empresa'}
@@ -302,7 +302,7 @@ export const StatusMatrixView = ({ filters }: StatusMatrixViewProps) => {
             <tbody>
               {matrixData.map((row) => (
                 <tr key={row.entityId}>
-                  <td className="border border-border p-2 font-medium bg-background">
+                  <td className="border border-border p-2 font-medium bg-background sticky left-0 z-10">
                     {row.entityName}
                   </td>
                   {periods.map((period) => {
