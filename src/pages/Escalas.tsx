@@ -20,6 +20,7 @@ interface Escala {
   dataescala: string;
   finalescala?: string;
   telefone?: string;
+  folga_data?: string;
 }
 
 interface Coordenador {
@@ -51,7 +52,8 @@ export default function Escalas() {
     finalescala: "",
     telefone: "",
     id_coordenador: "",
-    id_plantao: ""
+    id_plantao: "",
+    folga_data: ""
   });
   const {
     toast
@@ -184,7 +186,8 @@ export default function Escalas() {
       finalescala: "",
       telefone: "",
       id_coordenador: "",
-      id_plantao: ""
+      id_plantao: "",
+      folga_data: ""
     });
     setSelectedEmpresa("");
     setEditingEscala(null);
@@ -225,8 +228,10 @@ export default function Escalas() {
         dataescala: formData.dataescala,
         finalescala: formData.finalescala || null,
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
-        id_coordenador: formData.id_coordenador || null
-  };
+        id_coordenador: formData.id_coordenador || null,
+        id_plantao: formData.id_plantao || null,
+        folga_data: formData.folga_data || null
+      };
 
   const handlePlantaoChange = (plantaoId: string) => {
     setFormData(prev => ({
@@ -364,6 +369,13 @@ export default function Escalas() {
                 <Input id="finalescala" type="datetime-local" value={formData.finalescala} onChange={e => setFormData(prev => ({
               ...prev,
               finalescala: e.target.value
+            }))} />
+              </div>
+              <div>
+                <Label htmlFor="folga_data">Dia de Folga</Label>
+                <Input id="folga_data" type="date" value={formData.folga_data} onChange={e => setFormData(prev => ({
+              ...prev,
+              folga_data: e.target.value
             }))} />
               </div>
               <div>

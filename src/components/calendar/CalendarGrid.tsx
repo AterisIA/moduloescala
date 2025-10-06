@@ -77,7 +77,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   };
 
   const getScheduleDisplay = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return '💤';
+    if (schedule.type === 'rest') return '😴';
     if (schedule.type === 'vacation') return '🏖️';
     return `${schedule.startTime}-${schedule.endTime}`;
   };

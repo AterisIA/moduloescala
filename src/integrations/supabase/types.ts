@@ -570,6 +570,7 @@ export type Database = {
         Row: {
           dataescala: string
           finalescala: string | null
+          folga_data: string | null
           id_coordenador: string | null
           id_plantao: string | null
           idescala: number
@@ -579,6 +580,7 @@ export type Database = {
         Insert: {
           dataescala: string
           finalescala?: string | null
+          folga_data?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number
@@ -588,6 +590,7 @@ export type Database = {
         Update: {
           dataescala?: string
           finalescala?: string | null
+          folga_data?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number
