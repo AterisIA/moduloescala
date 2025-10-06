@@ -22,6 +22,8 @@ interface Escala {
   telefone?: string;
   folgas_datas?: string[];
   banco_horas_datas?: string[];
+  folgas_dias_semana?: number[];
+  banco_horas_dias_semana?: number[];
 }
 
 interface Coordenador {
@@ -63,11 +65,9 @@ export default function Escalas() {
     id_coordenador: "",
     id_plantao: "",
     id_contato_terceirizacao: "",
-    folgas_datas: [] as string[],
-    banco_horas_datas: [] as string[]
+    folgas_dias_semana: [] as number[],
+    banco_horas_dias_semana: [] as number[]
   });
-  const [currentFolgaData, setCurrentFolgaData] = useState("");
-  const [currentBancoData, setCurrentBancoData] = useState("");
   const {
     toast
   } = useToast();
@@ -224,48 +224,30 @@ export default function Escalas() {
       id_coordenador: "",
       id_plantao: "",
       id_contato_terceirizacao: "",
-      folgas_datas: [],
-      banco_horas_datas: []
+      folgas_dias_semana: [],
+      banco_horas_dias_semana: []
     });
-    setCurrentFolgaData("");
-    setCurrentBancoData("");
     setSelectedEmpresa("");
     setEditingEscala(null);
     setIsCreating(true);
     setIsDialogOpen(true);
   };
 
-  const handleAddFolga = () => {
-    if (currentFolgaData && !formData.folgas_datas.includes(currentFolgaData)) {
-      setFormData(prev => ({
-        ...prev,
-        folgas_datas: [...prev.folgas_datas, currentFolgaData]
-      }));
-      setCurrentFolgaData("");
-    }
-  };
-
-  const handleRemoveFolga = (date: string) => {
+  const handleToggleDiaFolga = (dia: number) => {
     setFormData(prev => ({
       ...prev,
-      folgas_datas: prev.folgas_datas.filter(d => d !== date)
+      folgas_dias_semana: prev.folgas_dias_semana.includes(dia)
+        ? prev.folgas_dias_semana.filter(d => d !== dia)
+        : [...prev.folgas_dias_semana, dia]
     }));
   };
 
-  const handleAddBancoHoras = () => {
-    if (currentBancoData && !formData.banco_horas_datas.includes(currentBancoData)) {
-      setFormData(prev => ({
-        ...prev,
-        banco_horas_datas: [...prev.banco_horas_datas, currentBancoData]
-      }));
-      setCurrentBancoData("");
-    }
-  };
-
-  const handleRemoveBancoHoras = (date: string) => {
+  const handleToggleDiaBancoHoras = (dia: number) => {
     setFormData(prev => ({
       ...prev,
-      banco_horas_datas: prev.banco_horas_datas.filter(d => d !== date)
+      banco_horas_dias_semana: prev.banco_horas_dias_semana.includes(dia)
+        ? prev.banco_horas_dias_semana.filter(d => d !== dia)
+        : [...prev.banco_horas_dias_semana, dia]
     }));
   };
 
@@ -305,8 +287,8 @@ export default function Escalas() {
         id_coordenador: formData.id_coordenador || null,
         id_plantao: formData.id_plantao || null,
         id_contato_terceirizacao: formData.id_contato_terceirizacao || null,
-        folgas_datas: formData.folgas_datas,
-        banco_horas_datas: formData.banco_horas_datas
+        folgas_dias_semana: formData.folgas_dias_semana,
+        banco_horas_dias_semana: formData.banco_horas_dias_semana
       };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -465,65 +447,61 @@ export default function Escalas() {
               </div>
               
               <div>
-                <Label htmlFor="folgas">Dias de Folga</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="folgas" 
-                    type="date" 
-                    value={currentFolgaData} 
-                    onChange={e => setCurrentFolgaData(e.target.value)} 
-                  />
-                  <Button type="button" onClick={handleAddFolga} variant="outline" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                <Label>Dias da Semana de Folga</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[
+                    { value: 0, label: 'Dom' },
+                    { value: 1, label: 'Seg' },
+                    { value: 2, label: 'Ter' },
+                    { value: 3, label: 'Qua' },
+                    { value: 4, label: 'Qui' },
+                    { value: 5, label: 'Sex' },
+                    { value: 6, label: 'Sáb' }
+                  ].map(dia => (
+                    <Button
+                      key={dia.value}
+                      type="button"
+                      variant={formData.folgas_dias_semana.includes(dia.value) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleToggleDiaFolga(dia.value)}
+                      className="min-w-[60px]"
+                    >
+                      {dia.label}
+                    </Button>
+                  ))}
                 </div>
-                {formData.folgas_datas.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.folgas_datas.map(date => (
-                      <Badge key={date} variant="secondary" className="gap-1">
-                        {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveFolga(date)}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Selecione os dias da semana que serão folga durante o período da escala
+                </p>
               </div>
 
               <div>
-                <Label htmlFor="banco_horas">Dias de Banco de Horas</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="banco_horas" 
-                    type="date" 
-                    value={currentBancoData} 
-                    onChange={e => setCurrentBancoData(e.target.value)} 
-                  />
-                  <Button type="button" onClick={handleAddBancoHoras} variant="outline" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                <Label>Dias da Semana de Banco de Horas</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[
+                    { value: 0, label: 'Dom' },
+                    { value: 1, label: 'Seg' },
+                    { value: 2, label: 'Ter' },
+                    { value: 3, label: 'Qua' },
+                    { value: 4, label: 'Qui' },
+                    { value: 5, label: 'Sex' },
+                    { value: 6, label: 'Sáb' }
+                  ].map(dia => (
+                    <Button
+                      key={dia.value}
+                      type="button"
+                      variant={formData.banco_horas_dias_semana.includes(dia.value) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleToggleDiaBancoHoras(dia.value)}
+                      className="min-w-[60px]"
+                    >
+                      {dia.label}
+                    </Button>
+                  ))}
                 </div>
-                {formData.banco_horas_datas.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.banco_horas_datas.map(date => (
-                      <Badge key={date} variant="secondary" className="gap-1">
-                        {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveBancoHoras(date)}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Selecione os dias da semana que serão banco de horas durante o período da escala
+                </p>
               </div>
               
               <div>

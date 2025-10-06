@@ -12,6 +12,8 @@ interface EscalaData {
   id_plantao: string | null;
   folgas_datas: string[] | null;
   banco_horas_datas: string[] | null;
+  folgas_dias_semana: number[] | null;
+  banco_horas_dias_semana: number[] | null;
 }
 
 interface CoordenadorData {
@@ -142,21 +144,9 @@ export function useEscalas() {
         const endDate = escala.finalescala ? new Date(escala.finalescala) : new Date(startDate);
         console.log(`Escala ${escala.idescala} dates:`, { startDate, endDate });
         
-        // Criar set de folgas para lookup rápido
-        const folgasSet = new Set<string>();
-        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
-          escala.folgas_datas.forEach(folga => {
-            folgasSet.add(folga);
-          });
-        }
-        
-        // Criar set de banco de horas para lookup rápido
-        const bancoHorasSet = new Set<string>();
-        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
-          escala.banco_horas_datas.forEach(banco => {
-            bancoHorasSet.add(banco);
-          });
-        }
+        // Criar sets para dias da semana de folga e banco de horas
+        const folgasDiasSemana = new Set<number>(escala.folgas_dias_semana || []);
+        const bancoHorasDiasSemana = new Set<number>(escala.banco_horas_dias_semana || []);
         
         // Iterar por cada dia do intervalo (inclusive)
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
@@ -165,21 +155,44 @@ export function useEscalas() {
         const currentDate = new Date(startDateOnly);
         
         while (currentDate <= endDateOnly) {
-          const dateKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
-          
-          // Se é folga, não criar schedule de work (será criado depois como 'rest')
-          if (folgasSet.has(dateKey)) {
+          const dateKey = currentDate.toISOString().split('T')[0];
+          const dayOfWeek = currentDate.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+
+          // Verifica se é dia de folga
+          if (folgasDiasSemana.has(dayOfWeek)) {
+            const schedule = {
+              id: `${escala.idescala}_folga_${dateKey}`,
+              employeeId,
+              date: new Date(currentDate),
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'rest' as const,
+              location: undefined
+            };
+            console.log('Created rest schedule (folga):', schedule);
+            schedulesArray.push(schedule);
             currentDate.setDate(currentDate.getDate() + 1);
             continue;
           }
-          
-          // Se é banco de horas, não criar schedule de work (será criado depois como 'break')
-          if (bancoHorasSet.has(dateKey)) {
+
+          // Verifica se é dia de banco de horas
+          if (bancoHorasDiasSemana.has(dayOfWeek)) {
+            const schedule = {
+              id: `${escala.idescala}_banco_${dateKey}`,
+              employeeId,
+              date: new Date(currentDate),
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'break' as const,
+              location: undefined
+            };
+            console.log('Created break schedule (banco de horas):', schedule);
+            schedulesArray.push(schedule);
             currentDate.setDate(currentDate.getDate() + 1);
             continue;
           }
-          
-          // Criar schedule com horário fixo 08:00-17:00
+
+          // Dia normal de trabalho
           const schedule = {
             id: `${escala.idescala}_${dateKey}`,
             employeeId,
@@ -189,81 +202,11 @@ export function useEscalas() {
             type: 'work' as const,
             location: undefined
           };
-          
+
           console.log('Created work schedule:', schedule);
           schedulesArray.push(schedule);
-          
+
           currentDate.setDate(currentDate.getDate() + 1);
-        }
-        
-        // Criar schedules para folgas (tipo 'rest')
-        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
-          escala.folgas_datas.forEach(folgaDate => {
-            const folgaDateObj = new Date(folgaDate + 'T00:00:00');
-            const schedule = {
-              id: `${escala.idescala}_folga_${folgaDate}`,
-              employeeId,
-              date: folgaDateObj,
-              startTime: "00:00",
-              endTime: "23:59",
-              type: 'rest' as const,
-              location: undefined
-            };
-            console.log('Created rest schedule (folga):', schedule);
-            schedulesArray.push(schedule);
-          });
-        }
-        
-        // Criar schedules para banco de horas (tipo 'break')
-        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
-          escala.banco_horas_datas.forEach(bancoDate => {
-            const bancoDateObj = new Date(bancoDate + 'T00:00:00');
-            const schedule = {
-              id: `${escala.idescala}_banco_${bancoDate}`,
-              employeeId,
-              date: bancoDateObj,
-              startTime: "00:00",
-              endTime: "23:59",
-              type: 'break' as const,
-              location: undefined
-            };
-            console.log('Created break schedule (banco de horas):', schedule);
-            schedulesArray.push(schedule);
-          });
-        }
-        
-        // Add rest days (folgas)
-        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
-          escala.folgas_datas.forEach((folgaDateStr, idx) => {
-            const folgaDate = new Date(folgaDateStr + 'T00:00:00');
-            const restSchedule = {
-              id: `${escala.idescala}_folga_${idx}`,
-              employeeId,
-              date: folgaDate,
-              startTime: "00:00",
-              endTime: "23:59",
-              type: 'rest' as const,
-              location: undefined
-            };
-            schedulesArray.push(restSchedule);
-          });
-        }
-        
-        // Add banco de horas days (time bank)
-        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
-          escala.banco_horas_datas.forEach((bancoDateStr, idx) => {
-            const bancoDate = new Date(bancoDateStr + 'T00:00:00');
-            const bancoSchedule = {
-              id: `${escala.idescala}_banco_${idx}`,
-              employeeId,
-              date: bancoDate,
-              startTime: "00:00",
-              endTime: "23:59",
-              type: 'break' as const, // Using 'break' type for banco de horas
-              location: undefined
-            };
-            schedulesArray.push(bancoSchedule);
-          });
         }
       });
 

@@ -569,9 +569,11 @@ export type Database = {
       escala: {
         Row: {
           banco_horas_datas: string[] | null
+          banco_horas_dias_semana: number[] | null
           dataescala: string
           finalescala: string | null
           folgas_datas: string[] | null
+          folgas_dias_semana: number[] | null
           id_contato_terceirizacao: string | null
           id_coordenador: string | null
           id_plantao: string | null
@@ -581,9 +583,11 @@ export type Database = {
         }
         Insert: {
           banco_horas_datas?: string[] | null
+          banco_horas_dias_semana?: number[] | null
           dataescala: string
           finalescala?: string | null
           folgas_datas?: string[] | null
+          folgas_dias_semana?: number[] | null
           id_contato_terceirizacao?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
@@ -593,9 +597,11 @@ export type Database = {
         }
         Update: {
           banco_horas_datas?: string[] | null
+          banco_horas_dias_semana?: number[] | null
           dataescala?: string
           finalescala?: string | null
           folgas_datas?: string[] | null
+          folgas_dias_semana?: number[] | null
           id_contato_terceirizacao?: string | null
           id_coordenador?: string | null
           id_plantao?: string | null
@@ -865,6 +871,7 @@ export type Database = {
           id: number
           message: Json | null
           nome: string | null
+          resposta: string | null
           telefone: string | null
         }
         Insert: {
@@ -873,6 +880,7 @@ export type Database = {
           id?: number
           message?: Json | null
           nome?: string | null
+          resposta?: string | null
           telefone?: string | null
         }
         Update: {
@@ -881,6 +889,7 @@ export type Database = {
           id?: number
           message?: Json | null
           nome?: string | null
+          resposta?: string | null
           telefone?: string | null
         }
         Relationships: []
