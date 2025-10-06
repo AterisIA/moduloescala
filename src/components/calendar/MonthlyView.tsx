@@ -55,13 +55,15 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
   const getScheduleIndicator = (schedule: Schedule) => {
     switch (schedule.type) {
       case 'work': 
-        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-red))]" />;
+        return <div className="w-2 h-2 rounded-full bg-blue-500" />;
       case 'rest': 
-        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-gray))]" />;
+        return <div className="w-2 h-2 rounded-full bg-green-500" />;
+      case 'break':
+        return <div className="w-2 h-2 rounded-full bg-purple-500" />;
       case 'vacation': 
-        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-blue))]" />;
+        return <div className="w-2 h-2 rounded-full bg-orange-500" />;
       default:
-        return <div className="w-2 h-2 rounded-full bg-[hsl(var(--schedule-red))]" />;
+        return <div className="w-2 h-2 rounded-full bg-blue-500" />;
     }
   };
 
@@ -199,11 +201,13 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                         isPast(date) ? 'opacity-60' : ''
                       } ${
                         isWorking 
-                          ? 'bg-[hsl(var(--schedule-red)/0.3)] hover:bg-[hsl(var(--schedule-red)/0.4)]'
+                          ? 'bg-blue-500/20 hover:bg-blue-500/30'
                           : schedule?.type === 'rest'
-                          ? 'bg-[hsl(var(--schedule-gray)/0.3)]'
+                          ? 'bg-green-500/20 hover:bg-green-500/30'
+                          : schedule?.type === 'break'
+                          ? 'bg-purple-500/20 hover:bg-purple-500/30'
                           : schedule?.type === 'vacation'
-                          ? 'bg-[hsl(var(--schedule-blue)/0.3)]'
+                          ? 'bg-orange-500/20 hover:bg-orange-500/30'
                           : 'hover:bg-muted/50'
                       } ${getDayClass(date)}`}
                     >
@@ -213,10 +217,12 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                             <div className="text-[11px] font-medium leading-tight">
                               {schedule.startTime.slice(0,5)}-{schedule.endTime.slice(0,5)}
                             </div>
+                          ) : schedule.type === 'rest' ? (
+                            <div className="text-xs font-semibold text-green-700">FOLGA</div>
+                          ) : schedule.type === 'break' ? (
+                            <div className="text-xs font-semibold text-purple-700">BH</div>
                           ) : (
-                            <div className="text-lg">
-                              {schedule.type === 'rest' ? '💤' : '🏖️'}
-                            </div>
+                            <div className="text-xs font-semibold text-orange-700">FÉRIAS</div>
                           )}
                         </div>
                       ) : (
