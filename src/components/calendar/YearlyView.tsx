@@ -162,7 +162,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
         }}
       >
         {/* Header Row 1: Month names and week labels */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
+        <div className="cal-first-col cal-header--year sticky top-0 left-0 bg-background border-b border-r p-2 font-medium z-30">
           <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
             <SelectTrigger className="w-full h-8 text-xs">
               <SelectValue />
@@ -177,12 +177,12 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
           const monthData = weeksByMonth[monthIdx];
           return (
             <Fragment key={monthIdx}>
-              <div className="bg-muted border-b border-r sticky top-0 z-10">
+              <div className="cal-header--year bg-muted border-b border-r sticky top-0 z-20">
                 <div className="p-2 text-center font-bold border-b text-sm">{monthData.name}</div>
                 <div className="p-2 text-center text-xs">Total</div>
               </div>
               {monthData.weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="bg-muted border-b border-r sticky top-0 z-10">
+                <div key={weekIndex} className="cal-header--year bg-muted border-b border-r sticky top-0 z-20">
                   <div className="p-1 text-center font-bold border-b text-xs">
                     S{yearWeeks.indexOf(week) + 1}
                   </div>
@@ -200,7 +200,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
           // Quadrant mode - show aggregated entities (simplified for yearly view)
           aggregatedEntities.map(entity => (
             <Fragment key={entity.id}>
-              <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+              <div className="cal-first-col sticky left-0 bg-background p-2 border-b border-r flex items-center gap-3 z-10">
                 <div className="flex items-center gap-3 flex-1">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
@@ -244,7 +244,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
             
             return (
               <Fragment key={employee.id}>
-                <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+                <div className="cal-first-col sticky left-0 bg-background p-2 border-b border-r flex items-center gap-3 z-10">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">

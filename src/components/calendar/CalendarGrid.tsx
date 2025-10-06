@@ -101,7 +101,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           } as React.CSSProperties}
         >
         {/* Header with dates */}
-        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20 border-b">
+        <div className="cal-first-col cal-header--week bg-muted font-semibold sticky top-0 left-0 z-30 border-b border-r">
           <div className="p-2">
             <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
               <SelectTrigger className="w-full h-10 text-sm">
@@ -116,7 +116,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
         {dates.map(date => (
           <div 
             key={date.toISOString()} 
-            className={`calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b ${
+            className={`cal-header--week bg-muted text-xs font-medium sticky top-0 z-20 border-b border-r ${
               isToday(date) ? 'bg-primary text-primary-foreground' : 
               isPastDay(date) ? 'text-[hsl(var(--past-day))]' : 'text-foreground'
             }`}
@@ -133,7 +133,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           // Quadrant mode - show aggregated entities
           aggregatedEntities.map(entity => (
             <Fragment key={entity.id}>
-              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+              <div className="cal-first-col bg-background border-b border-r sticky left-0 z-10">
                 <div className="flex items-center gap-2 p-2 w-full min-w-0">
                   <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                     <AvatarFallback className="text-xs">
@@ -173,7 +173,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
           // Normal mode - show employees
           filteredEmployees.map(employee => (
             <Fragment key={employee.id}>
-              <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+              <div className="cal-first-col bg-background border-b border-r sticky left-0 z-10">
                 <div className="flex items-center gap-2 p-2 w-full min-w-0">
                   <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                     <AvatarFallback className="text-xs">

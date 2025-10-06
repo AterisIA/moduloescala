@@ -98,7 +98,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
         }}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-background border-b p-2 font-medium z-10">
+        <div className="cal-first-col cal-header--month sticky top-0 left-0 bg-background border-b border-r p-2 font-medium z-30">
           <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
             <SelectTrigger className="w-full h-8 text-xs">
               <SelectValue />
@@ -112,7 +112,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
         {monthDays.map(date => (
           <div 
             key={date.toISOString()} 
-            className={`p-2 text-center text-sm font-medium border-b sticky top-0 bg-background z-10 ${getDayClass(date)}`}
+            className={`cal-header--month p-2 text-center text-sm font-medium border-b border-r sticky top-0 bg-background z-20 ${getDayClass(date)}`}
           >
             <div>{format(date, 'dd')}</div>
             <div className="text-xs">{format(date, 'EEE', { locale: ptBR })}</div>
@@ -124,7 +124,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
           // Quadrant mode - show aggregated entities
           aggregatedEntities.map(entity => (
             <Fragment key={entity.id}>
-              <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+              <div className="cal-first-col sticky left-0 bg-background p-2 border-b border-r flex items-center gap-3 z-10">
                 <div className="flex items-center gap-3 flex-1">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
@@ -165,7 +165,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
             
             return (
               <Fragment key={employee.id}>
-                <div className="sticky left-0 bg-background p-2 border-b flex items-center gap-3 z-10">
+                <div className="cal-first-col sticky left-0 bg-background p-2 border-b border-r flex items-center gap-3 z-10">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <div className="flex items-center gap-3 cursor-pointer hover:bg-muted/50 rounded p-1 flex-1">

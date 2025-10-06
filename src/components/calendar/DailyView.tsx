@@ -90,7 +90,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
         } as React.CSSProperties}
       >
         {/* Header with hours */}
-        <div className="calendar-cell calendar-cell-fixed bg-muted font-semibold sticky top-0 z-20">
+        <div className="cal-first-col cal-header--week bg-muted font-semibold sticky top-0 left-0 z-30 border-b border-r">
           <div className="p-2">
             <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
               <SelectTrigger className="w-full h-8 text-xs">
@@ -104,15 +104,15 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
         </div>
         
         {isQuadrantMode ? (
-          <div className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
-            <div className="text-center font-semibold">
+          <div className="cal-header--week bg-muted text-xs font-medium sticky top-0 z-20 border-b border-r">
+            <div className="text-center font-semibold p-2">
               Total do Dia
             </div>
           </div>
         ) : (
           hours.map(hour => (
-            <div key={hour} className="calendar-cell bg-muted text-xs font-medium sticky top-0 z-20 border-b">
-              <div className="text-center">
+            <div key={hour} className="cal-header--week bg-muted text-xs font-medium sticky top-0 z-20 border-b border-r">
+              <div className="text-center p-1">
                 <span className="hidden sm:inline">{String(hour).padStart(2, '0')}:00</span>
                 <span className="sm:hidden">{hour}</span>
               </div>
@@ -134,7 +134,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
             
             return (
               <Fragment key={entity.id}>
-                <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                <div className="cal-first-col bg-background border-b border-r sticky left-0 z-10">
                   <div className="flex items-center gap-2 p-2 w-full min-w-0">
                     <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                       <AvatarFallback className="text-xs">
@@ -162,7 +162,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
             
             return (
               <Fragment key={employee.id}>
-                <div className="calendar-cell calendar-cell-fixed bg-background border-b">
+                <div className="cal-first-col bg-background border-b border-r sticky left-0 z-10">
                   <div className="flex items-center gap-2 p-2 w-full min-w-0">
                     <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                       <AvatarFallback className="text-xs">
