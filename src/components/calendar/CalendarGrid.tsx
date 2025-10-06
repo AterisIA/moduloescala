@@ -88,7 +88,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   const gridCols = viewType === 'weekly' ? 'grid-cols-8' : 'grid-cols-8';
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full">
       <div className="calendar-scroll-container overflow-x-auto">
         <div 
           className="grid" 

@@ -153,7 +153,7 @@ export function YearlyView({ currentDate, employees, schedules, selectedDepartme
   const totalColumns = monthNames.length + yearWeeks.length;
 
   return (
-    <div className="calendar-scroll-container overflow-x-auto overflow-y-auto">
+    <div className="calendar-scroll-container overflow-x-auto">
       <div 
         className="grid gap-1"
         style={{ 

@@ -89,7 +89,7 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
     `${Math.floor(hours)}:${String(Math.round((hours % 1) * 60)).padStart(2, '0')}`;
 
   return (
-    <div className="calendar-scroll-container overflow-x-auto overflow-y-auto">
+    <div className="calendar-scroll-container overflow-x-auto">
       <div 
         className="grid gap-1"
         style={{ 
