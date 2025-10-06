@@ -5,6 +5,7 @@ import { FaceVerification } from "../components/FaceVerification";
 import { VideoRecorder } from "../components/VideoRecorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, User } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 type Step = "scan" | "verify" | "liveness" | "success" | "error";
 
@@ -41,6 +42,10 @@ export default function BaterPonto() {
   const handleQRScanned = (scannedToken: string) => {
     console.log("[Ponto] QR escaneado:", scannedToken);
     setToken(scannedToken);
+    toast({
+      title: "✅ QR Code Escaneado",
+      description: "QR escaneado com sucesso. Iniciando verificação facial...",
+    });
     setStep("verify");
   };
 
@@ -48,9 +53,19 @@ export default function BaterPonto() {
     if (success && data?.match) {
       console.log("[Ponto] Face verificada, indo para liveness check");
       setVerificationData(data);
+      toast({
+        title: "✅ Reconhecimento Facial Aprovado",
+        description: `Rosto reconhecido com ${((data.similarity_score || 0) * 100).toFixed(1)}% de confiança. Iniciando prova de vida...`,
+      });
       setStep("liveness");
     } else {
-      setError(data?.message || "Rosto não reconhecido");
+      const errorMsg = data?.message || "Rosto não reconhecido";
+      setError(errorMsg);
+      toast({
+        title: "❌ Reconhecimento Facial Falhou",
+        description: errorMsg,
+        variant: "destructive",
+      });
       setStep("error");
     }
   };
@@ -58,6 +73,24 @@ export default function BaterPonto() {
   const handleLivenessComplete = async (success: boolean, data?: PunchResult) => {
     if (success && data) {
       console.log("[Ponto] Liveness e ponto registrado");
+      
+      // Toast para prova de vida
+      toast({
+        title: "✅ Prova de Vida Aprovada",
+        description: "Verificação de vida concluída. Registrando ponto...",
+      });
+      
+      // Toast para localização se disponível
+      if (data.locationCheck) {
+        toast({
+          title: data.locationCheck.isInLocation ? "✅ Localização Capturada" : "⚠️ Localização Fora do Raio",
+          description: data.locationCheck.isInLocation 
+            ? `Você está no local correto (${data.locationCheck.distance.toFixed(0)}m de distância)`
+            : `Você está a ${data.locationCheck.distance.toFixed(0)}m do local`,
+          variant: data.locationCheck.isInLocation ? "default" : "destructive",
+        });
+      }
+      
       setResult({
         ...data,
         nome: verificationData?.nome,
@@ -65,7 +98,13 @@ export default function BaterPonto() {
       });
       setStep("success");
     } else {
-      setError(data?.message || "Erro ao registrar ponto");
+      const errorMsg = data?.message || "Erro ao registrar ponto";
+      setError(errorMsg);
+      toast({
+        title: "❌ Prova de Vida Falhou",
+        description: errorMsg,
+        variant: "destructive",
+      });
       setStep("error");
     }
   };
