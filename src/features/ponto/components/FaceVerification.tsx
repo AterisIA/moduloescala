@@ -231,16 +231,25 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
       if (verifyError) {
         console.error("[FaceVerify] Erro na chamada:", verifyError);
-        throw new Error(verifyError.message || "Erro ao conectar com servidor");
+        // Tratar erro de forma mais amigável
+        onComplete(false, {
+          match: false,
+          message: "Não foi possível conectar com o servidor de verificação. Tente novamente.",
+        });
+        return;
       }
 
       console.log("[FaceVerify] Resultado completo:", verifyData);
 
       // Se ok=false, significa que houve erro ou acesso negado
       if (!verifyData?.ok) {
-        const errorMsg = verifyData?.message || "Erro na verificação";
         console.error("[FaceVerify] Verificação falhou:", verifyData);
-        throw new Error(errorMsg);
+        // Mensagem amigável para quando não há match
+        onComplete(false, {
+          match: false,
+          message: verifyData?.message || "Rosto não reconhecido. Verifique se você já realizou o cadastro facial.",
+        });
+        return;
       }
 
       // Aqui ok=true, verificar se houve match
@@ -256,10 +265,10 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
           longitude: verifyData.longitude,
         });
       } else {
-        // Sem match
+        // Sem match - mensagem clara e amigável
         onComplete(false, {
           match: false,
-          message: "Rosto não reconhecido. Realize seu cadastro primeiro.",
+          message: "Seu rosto não foi reconhecido. Por favor, realize o cadastro facial antes de bater o ponto.",
         });
       }
 
@@ -267,7 +276,7 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       console.error("[FaceVerify] Erro:", err);
       onComplete(false, {
         match: false,
-        message: err.message || "Erro ao verificar rosto",
+        message: "Erro ao processar a verificação facial. Tente novamente ou entre em contato com o suporte.",
       });
     } finally {
       stopCamera();
