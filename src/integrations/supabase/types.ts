@@ -568,9 +568,10 @@ export type Database = {
       }
       escala: {
         Row: {
+          banco_horas_datas: string[] | null
           dataescala: string
           finalescala: string | null
-          folga_data: string | null
+          folgas_datas: string[] | null
           id_coordenador: string | null
           id_plantao: string | null
           idescala: number
@@ -578,9 +579,10 @@ export type Database = {
           telefone: string | null
         }
         Insert: {
+          banco_horas_datas?: string[] | null
           dataescala: string
           finalescala?: string | null
-          folga_data?: string | null
+          folgas_datas?: string[] | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number
@@ -588,9 +590,10 @@ export type Database = {
           telefone?: string | null
         }
         Update: {
+          banco_horas_datas?: string[] | null
           dataescala?: string
           finalescala?: string | null
-          folga_data?: string | null
+          folgas_datas?: string[] | null
           id_coordenador?: string | null
           id_plantao?: string | null
           idescala?: number

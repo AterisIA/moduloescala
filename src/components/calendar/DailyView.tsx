@@ -45,6 +45,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
 
   const getScheduleColor = (schedule: Schedule) => {
     if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
+    if (schedule.type === 'break') return 'bg-blue-100 text-blue-800'; // Banco de horas
     if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
     
     const start = parseInt(schedule.startTime.split(':')[0]);
@@ -59,6 +60,7 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
 
   const getScheduleDisplay = (schedule: Schedule) => {
     if (schedule.type === 'rest') return '😴';
+    if (schedule.type === 'break') return '⏰'; // Banco de horas
     if (schedule.type === 'vacation') return '🏖️';
     return `${schedule.startTime}-${schedule.endTime}`;
   };

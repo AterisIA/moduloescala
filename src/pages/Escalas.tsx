@@ -20,7 +20,8 @@ interface Escala {
   dataescala: string;
   finalescala?: string;
   telefone?: string;
-  folga_data?: string;
+  folgas_datas?: string[];
+  banco_horas_datas?: string[];
 }
 
 interface Coordenador {
@@ -53,8 +54,11 @@ export default function Escalas() {
     telefone: "",
     id_coordenador: "",
     id_plantao: "",
-    folga_data: ""
+    folgas_datas: [] as string[],
+    banco_horas_datas: [] as string[]
   });
+  const [currentFolgaData, setCurrentFolgaData] = useState("");
+  const [currentBancoData, setCurrentBancoData] = useState("");
   const {
     toast
   } = useToast();
@@ -187,12 +191,49 @@ export default function Escalas() {
       telefone: "",
       id_coordenador: "",
       id_plantao: "",
-      folga_data: ""
+      folgas_datas: [],
+      banco_horas_datas: []
     });
+    setCurrentFolgaData("");
+    setCurrentBancoData("");
     setSelectedEmpresa("");
     setEditingEscala(null);
     setIsCreating(true);
     setIsDialogOpen(true);
+  };
+
+  const handleAddFolga = () => {
+    if (currentFolgaData && !formData.folgas_datas.includes(currentFolgaData)) {
+      setFormData(prev => ({
+        ...prev,
+        folgas_datas: [...prev.folgas_datas, currentFolgaData]
+      }));
+      setCurrentFolgaData("");
+    }
+  };
+
+  const handleRemoveFolga = (date: string) => {
+    setFormData(prev => ({
+      ...prev,
+      folgas_datas: prev.folgas_datas.filter(d => d !== date)
+    }));
+  };
+
+  const handleAddBancoHoras = () => {
+    if (currentBancoData && !formData.banco_horas_datas.includes(currentBancoData)) {
+      setFormData(prev => ({
+        ...prev,
+        banco_horas_datas: [...prev.banco_horas_datas, currentBancoData]
+      }));
+      setCurrentBancoData("");
+    }
+  };
+
+  const handleRemoveBancoHoras = (date: string) => {
+    setFormData(prev => ({
+      ...prev,
+      banco_horas_datas: prev.banco_horas_datas.filter(d => d !== date)
+    }));
   };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -230,7 +271,8 @@ export default function Escalas() {
         telefone: formData.telefone ? cleanPhoneNumber(formData.telefone) : null,
         id_coordenador: formData.id_coordenador || null,
         id_plantao: formData.id_plantao || null,
-        folga_data: formData.folga_data || null
+        folgas_datas: formData.folgas_datas,
+        banco_horas_datas: formData.banco_horas_datas
       };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -371,13 +413,69 @@ export default function Escalas() {
               finalescala: e.target.value
             }))} />
               </div>
+              
               <div>
-                <Label htmlFor="folga_data">Dia de Folga</Label>
-                <Input id="folga_data" type="date" value={formData.folga_data} onChange={e => setFormData(prev => ({
-              ...prev,
-              folga_data: e.target.value
-            }))} />
+                <Label htmlFor="folgas">Dias de Folga</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="folgas" 
+                    type="date" 
+                    value={currentFolgaData} 
+                    onChange={e => setCurrentFolgaData(e.target.value)} 
+                  />
+                  <Button type="button" onClick={handleAddFolga} variant="outline" size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {formData.folgas_datas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.folgas_datas.map(date => (
+                      <Badge key={date} variant="secondary" className="gap-1">
+                        {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveFolga(date)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              <div>
+                <Label htmlFor="banco_horas">Dias de Banco de Horas</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="banco_horas" 
+                    type="date" 
+                    value={currentBancoData} 
+                    onChange={e => setCurrentBancoData(e.target.value)} 
+                  />
+                  <Button type="button" onClick={handleAddBancoHoras} variant="outline" size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {formData.banco_horas_datas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.banco_horas_datas.map(date => (
+                      <Badge key={date} variant="secondary" className="gap-1">
+                        {new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveBancoHoras(date)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <Label htmlFor="telefone">Telefone</Label>
                 <PhoneInput international countryCallingCodeEditable={false} defaultCountry="BR" value={formData.telefone} onChange={value => setFormData(prev => ({

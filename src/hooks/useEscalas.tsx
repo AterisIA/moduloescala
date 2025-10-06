@@ -10,7 +10,8 @@ interface EscalaData {
   telefone: string | null;
   id_coordenador: string | null;
   id_plantao: string | null;
-  folga_data: string | null;
+  folgas_datas: string[] | null;
+  banco_horas_datas: string[] | null;
 }
 
 interface CoordenadorData {
@@ -185,19 +186,38 @@ export function useEscalas() {
           currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        // Add rest day if folga_data exists
-        if (escala.folga_data) {
-          const folgaDate = new Date(escala.folga_data + 'T00:00:00');
-          const restSchedule = {
-            id: `${escala.idescala}_folga`,
-            employeeId,
-            date: folgaDate,
-            startTime: "00:00",
-            endTime: "23:59",
-            type: 'rest' as const,
-            location: undefined
-          };
-          schedulesArray.push(restSchedule);
+        // Add rest days (folgas)
+        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
+          escala.folgas_datas.forEach((folgaDateStr, idx) => {
+            const folgaDate = new Date(folgaDateStr + 'T00:00:00');
+            const restSchedule = {
+              id: `${escala.idescala}_folga_${idx}`,
+              employeeId,
+              date: folgaDate,
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'rest' as const,
+              location: undefined
+            };
+            schedulesArray.push(restSchedule);
+          });
+        }
+        
+        // Add banco de horas days (time bank)
+        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
+          escala.banco_horas_datas.forEach((bancoDateStr, idx) => {
+            const bancoDate = new Date(bancoDateStr + 'T00:00:00');
+            const bancoSchedule = {
+              id: `${escala.idescala}_banco_${idx}`,
+              employeeId,
+              date: bancoDate,
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'break' as const, // Using 'break' type for banco de horas
+              location: undefined
+            };
+            schedulesArray.push(bancoSchedule);
+          });
         }
       });
 
