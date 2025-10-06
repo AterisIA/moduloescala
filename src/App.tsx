@@ -9,6 +9,7 @@ import Contatos from "./pages/Contatos";
 import Coordenadores from "./pages/Coordenadores";
 import Verificacao from "./pages/Verificacao";
 import Escalas from "./pages/Escalas";
+import Plantoes from "./pages/Plantoes";
 import Calendario from "./pages/Calendario";
 import Presenca from "./pages/Presenca";
 import Relatorio from "./pages/Relatorio";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/coordenadores" element={<Layout><Coordenadores /></Layout>} />
           <Route path="/verificacao" element={<Layout><Verificacao /></Layout>} />
           <Route path="/escalas" element={<Layout><Escalas /></Layout>} />
+          <Route path="/plantoes" element={<Layout><Plantoes /></Layout>} />
           <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
           <Route path="/presenca" element={<Layout><Presenca /></Layout>} />
           <Route path="/relatorio" element={<Layout><Relatorio /></Layout>} />

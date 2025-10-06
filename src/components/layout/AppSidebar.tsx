@@ -8,7 +8,8 @@ import {
   Building2,
   LayoutDashboard,
   Clock,
-  QrCode
+  QrCode,
+  Briefcase
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -43,6 +44,12 @@ const navigation = [
     href: "/coordenadores",
     icon: Users,
     description: "Gestão de coordenadores"
+  },
+  {
+    name: "Plantões",
+    href: "/plantoes",
+    icon: Briefcase,
+    description: "Gestão de plantões"
   },
   {
     name: "Verificação de Presença",
