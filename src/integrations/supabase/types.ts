@@ -841,6 +841,33 @@ export type Database = {
         }
         Relationships: []
       }
+      messages_log: {
+        Row: {
+          created_at: string
+          data_hora: string | null
+          id: number
+          message: Json | null
+          nome: string | null
+          telefone: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_hora?: string | null
+          id?: number
+          message?: Json | null
+          nome?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_hora?: string | null
+          id?: number
+          message?: Json | null
+          nome?: string | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       permission_types: {
         Row: {
           created_at: string | null
