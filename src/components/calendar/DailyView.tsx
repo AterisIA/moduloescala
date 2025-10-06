@@ -44,24 +44,21 @@ export function DailyView({ currentDate, employees, schedules, selectedDepartmen
   };
 
   const getScheduleColor = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return 'bg-muted text-muted-foreground';
-    if (schedule.type === 'break') return 'bg-blue-100 text-blue-800'; // Banco de horas
-    if (schedule.type === 'vacation') return 'bg-orange-100 text-orange-800';
+    // Folga - verde
+    if (schedule.type === 'rest') return 'bg-green-500 text-white';
+    // Banco de horas - roxo
+    if (schedule.type === 'break') return 'bg-purple-500 text-white';
+    // Férias - laranja
+    if (schedule.type === 'vacation') return 'bg-orange-500 text-white';
     
-    const start = parseInt(schedule.startTime.split(':')[0]);
-    const end = parseInt(schedule.endTime.split(':')[0]);
-    
-    if (start >= 8 && end <= 18) return 'bg-[hsl(var(--schedule-diurno))] text-gray-800';
-    if (start >= 13 && end <= 20) return 'bg-[hsl(var(--schedule-vespertino))] text-white';
-    if (start >= 20 || end <= 6) return 'bg-[hsl(var(--schedule-noturno))] text-gray-800';
-    
-    return 'bg-gray-200 text-gray-800';
+    // Escala normal - azul
+    return 'bg-blue-500 text-white';
   };
 
   const getScheduleDisplay = (schedule: Schedule) => {
-    if (schedule.type === 'rest') return '😴';
-    if (schedule.type === 'break') return '⏰'; // Banco de horas
-    if (schedule.type === 'vacation') return '🏖️';
+    if (schedule.type === 'rest') return 'FOLGA';
+    if (schedule.type === 'break') return 'BH'; // Banco de horas
+    if (schedule.type === 'vacation') return 'FÉRIAS';
     return `${schedule.startTime}-${schedule.endTime}`;
   };
 

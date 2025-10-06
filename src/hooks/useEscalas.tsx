@@ -196,6 +196,42 @@ export function useEscalas() {
           currentDate.setDate(currentDate.getDate() + 1);
         }
         
+        // Criar schedules para folgas (tipo 'rest')
+        if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
+          escala.folgas_datas.forEach(folgaDate => {
+            const folgaDateObj = new Date(folgaDate + 'T00:00:00');
+            const schedule = {
+              id: `${escala.idescala}_folga_${folgaDate}`,
+              employeeId,
+              date: folgaDateObj,
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'rest' as const,
+              location: undefined
+            };
+            console.log('Created rest schedule (folga):', schedule);
+            schedulesArray.push(schedule);
+          });
+        }
+        
+        // Criar schedules para banco de horas (tipo 'break')
+        if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
+          escala.banco_horas_datas.forEach(bancoDate => {
+            const bancoDateObj = new Date(bancoDate + 'T00:00:00');
+            const schedule = {
+              id: `${escala.idescala}_banco_${bancoDate}`,
+              employeeId,
+              date: bancoDateObj,
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'break' as const,
+              location: undefined
+            };
+            console.log('Created break schedule (banco de horas):', schedule);
+            schedulesArray.push(schedule);
+          });
+        }
+        
         // Add rest days (folgas)
         if (escala.folgas_datas && Array.isArray(escala.folgas_datas)) {
           escala.folgas_datas.forEach((folgaDateStr, idx) => {
