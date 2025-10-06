@@ -37,6 +37,13 @@ interface Plantao {
     nome: string;
   };
 }
+interface ContatoTerceirizacao {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+}
+
 export default function Escalas() {
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +53,7 @@ export default function Escalas() {
   const [isCreating, setIsCreating] = useState(false);
   const [coordenadores, setCoordenadores] = useState<Coordenador[]>([]);
   const [plantoes, setPlantoes] = useState<Plantao[]>([]);
+  const [contatos, setContatos] = useState<ContatoTerceirizacao[]>([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>("");
   const [formData, setFormData] = useState({
     nomepessoaescala: "",
@@ -66,6 +74,7 @@ export default function Escalas() {
     fetchEscalas();
     fetchCoordenadores();
     fetchPlantoes();
+    fetchContatos();
   }, []);
 
   const fetchCoordenadores = async () => {
@@ -123,6 +132,28 @@ export default function Escalas() {
       setPlantoes(plantoesMapeados);
     } catch (error) {
       console.error("Erro ao buscar plantões:", error);
+    }
+  };
+
+  const fetchContatos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contatos_terceirizacao')
+        .select('id, name, phone, email')
+        .eq('status', 'active')
+        .order('name', { ascending: true });
+      
+      if (error) {
+        toast({
+          title: "Erro ao carregar contatos",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      setContatos(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar contatos:", error);
     }
   };
 
@@ -394,10 +425,25 @@ export default function Escalas() {
           {isCreating ? <div className="space-y-4">
               <div>
                 <Label htmlFor="nomepessoaescala">Nome da Pessoa *</Label>
-                <Input id="nomepessoaescala" value={formData.nomepessoaescala} onChange={e => setFormData(prev => ({
-              ...prev,
-              nomepessoaescala: e.target.value
-            }))} placeholder="Digite o nome da pessoa" />
+                <Select value={formData.nomepessoaescala} onValueChange={value => {
+                  const contato = contatos.find(c => c.name === value);
+                  setFormData(prev => ({
+                    ...prev,
+                    nomepessoaescala: value,
+                    telefone: contato?.phone || prev.telefone
+                  }));
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um contato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contatos.map(contato => (
+                      <SelectItem key={contato.id} value={contato.name}>
+                        {contato.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="dataescala">Data/Hora de Início *</Label>
