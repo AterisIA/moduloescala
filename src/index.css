@@ -224,4 +224,32 @@ All colors MUST be HSL.
   .safe-bottom {
     @apply pb-[env(safe-area-inset-bottom)];
   }
+
+  /* Calendar sticky positioning fixes */
+  .calendar-scroll-container {
+    @apply overflow-auto;
+    position: relative;
+  }
+
+  .cal-first-col {
+    position: sticky !important;
+    left: 0 !important;
+    background: hsl(var(--background)) !important;
+  }
+
+  .cal-header--week,
+  .cal-header--month {
+    position: sticky !important;
+    top: 0 !important;
+    background: hsl(var(--muted)) !important;
+  }
+
+  /* Ensure header in first column stays fixed in both directions */
+  .cal-first-col.cal-header--week,
+  .cal-first-col.cal-header--month {
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 40 !important;
+  }
 }
