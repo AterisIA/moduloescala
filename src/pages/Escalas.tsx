@@ -525,16 +525,16 @@ export default function Escalas() {
               <div>
                 <Label>Domingo do Mês (Folga)</Label>
                 <Select
-                  value={formData.domingo_mes?.toString() || ''}
+                  value={formData.domingo_mes?.toString() || 'none'}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, domingo_mes: value ? parseInt(value) : null })
+                    setFormData({ ...formData, domingo_mes: value === 'none' ? null : parseInt(value) })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o domingo do mês" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     <SelectItem value="1">Primeiro domingo</SelectItem>
                     <SelectItem value="2">Segundo domingo</SelectItem>
                     <SelectItem value="3">Terceiro domingo</SelectItem>
