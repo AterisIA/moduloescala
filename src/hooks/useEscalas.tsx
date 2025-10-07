@@ -170,6 +170,10 @@ export function useEscalas() {
           return null; // Nth occurrence doesn't exist
         };
         
+        // Extract start and end times from the escala timestamps
+        const escalaStartTime = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+        const escalaEndTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+        
         // Iterar por cada dia do intervalo (inclusive)
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
@@ -249,8 +253,8 @@ export function useEscalas() {
             id: `${escala.idescala}_${dateKey}`,
             employeeId,
             date: new Date(currentDate),
-            startTime: "08:00",
-            endTime: "17:00",
+            startTime: escalaStartTime,
+            endTime: escalaEndTime,
             type: 'work' as const,
             location: undefined
           };
