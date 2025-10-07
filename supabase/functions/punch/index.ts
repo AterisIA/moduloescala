@@ -416,17 +416,24 @@ serve(async (req) => {
             const horaSaida = parseInt(saidaMatch[1]);
             const minutoSaida = parseInt(saidaMatch[2]);
             
-            // Criar horários para hoje no horário local (BRT/BRST)
-            const agoraLocal = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-            const horarioEntrada = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate(), horaEntrada, minutoEntrada, 0, 0);
-            const horarioSaida = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate(), horaSaida, minutoSaida, 0, 0);
+            // Criar timestamps em BRT/BRST - interpretando as horas como horário de São Paulo
+            const hoje = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+            const [datePart] = hoje.split(', ');
+            const [mes, dia, ano] = datePart.split('/');
+            
+            // Criar strings de timestamp no formato ISO sem timezone (será interpretado como local)
+            const horarioEntradaStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}T${horaEntrada.toString().padStart(2, '0')}:${minutoEntrada.toString().padStart(2, '0')}:00`;
+            const horarioSaidaStr = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}T${horaSaida.toString().padStart(2, '0')}:${minutoSaida.toString().padStart(2, '0')}:00`;
             
             console.log(`[punch] Horários da escala - Entrada: ${horaEntrada}:${minutoEntrada}, Saída: ${horaSaida}:${minutoSaida}`);
-            console.log(`[punch] Horários aplicados ao dia atual - Entrada: ${horarioEntrada.toISOString()}, Saída: ${horarioSaida.toISOString()}`);
+            console.log(`[punch] Timestamps criados - Entrada: ${horarioEntradaStr}, Saída: ${horarioSaidaStr}`);
 
             if (tipo === 'ENTRADA') {
-              scheduleData.horario_esperado = horarioEntrada.toISOString();
-              const diffMs = now.getTime() - horarioEntrada.getTime();
+              scheduleData.horario_esperado = horarioEntradaStr;
+              // Comparar com horário atual em BRT
+              const agoraEmBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+              const entradaEmBRT = new Date(horarioEntradaStr);
+              const diffMs = agoraEmBRT.getTime() - entradaEmBRT.getTime();
               const diffMin = Math.floor(diffMs / 60000);
               
               if (diffMin > 0) {
@@ -438,8 +445,11 @@ serve(async (req) => {
                 console.log(`[punch] ENTRADA pontual ou adiantada`);
               }
             } else if (tipo === 'SAÍDA') {
-              scheduleData.horario_esperado = horarioSaida.toISOString();
-              const diffMs = now.getTime() - horarioSaida.getTime();
+              scheduleData.horario_esperado = horarioSaidaStr;
+              // Comparar com horário atual em BRT
+              const agoraEmBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+              const saidaEmBRT = new Date(horarioSaidaStr);
+              const diffMs = agoraEmBRT.getTime() - saidaEmBRT.getTime();
               const diffMin = Math.floor(diffMs / 60000);
               
               // Para SAÍDA: só marca atraso se saiu DEPOIS do horário esperado
