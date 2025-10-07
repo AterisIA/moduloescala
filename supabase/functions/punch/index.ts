@@ -377,13 +377,21 @@ serve(async (req) => {
 
       if (faceUser?.id_contato_terceirizacao) {
         // Buscar escala ativa para esse contato
+        // dataescala contém a hora de INÍCIO do expediente
+        // finalescala contém a DATA FINAL do contrato (não a hora de saída diária)
         const now = new Date();
+        const hojeBRT = now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const hoje = new Date(hojeBRT);
+        const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+        const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
+        
         const { data: escalas } = await supabase
           .from('escala')
           .select('idescala, dataescala, finalescala')
           .eq('id_contato_terceirizacao', faceUser.id_contato_terceirizacao)
-          .lte('dataescala', now.toISOString())
-          .gte('finalescala', now.toISOString())
+          .lte('dataescala', fimDia.toISOString())
+          .gte('finalescala', inicioDia.toISOString())
+          .order('dataescala', { ascending: false })
           .limit(1);
 
         if (escalas && escalas.length > 0) {
