@@ -390,17 +390,22 @@ serve(async (req) => {
           const escala = escalas[0];
           scheduleData.escala_id = escala.idescala;
 
-          // Extrair horários da escala
+          // Extrair APENAS AS HORAS dos timestamps da escala
           const dataEscala = new Date(escala.dataescala);
           const finalEscala = new Date(escala.finalescala);
           
-          const horarioEntrada = new Date(dataEscala);
-          const horarioSaida = new Date(finalEscala);
+          // Pegar apenas hora e minuto de cada timestamp
+          const horaEntrada = dataEscala.getHours();
+          const minutoEntrada = dataEscala.getMinutes();
+          const horaSaida = finalEscala.getHours();
+          const minutoSaida = finalEscala.getMinutes();
           
-          // Ajustar para o dia atual mantendo apenas o horário
+          // Aplicar ao dia atual
           const hoje = new Date();
-          horarioEntrada.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-          horarioSaida.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+          const horarioEntrada = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), horaEntrada, minutoEntrada, 0, 0);
+          const horarioSaida = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), horaSaida, minutoSaida, 0, 0);
+          
+          console.log(`[punch] Horários extraídos - Entrada: ${horarioEntrada.toISOString()}, Saída: ${horarioSaida.toISOString()}`);
 
       if (tipo === 'ENTRADA') {
         scheduleData.horario_esperado = horarioEntrada.toISOString();
