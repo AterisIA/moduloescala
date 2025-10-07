@@ -23,6 +23,7 @@ interface Escala {
   folgas_datas?: string[];
   banco_horas_datas?: string[];
   folgas_dias_semana?: number[];
+  domingo_mes?: number | null;
 }
 
 interface Coordenador {
@@ -65,7 +66,8 @@ export default function Escalas() {
     id_plantao: "",
     id_contato_terceirizacao: "",
     folgas_dias_semana: [] as number[],
-    banco_horas_datas: [] as string[]
+    banco_horas_datas: [] as string[],
+    domingo_mes: null as number | null
   });
   const [currentBancoData, setCurrentBancoData] = useState("");
   const {
@@ -225,7 +227,8 @@ export default function Escalas() {
       id_plantao: "",
       id_contato_terceirizacao: "",
       folgas_dias_semana: [],
-      banco_horas_datas: []
+      banco_horas_datas: [],
+      domingo_mes: null
     });
     setCurrentBancoData("");
     setSelectedEmpresa("");
@@ -297,7 +300,8 @@ export default function Escalas() {
         id_plantao: formData.id_plantao || null,
         id_contato_terceirizacao: formData.id_contato_terceirizacao || null,
         folgas_dias_semana: formData.folgas_dias_semana,
-        banco_horas_datas: formData.banco_horas_datas
+        banco_horas_datas: formData.banco_horas_datas,
+        domingo_mes: formData.domingo_mes
       };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -515,6 +519,31 @@ export default function Escalas() {
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
                   Selecione as datas específicas de banco de horas
+                </p>
+              </div>
+
+              <div>
+                <Label>Domingo do Mês (Folga)</Label>
+                <Select
+                  value={formData.domingo_mes?.toString() || ''}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, domingo_mes: value ? parseInt(value) : null })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o domingo do mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="1">Primeiro domingo</SelectItem>
+                    <SelectItem value="2">Segundo domingo</SelectItem>
+                    <SelectItem value="3">Terceiro domingo</SelectItem>
+                    <SelectItem value="4">Quarto domingo</SelectItem>
+                    <SelectItem value="5">Quinto domingo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Se selecionado, este domingo do mês será considerado folga durante o período da escala
                 </p>
               </div>
               

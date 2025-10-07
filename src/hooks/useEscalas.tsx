@@ -13,6 +13,7 @@ interface EscalaData {
   folgas_datas: string[] | null;
   banco_horas_datas: string[] | null;
   folgas_dias_semana: number[] | null;
+  domingo_mes: number | null;
 }
 
 interface CoordenadorData {
@@ -149,6 +150,25 @@ export function useEscalas() {
         if (escala.banco_horas_datas && Array.isArray(escala.banco_horas_datas)) {
           escala.banco_horas_datas.forEach(data => bancoHorasDatas.add(data));
         }
+        const domingoMes = escala.domingo_mes;
+
+        // Helper function to get the Nth occurrence of a weekday in a month
+        const getNthWeekdayOfMonth = (year: number, month: number, weekday: number, n: number): Date | null => {
+          let count = 0;
+          const date = new Date(year, month, 1);
+          
+          while (date.getMonth() === month) {
+            if (date.getDay() === weekday) {
+              count++;
+              if (count === n) {
+                return new Date(date);
+              }
+            }
+            date.setDate(date.getDate() + 1);
+          }
+          
+          return null; // Nth occurrence doesn't exist
+        };
         
         // Iterar por cada dia do intervalo (inclusive)
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
@@ -159,6 +179,18 @@ export function useEscalas() {
         while (currentDate <= endDateOnly) {
           const dateKey = currentDate.toISOString().split('T')[0];
           const dayOfWeek = currentDate.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+
+          // Check if this is a domingo do mês (specific Sunday of the month)
+          let isDomingoMes = false;
+          if (domingoMes && dayOfWeek === 0) { // 0 = Sunday
+            const nthSunday = getNthWeekdayOfMonth(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              0,
+              domingoMes
+            );
+            isDomingoMes = nthSunday && nthSunday.toISOString().split('T')[0] === dateKey;
+          }
 
           // Verifica se é dia de folga
           if (folgasDiasSemana.has(dayOfWeek)) {
@@ -172,6 +204,23 @@ export function useEscalas() {
               location: undefined
             };
             console.log('Created rest schedule (folga):', schedule);
+            schedulesArray.push(schedule);
+            currentDate.setDate(currentDate.getDate() + 1);
+            continue;
+          }
+
+          // Verifica se é domingo do mês (tem prioridade sobre folga normal)
+          if (isDomingoMes) {
+            const schedule = {
+              id: `${escala.idescala}_domingo_mes_${dateKey}`,
+              employeeId,
+              date: new Date(currentDate),
+              startTime: "00:00",
+              endTime: "23:59",
+              type: 'vacation' as const,
+              location: undefined
+            };
+            console.log('Created vacation schedule (domingo do mês):', schedule);
             schedulesArray.push(schedule);
             currentDate.setDate(currentDate.getDate() + 1);
             continue;

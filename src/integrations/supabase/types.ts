@@ -571,6 +571,7 @@ export type Database = {
           banco_horas_datas: string[] | null
           banco_horas_dias_semana: number[] | null
           dataescala: string
+          domingo_mes: number | null
           finalescala: string | null
           folgas_datas: string[] | null
           folgas_dias_semana: number[] | null
@@ -585,6 +586,7 @@ export type Database = {
           banco_horas_datas?: string[] | null
           banco_horas_dias_semana?: number[] | null
           dataescala: string
+          domingo_mes?: number | null
           finalescala?: string | null
           folgas_datas?: string[] | null
           folgas_dias_semana?: number[] | null
@@ -599,6 +601,7 @@ export type Database = {
           banco_horas_datas?: string[] | null
           banco_horas_dias_semana?: number[] | null
           dataescala?: string
+          domingo_mes?: number | null
           finalescala?: string | null
           folgas_datas?: string[] | null
           folgas_dias_semana?: number[] | null
