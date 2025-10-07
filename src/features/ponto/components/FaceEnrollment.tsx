@@ -41,11 +41,17 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   // Load escalas when contato is selected
   useEffect(() => {
     if (selectedContatoId) {
+      // Auto-fill name from selected contact
+      const selectedContato = contatos.find(c => c.id === selectedContatoId);
+      if (selectedContato) {
+        setNome(selectedContato.name);
+      }
       loadEscalas(selectedContatoId);
     } else {
       setEscalas([]);
+      setNome(""); // Clear name when no contact is selected
     }
-  }, [selectedContatoId]);
+  }, [selectedContatoId, contatos]);
 
   useEffect(() => {
     return () => {
@@ -285,27 +291,6 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
       {step === "idle" && (
         <div className="space-y-4">
           <div>
-            <Label htmlFor="nome">Nome *</Label>
-            <Input
-              id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Nome completo"
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="matricula">Matrícula</Label>
-            <Input
-              id="matricula"
-              value={matricula}
-              onChange={(e) => setMatricula(e.target.value)}
-              placeholder="Número da matrícula (opcional)"
-            />
-          </div>
-
-          <div>
             <Label htmlFor="contato">Contato de Terceirização</Label>
             <Select value={selectedContatoId} onValueChange={setSelectedContatoId}>
               <SelectTrigger>
@@ -329,6 +314,33 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="nome">Nome *</Label>
+            <Input
+              id="nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Nome completo"
+              disabled={!!selectedContatoId}
+              required
+            />
+            {selectedContatoId && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Nome preenchido automaticamente do contato selecionado
+              </p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="matricula">Matrícula</Label>
+            <Input
+              id="matricula"
+              value={matricula}
+              onChange={(e) => setMatricula(e.target.value)}
+              placeholder="Número da matrícula (opcional)"
+            />
           </div>
 
           {escalas.length > 0 && (
