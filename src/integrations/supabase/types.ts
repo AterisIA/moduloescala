@@ -98,6 +98,7 @@ export type Database = {
         Row: {
           created_at: string | null
           device_info: Json | null
+          escala_id: number | null
           face_confidence: number | null
           face_user_id: string | null
           geo_accuracy: number | null
@@ -106,16 +107,20 @@ export type Database = {
           geo_provider: string | null
           geo_status: string | null
           geo_timestamp: string | null
+          horario_esperado: string | null
           id: string
           kiosk_id: string
+          minutos_atraso: number | null
           punched_at: string
           selfie_path: string | null
+          status_horario: string | null
           tipo: string
           token_window: string
         }
         Insert: {
           created_at?: string | null
           device_info?: Json | null
+          escala_id?: number | null
           face_confidence?: number | null
           face_user_id?: string | null
           geo_accuracy?: number | null
@@ -124,16 +129,20 @@ export type Database = {
           geo_provider?: string | null
           geo_status?: string | null
           geo_timestamp?: string | null
+          horario_esperado?: string | null
           id?: string
           kiosk_id: string
+          minutos_atraso?: number | null
           punched_at?: string
           selfie_path?: string | null
+          status_horario?: string | null
           tipo: string
           token_window: string
         }
         Update: {
           created_at?: string | null
           device_info?: Json | null
+          escala_id?: number | null
           face_confidence?: number | null
           face_user_id?: string | null
           geo_accuracy?: number | null
@@ -142,10 +151,13 @@ export type Database = {
           geo_provider?: string | null
           geo_status?: string | null
           geo_timestamp?: string | null
+          horario_esperado?: string | null
           id?: string
           kiosk_id?: string
+          minutos_atraso?: number | null
           punched_at?: string
           selfie_path?: string | null
+          status_horario?: string | null
           tipo?: string
           token_window?: string
         }

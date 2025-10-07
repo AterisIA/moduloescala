@@ -359,7 +359,84 @@ serve(async (req) => {
 
     console.log('[punch] Dados de geo a serem salvos:', geoData);
 
-    // Gravar log com geolocalização e dados de reconhecimento facial
+    // Buscar escala da pessoa para validar horário
+    let scheduleData: any = {
+      escala_id: null,
+      horario_esperado: null,
+      minutos_atraso: 0,
+      status_horario: 'pontual',
+    };
+
+    if (face_user_id) {
+      // Buscar face_user para pegar id_contato_terceirizacao
+      const { data: faceUser } = await supabase
+        .from('face_users')
+        .select('id_contato_terceirizacao')
+        .eq('id', face_user_id)
+        .single();
+
+      if (faceUser?.id_contato_terceirizacao) {
+        // Buscar escala ativa para esse contato
+        const now = new Date();
+        const { data: escalas } = await supabase
+          .from('escala')
+          .select('idescala, dataescala, finalescala')
+          .eq('id_contato_terceirizacao', faceUser.id_contato_terceirizacao)
+          .lte('dataescala', now.toISOString())
+          .gte('finalescala', now.toISOString())
+          .limit(1);
+
+        if (escalas && escalas.length > 0) {
+          const escala = escalas[0];
+          scheduleData.escala_id = escala.idescala;
+
+          // Extrair horários da escala
+          const dataEscala = new Date(escala.dataescala);
+          const finalEscala = new Date(escala.finalescala);
+          
+          const horarioEntrada = new Date(dataEscala);
+          const horarioSaida = new Date(finalEscala);
+          
+          // Ajustar para o dia atual mantendo apenas o horário
+          const hoje = new Date();
+          horarioEntrada.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+          horarioSaida.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+
+          if (tipo === 'ENTRADA') {
+            scheduleData.horario_esperado = horarioEntrada.toISOString();
+            const diffMs = now.getTime() - horarioEntrada.getTime();
+            const diffMin = Math.floor(diffMs / 60000);
+            
+            if (diffMin > 0) {
+              scheduleData.minutos_atraso = diffMin;
+              scheduleData.status_horario = 'atrasado';
+              console.log(`[punch] ENTRADA com atraso de ${diffMin} minutos`);
+            } else {
+              console.log(`[punch] ENTRADA pontual ou adiantada`);
+            }
+          } else if (tipo === 'SAÍDA') {
+            scheduleData.horario_esperado = horarioSaida.toISOString();
+            const diffMs = now.getTime() - horarioSaida.getTime();
+            const diffMin = Math.floor(diffMs / 60000);
+            
+            if (diffMin > 0) {
+              scheduleData.minutos_atraso = diffMin;
+              scheduleData.status_horario = 'atrasado';
+              console.log(`[punch] SAÍDA com atraso de ${diffMin} minutos`);
+            } else {
+              console.log(`[punch] SAÍDA pontual ou adiantada`);
+            }
+          }
+        } else {
+          scheduleData.status_horario = 'fora_escala';
+          console.log('[punch] Nenhuma escala ativa encontrada para esta data');
+        }
+      }
+    }
+
+    console.log('[punch] Dados de escala calculados:', scheduleData);
+
+    // Gravar log com geolocalização, reconhecimento facial e validação de horário
     const { data: log, error: insertError } = await supabase
       .from("attendance_logs")
       .insert({
@@ -371,6 +448,7 @@ serve(async (req) => {
         device_info,
         token_window: payload.w,
         ...geoData,
+        ...scheduleData,
       })
       .select()
       .single();
@@ -407,13 +485,26 @@ serve(async (req) => {
       }
     }
 
+    // Construir mensagem de resposta com informações de atraso
+    let message = `${tipo} registrada com sucesso`;
+    if (scheduleData.status_horario === 'atrasado') {
+      message += ` (${scheduleData.minutos_atraso} minutos de atraso)`;
+    } else if (scheduleData.status_horario === 'fora_escala') {
+      message += ` (fora do horário de escala)`;
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
         tipo,
         punched_at: log.punched_at,
-        message: `${tipo} registrada com sucesso`,
+        message,
         face_user: faceUserData,
+        schedule_info: {
+          status: scheduleData.status_horario,
+          minutos_atraso: scheduleData.minutos_atraso,
+          horario_esperado: scheduleData.horario_esperado,
+        }
       }),
       {
         status: 200,

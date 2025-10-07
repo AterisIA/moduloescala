@@ -20,6 +20,11 @@ interface PunchResult {
     distance: number;
     address: string;
   };
+  schedule_info?: {
+    status: 'pontual' | 'atrasado' | 'fora_escala';
+    minutos_atraso: number;
+    horario_esperado: string | null;
+  };
 }
 
 interface VerificationData {
@@ -164,8 +169,8 @@ export default function BaterPonto() {
           
           {step === "success" && result && (
             <div className="space-y-4">
-              <Alert className="border-green-500">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <Alert className={result.schedule_info?.status === 'atrasado' ? 'border-orange-500' : 'border-green-500'}>
+                <CheckCircle2 className={`h-4 w-4 ${result.schedule_info?.status === 'atrasado' ? 'text-orange-500' : 'text-green-500'}`} />
                 <AlertDescription>
                   {result.nome && (
                     <>
@@ -177,6 +182,31 @@ export default function BaterPonto() {
                   )}
                   <strong>Tipo:</strong> {result.tipo}<br />
                   <strong>Horário:</strong> {new Date(result.punched_at).toLocaleString('pt-BR')}<br />
+                  
+                  {result.schedule_info && (
+                    <>
+                      {result.schedule_info.status === 'atrasado' && (
+                        <>
+                          <span className="font-semibold text-orange-600">
+                            ⚠️ Atraso: {result.schedule_info.minutos_atraso} minutos
+                          </span><br />
+                        </>
+                      )}
+                      {result.schedule_info.status === 'fora_escala' && (
+                        <>
+                          <span className="font-semibold text-orange-600">
+                            ⚠️ Fora do horário de escala
+                          </span><br />
+                        </>
+                      )}
+                      {result.schedule_info.horario_esperado && (
+                        <>
+                          <strong>Horário esperado:</strong> {new Date(result.schedule_info.horario_esperado).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}<br />
+                        </>
+                      )}
+                    </>
+                  )}
+                  
                   {result.confidence && (
                     <>
                       <strong>Confiança:</strong> {(result.confidence * 100).toFixed(1)}%<br />
