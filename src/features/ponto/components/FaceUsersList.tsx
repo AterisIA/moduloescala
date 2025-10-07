@@ -11,7 +11,14 @@ export function FaceUsersList() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("face_users")
-        .select("*")
+        .select(`
+          *,
+          contato:id_contato_terceirizacao(
+            name,
+            role,
+            phone
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -66,6 +73,11 @@ export function FaceUsersList() {
                 {user.matricula && (
                   <p className="text-sm text-muted-foreground">
                     Matrícula: {user.matricula}
+                  </p>
+                )}
+                {user.contato && (
+                  <p className="text-sm text-muted-foreground">
+                    Contato: {user.contato.name} ({user.contato.role})
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">

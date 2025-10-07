@@ -12,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { nome, matricula, latitude, longitude, images } = await req.json();
+    const { nome, matricula, id_contato_terceirizacao, latitude, longitude, images } = await req.json();
 
-    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, latitude, longitude, imageCount: images?.length });
+    console.log('[Enroll] Recebendo cadastro:', { nome, matricula, id_contato_terceirizacao, latitude, longitude, imageCount: images?.length });
 
     // Validações
     if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
@@ -124,6 +124,7 @@ serve(async (req) => {
         id: userId,
         nome: nome.trim(),
         matricula: matricula?.trim() || null,
+        id_contato_terceirizacao: id_contato_terceirizacao || null,
         latitude: latitude,
         longitude: longitude,
         image_paths: imagePaths,

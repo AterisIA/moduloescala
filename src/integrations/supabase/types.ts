@@ -678,6 +678,7 @@ export type Database = {
           endereco_profissional: string | null
           facial_features: Json | null
           id: string
+          id_contato_terceirizacao: string | null
           image_paths: string[] | null
           latitude: number | null
           longitude: number | null
@@ -691,6 +692,7 @@ export type Database = {
           endereco_profissional?: string | null
           facial_features?: Json | null
           id?: string
+          id_contato_terceirizacao?: string | null
           image_paths?: string[] | null
           latitude?: number | null
           longitude?: number | null
@@ -704,13 +706,22 @@ export type Database = {
           endereco_profissional?: string | null
           facial_features?: Json | null
           id?: string
+          id_contato_terceirizacao?: string | null
           image_paths?: string[] | null
           latitude?: number | null
           longitude?: number | null
           matricula?: string | null
           nome?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "face_users_id_contato_terceirizacao_fkey"
+            columns: ["id_contato_terceirizacao"]
+            isOneToOne: false
+            referencedRelation: "contatos_terceirizacao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       file_upload: {
         Row: {

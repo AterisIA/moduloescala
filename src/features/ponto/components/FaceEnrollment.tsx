@@ -6,6 +6,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Camera, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { format } from "date-fns";
 
 interface FaceEnrollmentProps {
   onSuccess: () => void;
@@ -18,6 +21,10 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
   const [coordenadas, setCoordenadas] = useState(""); // Formato: "latitude, longitude"
+  const [selectedContatoId, setSelectedContatoId] = useState<string>("");
+  const [contatos, setContatos] = useState<any[]>([]);
+  const [escalas, setEscalas] = useState<any[]>([]);
+  const [loadingContatos, setLoadingContatos] = useState(false);
   const [step, setStep] = useState<CaptureStep>("idle");
   const [error, setError] = useState("");
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -26,11 +33,68 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Load contatos de terceirização
+  useEffect(() => {
+    loadContatos();
+  }, []);
+
+  // Load escalas when contato is selected
+  useEffect(() => {
+    if (selectedContatoId) {
+      loadEscalas(selectedContatoId);
+    } else {
+      setEscalas([]);
+    }
+  }, [selectedContatoId]);
+
   useEffect(() => {
     return () => {
       stopCamera();
     };
   }, []);
+
+  const loadContatos = async () => {
+    setLoadingContatos(true);
+    try {
+      const { data, error } = await supabase
+        .from('contatos_terceirizacao')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+      
+      if (error) throw error;
+      setContatos(data || []);
+    } catch (err: any) {
+      console.error('Erro ao carregar contatos:', err);
+      toast({ 
+        title: "Erro", 
+        description: "Não foi possível carregar os contatos de terceirização",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingContatos(false);
+    }
+  };
+
+  const loadEscalas = async (contatoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('escala')
+        .select(`
+          *,
+          coordenador:id_coordenador(nome),
+          plantao:id_plantao(nome)
+        `)
+        .eq('id_contato_terceirizacao', contatoId)
+        .gte('finalescala', new Date().toISOString())
+        .order('dataescala', { ascending: false });
+      
+      if (error) throw error;
+      setEscalas(data || []);
+    } catch (err: any) {
+      console.error('Erro ao carregar escalas:', err);
+    }
+  };
 
   const startCamera = async () => {
     console.log("[FaceEnroll] Iniciando câmera...");
@@ -134,6 +198,7 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
         body: {
           nome: nome.trim(),
           matricula: matricula.trim() || null,
+          id_contato_terceirizacao: selectedContatoId || null,
           latitude,
           longitude,
           images: images,
@@ -239,6 +304,59 @@ export function FaceEnrollment({ onSuccess, onCancel }: FaceEnrollmentProps) {
               placeholder="Número da matrícula (opcional)"
             />
           </div>
+
+          <div>
+            <Label htmlFor="contato">Contato de Terceirização</Label>
+            <Select value={selectedContatoId} onValueChange={setSelectedContatoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um contato (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingContatos ? (
+                  <div className="p-2 text-center text-sm text-muted-foreground">
+                    Carregando...
+                  </div>
+                ) : contatos.length === 0 ? (
+                  <div className="p-2 text-center text-sm text-muted-foreground">
+                    Nenhum contato disponível
+                  </div>
+                ) : (
+                  contatos.map((contato) => (
+                    <SelectItem key={contato.id} value={contato.id}>
+                      {contato.name} - {contato.role}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {escalas.length > 0 && (
+            <Card>
+              <CardContent className="pt-4">
+                <Label className="text-sm font-medium mb-2 block">
+                  Escalas Associadas ({escalas.length})
+                </Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {escalas.map((escala: any) => (
+                    <div key={escala.idescala} className="text-sm p-2 bg-muted rounded">
+                      <div className="font-medium">{escala.nomepessoaescala}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(escala.dataescala), 'dd/MM/yyyy HH:mm')} até{' '}
+                        {escala.finalescala ? format(new Date(escala.finalescala), 'dd/MM/yyyy HH:mm') : 'Indeterminado'}
+                      </div>
+                      {escala.coordenador && (
+                        <div className="text-xs">Coord: {escala.coordenador.nome}</div>
+                      )}
+                      {escala.plantao && (
+                        <div className="text-xs">Plantão: {escala.plantao.nome}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div>
             <Label htmlFor="coordenadas">Coordenadas do Local de Trabalho</Label>
