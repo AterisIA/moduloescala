@@ -402,31 +402,36 @@ serve(async (req) => {
           horarioEntrada.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
           horarioSaida.setFullYear(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
-          if (tipo === 'ENTRADA') {
-            scheduleData.horario_esperado = horarioEntrada.toISOString();
-            const diffMs = now.getTime() - horarioEntrada.getTime();
-            const diffMin = Math.floor(diffMs / 60000);
-            
-            if (diffMin > 0) {
-              scheduleData.minutos_atraso = diffMin;
-              scheduleData.status_horario = 'atrasado';
-              console.log(`[punch] ENTRADA com atraso de ${diffMin} minutos`);
-            } else {
-              console.log(`[punch] ENTRADA pontual ou adiantada`);
-            }
-          } else if (tipo === 'SAÍDA') {
-            scheduleData.horario_esperado = horarioSaida.toISOString();
-            const diffMs = now.getTime() - horarioSaida.getTime();
-            const diffMin = Math.floor(diffMs / 60000);
-            
-            if (diffMin > 0) {
-              scheduleData.minutos_atraso = diffMin;
-              scheduleData.status_horario = 'atrasado';
-              console.log(`[punch] SAÍDA com atraso de ${diffMin} minutos`);
-            } else {
-              console.log(`[punch] SAÍDA pontual ou adiantada`);
-            }
-          }
+      if (tipo === 'ENTRADA') {
+        scheduleData.horario_esperado = horarioEntrada.toISOString();
+        const diffMs = now.getTime() - horarioEntrada.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        
+        if (diffMin > 0) {
+          scheduleData.minutos_atraso = diffMin;
+          scheduleData.status_horario = 'atrasado';
+          console.log(`[punch] ENTRADA com atraso de ${diffMin} minutos`);
+        } else {
+          scheduleData.minutos_atraso = 0;
+          console.log(`[punch] ENTRADA pontual ou adiantada`);
+        }
+      } else if (tipo === 'SAÍDA') {
+        scheduleData.horario_esperado = horarioSaida.toISOString();
+        const diffMs = now.getTime() - horarioSaida.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        
+        // Para SAÍDA: só marca atraso se saiu DEPOIS do horário esperado
+        if (diffMin > 0) {
+          scheduleData.minutos_atraso = diffMin;
+          scheduleData.status_horario = 'atrasado';
+          console.log(`[punch] SAÍDA com atraso de ${diffMin} minutos`);
+        } else {
+          // Saiu antes ou no horário - não é atraso
+          scheduleData.minutos_atraso = 0;
+          scheduleData.status_horario = diffMin < -10 ? 'saida_antecipada' : 'pontual';
+          console.log(`[punch] SAÍDA ${diffMin < -10 ? 'antecipada' : 'pontual'} (${Math.abs(diffMin)} minutos antes)`);
+        }
+      }
         } else {
           scheduleData.status_horario = 'fora_escala';
           console.log('[punch] Nenhuma escala ativa encontrada para esta data');
@@ -489,6 +494,8 @@ serve(async (req) => {
     let message = `${tipo} registrada com sucesso`;
     if (scheduleData.status_horario === 'atrasado') {
       message += ` (${scheduleData.minutos_atraso} minutos de atraso)`;
+    } else if (scheduleData.status_horario === 'saida_antecipada') {
+      message += ` (saída antecipada)`;
     } else if (scheduleData.status_horario === 'fora_escala') {
       message += ` (fora do horário de escala)`;
     }
