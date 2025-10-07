@@ -390,53 +390,63 @@ serve(async (req) => {
           const escala = escalas[0];
           scheduleData.escala_id = escala.idescala;
 
-          // Extrair APENAS AS HORAS dos timestamps da escala
-          const dataEscala = new Date(escala.dataescala);
-          const finalEscala = new Date(escala.finalescala);
+          // Extrair apenas hora e minuto dos timestamps e interpretar no fuso de São Paulo
+          // O timestamp no banco é 'timestamp without time zone', então precisamos interpretar como local BRT
+          const dataEscalaStr = escala.dataescala; // ex: '2025-10-06 08:00:00'
+          const finalEscalaStr = escala.finalescala; // ex: '2025-11-05 17:00:00'
           
-          // Pegar apenas hora e minuto de cada timestamp
-          const horaEntrada = dataEscala.getHours();
-          const minutoEntrada = dataEscala.getMinutes();
-          const horaSaida = finalEscala.getHours();
-          const minutoSaida = finalEscala.getMinutes();
+          // Extrair hora e minuto usando regex para garantir interpretação correta
+          const entradaMatch = dataEscalaStr.match(/(\d{2}):(\d{2}):(\d{2})/);
+          const saidaMatch = finalEscalaStr.match(/(\d{2}):(\d{2}):(\d{2})/);
           
-          // Aplicar ao dia atual
-          const hoje = new Date();
-          const horarioEntrada = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), horaEntrada, minutoEntrada, 0, 0);
-          const horarioSaida = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), horaSaida, minutoSaida, 0, 0);
-          
-          console.log(`[punch] Horários extraídos - Entrada: ${horarioEntrada.toISOString()}, Saída: ${horarioSaida.toISOString()}`);
+          if (!entradaMatch || !saidaMatch) {
+            console.error('[punch] Formato de horário inválido na escala');
+            scheduleData.status_horario = 'fora_escala';
+          } else {
+            const horaEntrada = parseInt(entradaMatch[1]);
+            const minutoEntrada = parseInt(entradaMatch[2]);
+            const horaSaida = parseInt(saidaMatch[1]);
+            const minutoSaida = parseInt(saidaMatch[2]);
+            
+            // Criar horários para hoje no horário local (BRT/BRST)
+            const agoraLocal = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+            const horarioEntrada = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate(), horaEntrada, minutoEntrada, 0, 0);
+            const horarioSaida = new Date(agoraLocal.getFullYear(), agoraLocal.getMonth(), agoraLocal.getDate(), horaSaida, minutoSaida, 0, 0);
+            
+            console.log(`[punch] Horários da escala - Entrada: ${horaEntrada}:${minutoEntrada}, Saída: ${horaSaida}:${minutoSaida}`);
+            console.log(`[punch] Horários aplicados ao dia atual - Entrada: ${horarioEntrada.toISOString()}, Saída: ${horarioSaida.toISOString()}`);
 
-      if (tipo === 'ENTRADA') {
-        scheduleData.horario_esperado = horarioEntrada.toISOString();
-        const diffMs = now.getTime() - horarioEntrada.getTime();
-        const diffMin = Math.floor(diffMs / 60000);
-        
-        if (diffMin > 0) {
-          scheduleData.minutos_atraso = diffMin;
-          scheduleData.status_horario = 'atrasado';
-          console.log(`[punch] ENTRADA com atraso de ${diffMin} minutos`);
-        } else {
-          scheduleData.minutos_atraso = 0;
-          console.log(`[punch] ENTRADA pontual ou adiantada`);
-        }
-      } else if (tipo === 'SAÍDA') {
-        scheduleData.horario_esperado = horarioSaida.toISOString();
-        const diffMs = now.getTime() - horarioSaida.getTime();
-        const diffMin = Math.floor(diffMs / 60000);
-        
-        // Para SAÍDA: só marca atraso se saiu DEPOIS do horário esperado
-        if (diffMin > 0) {
-          scheduleData.minutos_atraso = diffMin;
-          scheduleData.status_horario = 'atrasado';
-          console.log(`[punch] SAÍDA com atraso de ${diffMin} minutos`);
-        } else {
-          // Saiu antes ou no horário - não é atraso
-          scheduleData.minutos_atraso = 0;
-          scheduleData.status_horario = diffMin < -10 ? 'saida_antecipada' : 'pontual';
-          console.log(`[punch] SAÍDA ${diffMin < -10 ? 'antecipada' : 'pontual'} (${Math.abs(diffMin)} minutos antes)`);
-        }
-      }
+            if (tipo === 'ENTRADA') {
+              scheduleData.horario_esperado = horarioEntrada.toISOString();
+              const diffMs = now.getTime() - horarioEntrada.getTime();
+              const diffMin = Math.floor(diffMs / 60000);
+              
+              if (diffMin > 0) {
+                scheduleData.minutos_atraso = diffMin;
+                scheduleData.status_horario = 'atrasado';
+                console.log(`[punch] ENTRADA com atraso de ${diffMin} minutos`);
+              } else {
+                scheduleData.minutos_atraso = 0;
+                console.log(`[punch] ENTRADA pontual ou adiantada`);
+              }
+            } else if (tipo === 'SAÍDA') {
+              scheduleData.horario_esperado = horarioSaida.toISOString();
+              const diffMs = now.getTime() - horarioSaida.getTime();
+              const diffMin = Math.floor(diffMs / 60000);
+              
+              // Para SAÍDA: só marca atraso se saiu DEPOIS do horário esperado
+              if (diffMin > 0) {
+                scheduleData.minutos_atraso = diffMin;
+                scheduleData.status_horario = 'atrasado';
+                console.log(`[punch] SAÍDA com atraso de ${diffMin} minutos`);
+              } else {
+                // Saiu antes ou no horário - não é atraso
+                scheduleData.minutos_atraso = 0;
+                scheduleData.status_horario = diffMin < -10 ? 'saida_antecipada' : 'pontual';
+                console.log(`[punch] SAÍDA ${diffMin < -10 ? 'antecipada' : 'pontual'} (${Math.abs(diffMin)} minutos antes)`);
+              }
+            }
+          }
         } else {
           scheduleData.status_horario = 'fora_escala';
           console.log('[punch] Nenhuma escala ativa encontrada para esta data');
