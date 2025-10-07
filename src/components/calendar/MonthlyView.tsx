@@ -221,6 +221,8 @@ export function MonthlyView({ currentDate, employees, schedules, selectedDepartm
                             <div className="text-xs font-semibold text-green-700">FOLGA</div>
                           ) : schedule.type === 'break' ? (
                             <div className="text-xs font-semibold text-purple-700">BH</div>
+                          ) : schedule.type === 'vacation' && schedule.isDomingoMes ? (
+                            <div className="text-xs font-semibold text-orange-700">DOMINGO DO MÊS</div>
                           ) : (
                             <div className="text-xs font-semibold text-orange-700">FÉRIAS</div>
                           )}

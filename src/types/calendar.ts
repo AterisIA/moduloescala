@@ -17,6 +17,7 @@ export interface Schedule {
   endTime: string;
   type: 'work' | 'break' | 'rest' | 'vacation';
   location?: string;
+  isDomingoMes?: boolean;
 }
 
 export type ViewType = 'daily' | 'weekly' | 'monthly' | 'yearly';

@@ -218,7 +218,8 @@ export function useEscalas() {
               startTime: "00:00",
               endTime: "23:59",
               type: 'vacation' as const,
-              location: undefined
+              location: undefined,
+              isDomingoMes: true
             };
             console.log('Created vacation schedule (domingo do mês):', schedule);
             schedulesArray.push(schedule);

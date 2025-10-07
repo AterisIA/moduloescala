@@ -77,7 +77,7 @@ export function CalendarGrid({ currentDate, employees, schedules, selectedDepart
   const getScheduleDisplay = (schedule: Schedule) => {
     if (schedule.type === 'rest') return 'FOLGA';
     if (schedule.type === 'break') return 'BH'; // Banco de horas
-    if (schedule.type === 'vacation') return 'FÉRIAS';
+    if (schedule.type === 'vacation') return schedule.isDomingoMes ? 'DOMINGO DO MÊS' : 'FÉRIAS';
     return `${schedule.startTime}-${schedule.endTime}`;
   };
 
