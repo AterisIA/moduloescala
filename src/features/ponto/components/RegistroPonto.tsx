@@ -73,12 +73,13 @@ export function RegistroPonto({
     buscarUltimoRegistro();
   }, []);
 
-  // Registrar entrada automaticamente quando houver faceUserId e não houver registro do dia
-  useEffect(() => {
-    if (propFaceUserId && ultimoRegistro === null && !loading && escalaAtiva) {
-      registrarPonto('ENTRADA');
-    }
-  }, [propFaceUserId, ultimoRegistro, escalaAtiva]);
+  // NÃO registrar entrada automaticamente - isso será feito no fluxo BaterPonto
+  // que já chama a edge function punch após validação
+  // useEffect(() => {
+  //   if (propFaceUserId && ultimoRegistro === null && !loading && escalaAtiva) {
+  //     registrarPonto('ENTRADA');
+  //   }
+  // }, [propFaceUserId, ultimoRegistro, escalaAtiva]);
 
   // Atualizar timers quando carregar último registro
   useEffect(() => {
