@@ -293,7 +293,7 @@ serve(async (req) => {
       
       // Se não temos tipoSolicitado ainda, precisamos determiná-lo primeiro
       const tipoARegistrar = tipoSolicitado || (
-        !existingLog || existingLog.length === 0 || tipoExistente === "SAÍDA" 
+        !existingLog || existingLog.length === 0 || tipoExistente === "SAÍDA" || tipoExistente === "VOLTA_PAUSA"
           ? "ENTRADA" 
           : "SAÍDA"
       );
@@ -324,9 +324,13 @@ serve(async (req) => {
     // Se tipo foi especificado, usar ele; senão, determinar automaticamente
     let tipo = tipoSolicitado;
     if (!tipo) {
-      tipo = !lastPunch || lastPunch.length === 0 || lastPunch[0].tipo === "SAÍDA" 
+      // Verificar se último registro foi SAÍDA ou VOLTA_PAUSA
+      const ultimoTipo = lastPunch?.[0]?.tipo;
+      tipo = !lastPunch || lastPunch.length === 0 || ultimoTipo === "SAÍDA" 
         ? "ENTRADA" 
-        : "SAÍDA";
+        : ultimoTipo === "ENTRADA" || ultimoTipo === "VOLTA_PAUSA"
+        ? "SAÍDA"
+        : "ENTRADA";
     }
 
     console.log("[punch] Tipo determinado:", tipo);
