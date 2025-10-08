@@ -53,6 +53,11 @@ export function RegistroPonto({
   const [ultimoRegistro, setUltimoRegistro] = useState<RegistroPontoData | null>(null);
   const [loading, setLoading] = useState(false);
   
+  // Log sempre que o estado mudar
+  useEffect(() => {
+    console.log("[RegistroPonto] Estado mudou para:", estado);
+  }, [estado]);
+  
   // Estados para validação de saída
   const [validandoSaida, setValidandoSaida] = useState(false);
   const [stepValidacao, setStepValidacao] = useState<'scan' | 'verify' | 'liveness' | null>(null);
@@ -68,6 +73,8 @@ export function RegistroPonto({
     estado === 'PAUSA',
     ultimoRegistro?.tempo_pausa_segundos || 0
   );
+  
+  console.log("[RegistroPonto] Estado atual:", estado, "Timer rodando?", estado === 'ENTRADA' || estado === 'VOLTA_PAUSA');
 
   // Buscar escala ativa e último registro ao montar
   useEffect(() => {
@@ -101,14 +108,24 @@ export function RegistroPonto({
 
   // Atualizar timers quando carregar último registro
   useEffect(() => {
+    console.log("[RegistroPonto] useEffect - ultimoRegistro:", ultimoRegistro);
+    
     if (ultimoRegistro) {
+      console.log("[RegistroPonto] Configurando timers com:", {
+        tempo_trabalho_segundos: ultimoRegistro.tempo_trabalho_segundos,
+        tempo_pausa_segundos: ultimoRegistro.tempo_pausa_segundos,
+        estado: ultimoRegistro.estado
+      });
+      
       trabalhoTimer.setTime(ultimoRegistro.tempo_trabalho_segundos);
       pausaTimer.setTime(ultimoRegistro.tempo_pausa_segundos);
       
       // Atualizar estado para que os timers comecem a rodar
       if (ultimoRegistro.estado === 'ENTRADA' || ultimoRegistro.estado === 'VOLTA_PAUSA') {
+        console.log("[RegistroPonto] Iniciando timer de trabalho, estado:", ultimoRegistro.estado);
         setEstado(ultimoRegistro.estado);
       } else if (ultimoRegistro.estado === 'PAUSA') {
+        console.log("[RegistroPonto] Iniciando timer de pausa");
         setEstado('PAUSA');
       }
     }
@@ -136,6 +153,8 @@ export function RegistroPonto({
 
   const buscarUltimoRegistro = async () => {
     try {
+      console.log("[RegistroPonto] Buscando último registro...");
+      
       const hoje = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('attendance_logs')
@@ -146,6 +165,9 @@ export function RegistroPonto({
         .maybeSingle();
 
       if (error) throw error;
+      
+      console.log("[RegistroPonto] Último registro encontrado:", data);
+      
       if (data) {
         const registro: RegistroPontoData = {
           id: data.id,
@@ -154,15 +176,19 @@ export function RegistroPonto({
           tempo_pausa_segundos: data.tempo_pausa_segundos || 0,
           pausa_minutos_esperado: data.escala_id ? pausaMinimaMinutos : undefined,
         };
+        
+        console.log("[RegistroPonto] Registro processado:", registro);
         setUltimoRegistro(registro);
         setEstado(data.estado_ponto as EstadoPonto);
         
         if (data.estado_ponto === 'PAUSA') {
           setPausaIniciada(new Date(data.punched_at));
         }
+      } else {
+        console.log("[RegistroPonto] Nenhum registro encontrado para hoje");
       }
     } catch (error) {
-      console.error('Erro ao buscar último registro:', error);
+      console.error('[RegistroPonto] Erro ao buscar último registro:', error);
     }
   };
 
