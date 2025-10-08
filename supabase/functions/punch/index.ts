@@ -299,10 +299,10 @@ serve(async (req) => {
       );
     }
 
-    // Determinar tipo (ENTRADA ou SAÍDA) baseado no último registro
+    // Determinar tipo (ENTRADA ou SAÍDA) baseado no último registro e calcular tempos
     const { data: lastPunch } = await supabase
       .from("attendance_logs")
-      .select("tipo")
+      .select("*")
       .eq("kiosk_id", payload.k)
       .order("punched_at", { ascending: false })
       .limit(1);
@@ -310,6 +310,53 @@ serve(async (req) => {
     const tipo = !lastPunch || lastPunch.length === 0 || lastPunch[0].tipo === "SAÍDA" 
       ? "ENTRADA" 
       : "SAÍDA";
+
+    // Calcular tempos acumulados do dia
+    const hoje = new Date().toISOString().split('T')[0];
+    const { data: punchesToday } = await supabase
+      .from("attendance_logs")
+      .select("*")
+      .eq("kiosk_id", payload.k)
+      .gte("punched_at", hoje)
+      .order("punched_at", { ascending: true });
+
+    let tempoTrabalho = 0;
+    let tempoPausa = 0;
+    let estadoPonto = tipo === 'ENTRADA' ? 'ENTRADA' : null;
+
+    if (punchesToday && punchesToday.length > 0) {
+      // Calcular tempo trabalhado baseado nos registros do dia
+      for (let i = 0; i < punchesToday.length; i++) {
+        const punch = punchesToday[i];
+        const nextPunch = i < punchesToday.length - 1 ? punchesToday[i + 1] : null;
+        
+        if (punch.tipo === 'ENTRADA' && nextPunch) {
+          const start = new Date(punch.punched_at).getTime();
+          const end = new Date(nextPunch.punched_at).getTime();
+          const diffSeconds = Math.floor((end - start) / 1000);
+          
+          if (nextPunch.tipo === 'SAÍDA') {
+            tempoTrabalho += diffSeconds;
+          } else if (nextPunch.tipo === 'PAUSA') {
+            tempoTrabalho += diffSeconds;
+          }
+        } else if (punch.tipo === 'PAUSA' && nextPunch?.tipo === 'VOLTA_PAUSA') {
+          const start = new Date(punch.punched_at).getTime();
+          const end = new Date(nextPunch.punched_at).getTime();
+          tempoPausa += Math.floor((end - start) / 1000);
+        }
+      }
+      
+      // Se o tipo agora é ENTRADA, adicionar tempo até agora
+      if (tipo === 'ENTRADA') {
+        const ultimoPunch = punchesToday[punchesToday.length - 1];
+        if (ultimoPunch.tipo === 'ENTRADA') {
+          const start = new Date(ultimoPunch.punched_at).getTime();
+          const now = Date.now();
+          tempoTrabalho += Math.floor((now - start) / 1000);
+        }
+      }
+    }
 
     // Validar e processar geolocalização
     let geoData: any = {
@@ -474,7 +521,7 @@ serve(async (req) => {
 
     console.log('[punch] Dados de escala calculados:', scheduleData);
 
-    // Gravar log com geolocalização, reconhecimento facial e validação de horário
+    // Gravar log com geolocalização, reconhecimento facial, validação de horário e estado
     const { data: log, error: insertError } = await supabase
       .from("attendance_logs")
       .insert({
@@ -485,6 +532,9 @@ serve(async (req) => {
         face_confidence: face_confidence || null,
         device_info,
         token_window: payload.w,
+        estado_ponto: estadoPonto,
+        tempo_trabalho_segundos: tempoTrabalho,
+        tempo_pausa_segundos: tempoPausa,
         ...geoData,
         ...scheduleData,
       })
