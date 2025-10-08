@@ -276,28 +276,41 @@ serve(async (req) => {
       console.log('[punch] Modo reconhecimento facial - sem selfie');
     }
 
-    // Verificar replay (mesma janela temporal)
+    // Verificar replay (mesma janela temporal) - permitir tipos diferentes
     const { data: existingLog, error: logError } = await supabase
       .from("attendance_logs")
-      .select("id")
+      .select("tipo")
       .eq("kiosk_id", payload.k)
       .eq("token_window", payload.w)
+      .order("punched_at", { ascending: false })
       .limit(1);
 
     if (logError) {
       console.error("[punch] Erro ao verificar replay:", logError);
     } else if (existingLog && existingLog.length > 0) {
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          code: "REPLAY_WINDOW",
-          message: "Ponto já registrado nesta janela temporal",
-        }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+      // Só bloquear se for o mesmo tipo na mesma janela
+      const tipoExistente = existingLog[0].tipo;
+      
+      // Se não temos tipoSolicitado ainda, precisamos determiná-lo primeiro
+      const tipoARegistrar = tipoSolicitado || (
+        !existingLog || existingLog.length === 0 || tipoExistente === "SAÍDA" 
+          ? "ENTRADA" 
+          : "SAÍDA"
       );
+      
+      if (tipoExistente === tipoARegistrar) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            code: "REPLAY_WINDOW",
+            message: `${tipoARegistrar} já registrada nesta janela temporal`,
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Determinar tipo baseado no parâmetro solicitado ou último registro
