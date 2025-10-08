@@ -7,6 +7,7 @@ import { KioskForm } from "../components/KioskForm";
 import { RecentPunches } from "../components/RecentPunches";
 import { FaceEnrollment } from "../components/FaceEnrollment";
 import { FaceUsersList } from "../components/FaceUsersList";
+import { RegistroPonto } from "../components/RegistroPonto";
 
 export default function GestaoPonto() {
   const [showKioskForm, setShowKioskForm] = useState(false);
@@ -62,6 +63,8 @@ export default function GestaoPonto() {
         </Card>
       )}
 
+      <RegistroPonto />
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <KiosksList />
         <FaceUsersList />
