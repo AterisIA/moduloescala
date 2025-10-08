@@ -231,11 +231,20 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
 
       if (verifyError) {
         console.error("[FaceVerify] Erro na chamada:", verifyError);
-        // Tratar erro de forma mais amigável
-        onComplete(false, {
-          match: false,
-          message: "Não foi possível conectar com o servidor de verificação. Tente novamente.",
-        });
+        
+        // Verificar se é erro de rede ou servidor
+        const errorMessage = verifyError.message || "";
+        if (errorMessage.includes("non-2xx") || errorMessage.includes("network")) {
+          onComplete(false, {
+            match: false,
+            message: "Não foi possível conectar com o servidor de verificação. Verifique sua conexão e tente novamente.",
+          });
+        } else {
+          onComplete(false, {
+            match: false,
+            message: "Erro ao verificar identidade. Tente novamente.",
+          });
+        }
         return;
       }
 
@@ -244,7 +253,17 @@ export function FaceVerification({ token, onComplete, onCancel }: FaceVerificati
       // Se ok=false, significa que houve erro ou acesso negado
       if (!verifyData?.ok) {
         console.error("[FaceVerify] Verificação falhou:", verifyData);
-        // Mensagem amigável para quando não há match
+        
+        // Tratamento específico para token expirado
+        if (verifyData?.code === 'INVALID_TOKEN_SIGNATURE') {
+          onComplete(false, {
+            match: false,
+            message: "O QR Code expirou. Por favor, escaneie um novo QR Code e tente novamente.",
+          });
+          return;
+        }
+        
+        // Outros erros
         onComplete(false, {
           match: false,
           message: verifyData?.message || "Rosto não reconhecido. Verifique se você já realizou o cadastro facial.",
