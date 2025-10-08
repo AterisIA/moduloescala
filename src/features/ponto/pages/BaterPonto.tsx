@@ -16,6 +16,13 @@ interface PunchResult {
   nome?: string;
   confidence?: number;
   message?: string;
+  face_user_id?: string;
+  face_user?: {
+    id: string;
+    nome: string;
+    latitude?: number;
+    longitude?: number;
+  };
   locationCheck?: {
     isInLocation: boolean;
     distance: number;
@@ -275,9 +282,10 @@ export default function BaterPonto() {
           
           <RegistroPonto 
             token={token}
-            faceUserId={verificationData?.face_user_id}
+            faceUserId={verificationData?.face_user_id || result?.face_user_id}
             onSaidaComplete={() => setStep("scan")}
             requireValidationOnSaida={true}
+            initialData={result}
           />
         </div>
       )}

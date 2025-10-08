@@ -17,6 +17,7 @@ interface RegistroPontoProps {
   faceUserId?: string;
   onSaidaComplete?: () => void;
   requireValidationOnSaida?: boolean;
+  initialData?: any; // Dados do registro inicial do punch
 }
 
 interface RegistroPontoData {
@@ -42,7 +43,8 @@ export function RegistroPonto({
   token: propToken, 
   faceUserId: propFaceUserId,
   onSaidaComplete,
-  requireValidationOnSaida = false 
+  requireValidationOnSaida = false,
+  initialData
 }: RegistroPontoProps) {
   const [estado, setEstado] = useState<EstadoPonto>(null);
   const [pausaIniciada, setPausaIniciada] = useState<Date | null>(null);
@@ -70,8 +72,24 @@ export function RegistroPonto({
   // Buscar escala ativa e último registro ao montar
   useEffect(() => {
     buscarEscalaAtiva();
-    buscarUltimoRegistro();
-  }, []);
+    
+    // Se já temos dados iniciais do punch, configurar estado imediatamente
+    if (initialData?.tipo) {
+      console.log("[RegistroPonto] Configurando com dados iniciais:", initialData);
+      
+      // Mapear tipo do punch para estado do ponto
+      const estadoInicial: EstadoPonto = initialData.tipo === 'ENTRADA' ? 'ENTRADA' : 
+                                         initialData.tipo === 'PAUSA' ? 'PAUSA' :
+                                         initialData.tipo === 'VOLTA_PAUSA' ? 'VOLTA_PAUSA' : 'ENTRADA';
+      
+      setEstado(estadoInicial);
+      
+      // Buscar último registro para pegar tempos acumulados
+      buscarUltimoRegistro();
+    } else {
+      buscarUltimoRegistro();
+    }
+  }, [initialData]);
 
   // NÃO registrar entrada automaticamente - isso será feito no fluxo BaterPonto
   // que já chama a edge function punch após validação
