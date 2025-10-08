@@ -67,7 +67,8 @@ export default function Escalas() {
     id_contato_terceirizacao: "",
     folgas_dias_semana: [] as number[],
     banco_horas_datas: [] as string[],
-    domingo_mes: null as number | null
+    domingo_mes: null as number | null,
+    pausa_minutos: null as number | null
   });
   const [currentBancoData, setCurrentBancoData] = useState("");
   const {
@@ -228,7 +229,8 @@ export default function Escalas() {
       id_contato_terceirizacao: "",
       folgas_dias_semana: [],
       banco_horas_datas: [],
-      domingo_mes: null
+      domingo_mes: null,
+      pausa_minutos: null
     });
     setCurrentBancoData("");
     setSelectedEmpresa("");
@@ -301,7 +303,8 @@ export default function Escalas() {
         id_contato_terceirizacao: formData.id_contato_terceirizacao || null,
         folgas_dias_semana: formData.folgas_dias_semana,
         banco_horas_datas: formData.banco_horas_datas,
-        domingo_mes: formData.domingo_mes
+        domingo_mes: formData.domingo_mes,
+        pausa_minutos: formData.pausa_minutos
       };
 
   const handlePlantaoChange = (plantaoId: string) => {
@@ -457,6 +460,22 @@ export default function Escalas() {
               ...prev,
               finalescala: e.target.value
             }))} />
+              </div>
+
+              <div>
+                <Label htmlFor="pausa">Pausa</Label>
+                <Select value={formData.pausa_minutos?.toString() || ""} onValueChange={value => setFormData(prev => ({
+                  ...prev,
+                  pausa_minutos: value ? parseInt(value) : null
+                }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a duração da pausa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="72">1 hora e 12 minutos</SelectItem>
+                    <SelectItem value="60">1 hora</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>

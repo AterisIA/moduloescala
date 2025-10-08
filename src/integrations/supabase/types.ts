@@ -592,6 +592,7 @@ export type Database = {
           id_plantao: string | null
           idescala: number
           nomepessoaescala: string
+          pausa_minutos: number | null
           telefone: string | null
         }
         Insert: {
@@ -607,6 +608,7 @@ export type Database = {
           id_plantao?: string | null
           idescala?: number
           nomepessoaescala: string
+          pausa_minutos?: number | null
           telefone?: string | null
         }
         Update: {
@@ -622,6 +624,7 @@ export type Database = {
           id_plantao?: string | null
           idescala?: number
           nomepessoaescala?: string
+          pausa_minutos?: number | null
           telefone?: string | null
         }
         Relationships: [
