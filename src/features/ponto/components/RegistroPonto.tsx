@@ -6,8 +6,18 @@ import { Clock, Play, Pause, StopCircle, RotateCcw } from "lucide-react";
 import { useTimer } from "@/hooks/useTimer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { QRScanner } from "./QRScanner";
+import { FaceVerification } from "./FaceVerification";
+import { VideoRecorder } from "./VideoRecorder";
 
 type EstadoPonto = 'ENTRADA' | 'PAUSA' | 'VOLTA_PAUSA' | 'SAIDA' | null;
+
+interface RegistroPontoProps {
+  token?: string;
+  faceUserId?: string;
+  onSaidaComplete?: () => void;
+  requireValidationOnSaida?: boolean;
+}
 
 interface RegistroPontoData {
   id?: string;
@@ -28,13 +38,24 @@ interface EscalaAtiva {
   pausa_minutos: number | null;
 }
 
-export function RegistroPonto() {
+export function RegistroPonto({ 
+  token: propToken, 
+  faceUserId: propFaceUserId,
+  onSaidaComplete,
+  requireValidationOnSaida = false 
+}: RegistroPontoProps) {
   const [estado, setEstado] = useState<EstadoPonto>(null);
   const [pausaIniciada, setPausaIniciada] = useState<Date | null>(null);
   const [pausaMinimaMinutos, setPausaMinimaMinutos] = useState<number>(60);
   const [escalaAtiva, setEscalaAtiva] = useState<EscalaAtiva | null>(null);
   const [ultimoRegistro, setUltimoRegistro] = useState<RegistroPontoData | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Estados para validação de saída
+  const [validandoSaida, setValidandoSaida] = useState(false);
+  const [stepValidacao, setStepValidacao] = useState<'scan' | 'verify' | 'liveness' | null>(null);
+  const [tokenSaida, setTokenSaida] = useState<string>("");
+  const [verificationData, setVerificationData] = useState<any>(null);
 
   // Cronômetros
   const trabalhoTimer = useTimer(
@@ -112,7 +133,58 @@ export function RegistroPonto() {
     }
   };
 
+  const handleQRScanned = (scannedToken: string) => {
+    setTokenSaida(scannedToken);
+    setStepValidacao('verify');
+    toast({
+      title: "QR Code Escaneado",
+      description: "Iniciando verificação facial para saída...",
+    });
+  };
+
+  const handleFaceVerified = async (success: boolean, data?: any) => {
+    if (success && data?.match) {
+      setVerificationData(data);
+      setStepValidacao('liveness');
+      toast({
+        title: "Rosto Reconhecido",
+        description: "Iniciando prova de vida...",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: data?.message || "Rosto não reconhecido",
+        variant: "destructive",
+      });
+      setValidandoSaida(false);
+      setStepValidacao(null);
+    }
+  };
+
+  const handleLivenessComplete = async (success: boolean) => {
+    if (success) {
+      setValidandoSaida(false);
+      setStepValidacao(null);
+      await registrarPonto('SAIDA');
+    } else {
+      toast({
+        title: "Erro",
+        description: "Prova de vida falhou",
+        variant: "destructive",
+      });
+      setValidandoSaida(false);
+      setStepValidacao(null);
+    }
+  };
+
   const registrarPonto = async (novoEstado: EstadoPonto) => {
+    // Se for saída e exigir validação, iniciar fluxo de validação
+    if (novoEstado === 'SAIDA' && requireValidationOnSaida && !validandoSaida) {
+      setValidandoSaida(true);
+      setStepValidacao('scan');
+      return;
+    }
+
     if (!escalaAtiva) {
       toast({
         title: "Erro",
@@ -158,8 +230,9 @@ export function RegistroPonto() {
       const { data, error } = await supabase
         .from('attendance_logs')
         .insert({
-          kiosk_id: '00000000-0000-0000-0000-000000000000', // Placeholder
+          kiosk_id: propToken ? '00000000-0000-0000-0000-000000000001' : '00000000-0000-0000-0000-000000000000',
           escala_id: escalaAtiva.idescala,
+          face_user_id: propFaceUserId,
           estado_ponto: novoEstado,
           tempo_trabalho_segundos: tempoTrabalho,
           tempo_pausa_segundos: tempoPausa,
@@ -167,7 +240,7 @@ export function RegistroPonto() {
           horario_previsto: novoEstado === 'SAIDA' ? escalaAtiva.finalescala : null,
           observacoes: observacoes || null,
           tipo: novoEstado || 'ENTRADA',
-          token_window: new Date().toISOString(),
+          token_window: propToken || new Date().toISOString(),
         })
         .select()
         .single();
@@ -181,6 +254,11 @@ export function RegistroPonto() {
       } else if (novoEstado === 'VOLTA_PAUSA') {
         setPausaIniciada(null);
         pausaTimer.reset();
+      } else if (novoEstado === 'SAIDA') {
+        // Resetar tudo após saída
+        if (onSaidaComplete) {
+          onSaidaComplete();
+        }
       }
 
       toast({
@@ -221,6 +299,51 @@ export function RegistroPonto() {
   };
 
   const tempoLiquido = trabalhoTimer.seconds - pausaTimer.seconds;
+
+  // Se estiver validando saída, mostrar fluxo de validação
+  if (validandoSaida && stepValidacao) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {stepValidacao === 'scan' && "Escaneie o QR Code para Saída"}
+            {stepValidacao === 'verify' && "Verificação Facial"}
+            {stepValidacao === 'liveness' && "Verificação de Vida"}
+          </CardTitle>
+          <CardDescription>
+            {stepValidacao === 'scan' && "Aponte a câmera para o QR Code"}
+            {stepValidacao === 'verify' && "Olhe diretamente para a câmera"}
+            {stepValidacao === 'liveness' && "Gire a cabeça lentamente"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stepValidacao === 'scan' && <QRScanner onScanned={handleQRScanned} />}
+          {stepValidacao === 'verify' && (
+            <FaceVerification 
+              token={tokenSaida} 
+              onComplete={handleFaceVerified}
+              onCancel={() => {
+                setValidandoSaida(false);
+                setStepValidacao(null);
+              }}
+            />
+          )}
+          {stepValidacao === 'liveness' && verificationData && (
+            <VideoRecorder 
+              token={tokenSaida}
+              faceUserId={verificationData.face_user_id}
+              faceConfidence={verificationData.similarity_score}
+              onComplete={handleLivenessComplete}
+              onCancel={() => {
+                setValidandoSaida(false);
+                setStepValidacao(null);
+              }}
+            />
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

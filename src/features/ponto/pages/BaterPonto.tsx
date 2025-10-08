@@ -6,8 +6,9 @@ import { VideoRecorder } from "../components/VideoRecorder";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { RegistroPonto } from "../components/RegistroPonto";
 
-type Step = "scan" | "verify" | "liveness" | "success" | "error";
+type Step = "scan" | "verify" | "liveness" | "registro" | "success" | "error";
 
 interface PunchResult {
   tipo: string;
@@ -77,12 +78,12 @@ export default function BaterPonto() {
 
   const handleLivenessComplete = async (success: boolean, data?: PunchResult) => {
     if (success && data) {
-      console.log("[Ponto] Liveness e ponto registrado");
+      console.log("[Ponto] Liveness aprovado, mostrando registro de ponto");
       
       // Toast para prova de vida
       toast({
         title: "✅ Prova de Vida Aprovada",
-        description: "Verificação de vida concluída. Registrando ponto...",
+        description: "Verificação concluída. Agora você pode registrar seu ponto.",
       });
       
       // Toast para localização se disponível
@@ -101,9 +102,9 @@ export default function BaterPonto() {
         nome: verificationData?.nome,
         confidence: verificationData?.similarity_score,
       });
-      setStep("success");
+      setStep("registro");
     } else {
-      const errorMsg = data?.message || "Erro ao registrar ponto";
+      const errorMsg = data?.message || "Erro ao verificar prova de vida";
       setError(errorMsg);
       toast({
         title: "❌ Prova de Vida Falhou",
@@ -129,45 +130,46 @@ export default function BaterPonto() {
         <p className="text-muted-foreground">Escaneie o QR Code e verifique seu rosto</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {step === "scan" && "Escaneie o QR Code"}
-            {step === "verify" && "Verificação Facial"}
-            {step === "liveness" && "Verificação de Vida"}
-            {step === "success" && "Ponto Registrado!"}
-            {step === "error" && "Erro ao Registrar"}
-          </CardTitle>
-          <CardDescription>
-            {step === "scan" && "Aponte a câmera para o QR Code do kiosque"}
-            {step === "verify" && "Olhe diretamente para a câmera para verificação"}
-            {step === "liveness" && "Gire a cabeça lentamente durante a gravação"}
-            {step === "success" && "Seu ponto foi registrado com sucesso"}
-            {step === "error" && "Ocorreu um erro ao processar sua batida"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {step === "scan" && <QRScanner onScanned={handleQRScanned} />}
-          
-          {step === "verify" && (
-            <FaceVerification 
-              token={token} 
-              onComplete={handleFaceVerified}
-              onCancel={handleReset}
-            />
-          )}
+      {step !== "registro" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {step === "scan" && "Escaneie o QR Code"}
+              {step === "verify" && "Verificação Facial"}
+              {step === "liveness" && "Verificação de Vida"}
+              {step === "success" && "Ponto Registrado!"}
+              {step === "error" && "Erro ao Registrar"}
+            </CardTitle>
+            <CardDescription>
+              {step === "scan" && "Aponte a câmera para o QR Code do kiosque"}
+              {step === "verify" && "Olhe diretamente para a câmera para verificação"}
+              {step === "liveness" && "Gire a cabeça lentamente durante a gravação"}
+              {step === "success" && "Seu ponto foi registrado com sucesso"}
+              {step === "error" && "Ocorreu um erro ao processar sua batida"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {step === "scan" && <QRScanner onScanned={handleQRScanned} />}
+            
+            {step === "verify" && (
+              <FaceVerification 
+                token={token} 
+                onComplete={handleFaceVerified}
+                onCancel={handleReset}
+              />
+            )}
 
-          {step === "liveness" && verificationData && (
-            <VideoRecorder 
-              token={token}
-              faceUserId={verificationData.face_user_id}
-              faceConfidence={verificationData.similarity_score}
-              onComplete={handleLivenessComplete}
-              onCancel={handleReset}
-            />
-          )}
-          
-          {step === "success" && result && (
+            {step === "liveness" && verificationData && (
+              <VideoRecorder 
+                token={token}
+                faceUserId={verificationData.face_user_id}
+                faceConfidence={verificationData.similarity_score}
+                onComplete={handleLivenessComplete}
+                onCancel={handleReset}
+              />
+            )}
+            
+            {step === "success" && result && (
             <div className="space-y-4">
               <Alert className={result.schedule_info?.status === 'atrasado' ? 'border-orange-500' : 'border-green-500'}>
                 <CheckCircle2 className={`h-4 w-4 ${result.schedule_info?.status === 'atrasado' ? 'text-orange-500' : 'text-green-500'}`} />
@@ -246,8 +248,39 @@ export default function BaterPonto() {
               </button>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {result && (
+            <Alert className="border-blue-500">
+              <CheckCircle2 className="h-4 w-4 text-blue-500" />
+              <AlertDescription>
+                {result.nome && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4" />
+                    <strong>{result.nome}</strong>
+                  </div>
+                )}
+                Verificação concluída com sucesso! Use os botões abaixo para registrar seu ponto.
+                {result.confidence && (
+                  <>
+                    <br />
+                    <strong>Confiança:</strong> {(result.confidence * 100).toFixed(1)}%
+                  </>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <RegistroPonto 
+            token={token}
+            faceUserId={verificationData?.face_user_id}
+            onSaidaComplete={() => setStep("scan")}
+            requireValidationOnSaida={true}
+          />
+        </div>
+      )}
     </div>
   );
 }
