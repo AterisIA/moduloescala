@@ -138,7 +138,7 @@ serve(async (req) => {
       k: kioskId,
       w: window,
       iat: Math.floor(now.getTime() / 1000),
-      exp: Math.floor(now.getTime() / 1000) + 120, // 2 minutos
+      exp: Math.floor(now.getTime() / 1000) + 300, // 5 minutos para permitir tempo para verificação facial e liveness
     };
 
     const token = await generateToken(payload, kiosk.segredo_base32);
@@ -150,7 +150,7 @@ serve(async (req) => {
         ok: true,
         token,
         window,
-        expires_in: 120,
+        expires_in: 300,
       }),
       {
         status: 200,
