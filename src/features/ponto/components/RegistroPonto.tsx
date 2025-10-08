@@ -86,6 +86,13 @@ export function RegistroPonto({
     if (ultimoRegistro) {
       trabalhoTimer.setTime(ultimoRegistro.tempo_trabalho_segundos);
       pausaTimer.setTime(ultimoRegistro.tempo_pausa_segundos);
+      
+      // Atualizar estado para que os timers comecem a rodar
+      if (ultimoRegistro.estado === 'ENTRADA' || ultimoRegistro.estado === 'VOLTA_PAUSA') {
+        setEstado(ultimoRegistro.estado);
+      } else if (ultimoRegistro.estado === 'PAUSA') {
+        setEstado('PAUSA');
+      }
     }
   }, [ultimoRegistro]);
 
