@@ -294,7 +294,8 @@ export function RegistroPonto({
           face_user_id: propFaceUserId,
           face_confidence: 0.95,
           device_info: deviceInfo,
-          geo: geoData
+          geo: geoData,
+          tipo: novoEstado // Enviar o tipo solicitado
         }
       });
 

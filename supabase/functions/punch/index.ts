@@ -74,14 +74,15 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse body
-    const { token, selfie_path, face_user_id, face_confidence, device_info, geo } = await req.json();
+    const { token, selfie_path, face_user_id, face_confidence, device_info, geo, tipo: tipoSolicitado } = await req.json();
 
     console.log("[punch] Dados recebidos:", { 
       selfie_path, 
       face_user_id, 
       face_confidence, 
       device_info, 
-      geo 
+      geo,
+      tipo: tipoSolicitado
     });
 
     if (!token) {
@@ -299,7 +300,7 @@ serve(async (req) => {
       );
     }
 
-    // Determinar tipo (ENTRADA ou SAÍDA) baseado no último registro e calcular tempos
+    // Determinar tipo baseado no parâmetro solicitado ou último registro
     const { data: lastPunch } = await supabase
       .from("attendance_logs")
       .select("*")
@@ -307,9 +308,15 @@ serve(async (req) => {
       .order("punched_at", { ascending: false })
       .limit(1);
 
-    const tipo = !lastPunch || lastPunch.length === 0 || lastPunch[0].tipo === "SAÍDA" 
-      ? "ENTRADA" 
-      : "SAÍDA";
+    // Se tipo foi especificado, usar ele; senão, determinar automaticamente
+    let tipo = tipoSolicitado;
+    if (!tipo) {
+      tipo = !lastPunch || lastPunch.length === 0 || lastPunch[0].tipo === "SAÍDA" 
+        ? "ENTRADA" 
+        : "SAÍDA";
+    }
+
+    console.log("[punch] Tipo determinado:", tipo);
 
     // Calcular tempos acumulados do dia
     const hoje = new Date().toISOString().split('T')[0];
