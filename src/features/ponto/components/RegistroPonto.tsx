@@ -106,11 +106,12 @@ export function RegistroPonto({
   //   }
   // }, [propFaceUserId, ultimoRegistro, escalaAtiva]);
 
-  // Atualizar timers quando carregar último registro
+  // Atualizar timers quando carregar último registro (APENAS na montagem inicial)
   useEffect(() => {
     console.log("[RegistroPonto] useEffect - ultimoRegistro:", ultimoRegistro);
     
-    if (ultimoRegistro) {
+    if (ultimoRegistro && estado === null) {
+      // Só atualiza o estado se ainda não foi definido (montagem inicial)
       console.log("[RegistroPonto] Configurando timers com:", {
         tempo_trabalho_segundos: ultimoRegistro.tempo_trabalho_segundos,
         tempo_pausa_segundos: ultimoRegistro.tempo_pausa_segundos,
@@ -128,6 +129,11 @@ export function RegistroPonto({
         console.log("[RegistroPonto] Iniciando timer de pausa");
         setEstado('PAUSA');
       }
+    } else if (ultimoRegistro && estado !== null) {
+      // Se já tem estado, só atualiza os timers
+      console.log("[RegistroPonto] Atualizando apenas timers, mantendo estado:", estado);
+      trabalhoTimer.setTime(ultimoRegistro.tempo_trabalho_segundos);
+      pausaTimer.setTime(ultimoRegistro.tempo_pausa_segundos);
     }
   }, [ultimoRegistro]);
 
@@ -179,9 +185,9 @@ export function RegistroPonto({
         
         console.log("[RegistroPonto] Registro processado:", registro);
         setUltimoRegistro(registro);
-        setEstado(data.estado_ponto as EstadoPonto);
+        // NÃO setEstado aqui - será gerenciado em registrarPonto
         
-        if (data.estado_ponto === 'PAUSA') {
+        if (data.estado_ponto === 'PAUSA' && !pausaIniciada) {
           setPausaIniciada(new Date(data.punched_at));
         }
       } else {
