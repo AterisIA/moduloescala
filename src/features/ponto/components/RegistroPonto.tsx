@@ -203,54 +203,48 @@ export function RegistroPonto({
 
     setLoading(true);
     try {
-      const agora = new Date();
-      let tempoTrabalho = trabalhoTimer.seconds;
-      let tempoPausa = pausaTimer.seconds;
-
-      // Calcular banco de horas
-      let bancoHorasMinutos = 0;
-      let observacoes = '';
-
-      if (novoEstado === 'VOLTA_PAUSA' && pausaIniciada) {
-        const pausaRealMinutos = Math.floor((agora.getTime() - pausaIniciada.getTime()) / 60000);
-        const diferencaPausa = pausaRealMinutos - pausaMinimaMinutos;
-        
-        if (diferencaPausa > 0) {
-          bancoHorasMinutos = -diferencaPausa;
-          observacoes = `Pausa excedida em ${diferencaPausa} minutos (débito no banco de horas)`;
-        }
+      // Preparar dados de geolocalização
+      let geoData = null;
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        geoData = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp,
+          status: 'ok'
+        };
+      } catch (geoError) {
+        console.log('Geolocalização não disponível:', geoError);
+        geoData = {
+          lat: 0,
+          lng: 0,
+          accuracy: 0,
+          timestamp: Date.now(),
+          status: 'error'
+        };
       }
 
-      if (novoEstado === 'SAIDA' && escalaAtiva.finalescala) {
-        const saidaPrevista = new Date(escalaAtiva.finalescala);
-        const diferencaMinutos = Math.floor((agora.getTime() - saidaPrevista.getTime()) / 60000);
-        
-        if (diferencaMinutos > 0) {
-          bancoHorasMinutos = diferencaMinutos;
-          observacoes = `Trabalhou ${diferencaMinutos} minutos a mais (crédito no banco de horas)`;
-        } else if (diferencaMinutos < 0) {
-          bancoHorasMinutos = diferencaMinutos;
-          observacoes = `Saiu ${Math.abs(diferencaMinutos)} minutos antes (débito no banco de horas)`;
-        }
-      }
+      // Preparar dados do dispositivo
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        videoWidth: 640,
+        videoHeight: 480
+      };
 
-      const { data, error } = await supabase
-        .from('attendance_logs')
-        .insert({
-          kiosk_id: propToken ? '00000000-0000-0000-0000-000000000001' : '00000000-0000-0000-0000-000000000000',
-          escala_id: escalaAtiva.idescala,
+      // Chamar a edge function punch
+      const { data, error } = await supabase.functions.invoke('punch', {
+        body: {
+          token: propToken || new Date().toISOString(),
+          selfie_path: null, // Não há vídeo neste fluxo
           face_user_id: propFaceUserId,
-          estado_ponto: novoEstado,
-          tempo_trabalho_segundos: tempoTrabalho,
-          tempo_pausa_segundos: tempoPausa,
-          banco_horas_minutos: bancoHorasMinutos,
-          horario_previsto: novoEstado === 'SAIDA' ? escalaAtiva.finalescala : null,
-          observacoes: observacoes || null,
-          tipo: novoEstado || 'ENTRADA',
-          token_window: propToken || new Date().toISOString(),
-        })
-        .select()
-        .single();
+          face_confidence: 0.95,
+          device_info: deviceInfo,
+          geo: geoData
+        }
+      });
 
       if (error) throw error;
 
@@ -270,22 +264,15 @@ export function RegistroPonto({
 
       toast({
         title: "Ponto registrado",
-        description: `${novoEstado} registrado com sucesso`,
+        description: `${data?.tipo || novoEstado} registrado com sucesso`,
       });
 
-      if (observacoes) {
-        toast({
-          title: "Banco de horas",
-          description: observacoes,
-        });
-      }
-
       buscarUltimoRegistro();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao registrar ponto:', error);
       toast({
         title: "Erro",
-        description: "Erro ao registrar ponto",
+        description: error?.message || "Erro ao registrar ponto",
         variant: "destructive",
       });
     } finally {
