@@ -451,27 +451,33 @@ export function RegistroPonto({
 
         {/* Botões de ação */}
         <div className="flex gap-3 flex-wrap justify-center">
-          {(estado === 'PAUSA' || estado === 'ENTRADA' || estado === 'VOLTA_PAUSA') && (
+          {/* Botão de Pausar - só aparece quando está trabalhando (ENTRADA ou VOLTA_PAUSA) */}
+          {(estado === 'ENTRADA' || estado === 'VOLTA_PAUSA') && (
             <Button
-              onClick={() => registrarPonto(estado === 'PAUSA' ? 'VOLTA_PAUSA' : 'PAUSA')}
-              disabled={loading || (estado === 'PAUSA' && !podeVoltarDaPausa())}
+              onClick={() => registrarPonto('PAUSA')}
+              disabled={loading}
               variant="secondary"
               size="lg"
             >
-              {estado === 'PAUSA' ? (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Volta da Pausa
-                </>
-              ) : (
-                <>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pausa
-                </>
-              )}
+              <Pause className="mr-2 h-4 w-4" />
+              Pausa
             </Button>
           )}
 
+          {/* Botão de Voltar da Pausa - só aparece quando está em pausa */}
+          {estado === 'PAUSA' && (
+            <Button
+              onClick={() => registrarPonto('VOLTA_PAUSA')}
+              disabled={loading || !podeVoltarDaPausa()}
+              variant="secondary"
+              size="lg"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Volta da Pausa
+            </Button>
+          )}
+
+          {/* Botão de Saída - só aparece quando está trabalhando (ENTRADA ou VOLTA_PAUSA) */}
           {(estado === 'ENTRADA' || estado === 'VOLTA_PAUSA') && (
             <Button
               onClick={() => registrarPonto('SAIDA')}
