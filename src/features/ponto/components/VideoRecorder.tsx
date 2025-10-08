@@ -310,8 +310,9 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
         const rollVariance = calculateVariance(positions.map(p => p.roll));
         
         const totalMovement = yawVariance + pitchVariance + rollVariance;
-        // Threshold reduzido para 0.003 - mais sensível aos movimentos da cabeça
-        const hasMovement = totalMovement > 0.003;
+        // Threshold muito reduzido para aceitar movimentos mínimos
+        const MOVEMENT_THRESHOLD = 0.001;
+        const hasMovement = totalMovement > MOVEMENT_THRESHOLD;
         
         console.log("[Ponto] Análise de movimento:", {
           detections,
@@ -319,7 +320,9 @@ export function VideoRecorder({ token, faceUserId, faceConfidence, onComplete, o
           pitchVariance: pitchVariance.toFixed(4),
           rollVariance: rollVariance.toFixed(4),
           totalMovement: totalMovement.toFixed(4),
-          hasMovement
+          threshold: MOVEMENT_THRESHOLD,
+          hasMovement,
+          passou: totalMovement > MOVEMENT_THRESHOLD ? 'SIM' : 'NAO'
         });
         
         const result = {
