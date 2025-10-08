@@ -73,6 +73,13 @@ export function RegistroPonto({
     buscarUltimoRegistro();
   }, []);
 
+  // Registrar entrada automaticamente quando houver faceUserId e não houver registro do dia
+  useEffect(() => {
+    if (propFaceUserId && ultimoRegistro === null && !loading && escalaAtiva) {
+      registrarPonto('ENTRADA');
+    }
+  }, [propFaceUserId, ultimoRegistro, escalaAtiva]);
+
   // Atualizar timers quando carregar último registro
   useEffect(() => {
     if (ultimoRegistro) {
@@ -403,49 +410,39 @@ export function RegistroPonto({
         )}
 
         {/* Botões de ação */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Button
-            onClick={() => registrarPonto('ENTRADA')}
-            disabled={estado !== null || loading}
-            className="w-full"
-            size="lg"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            Entrada
-          </Button>
+        <div className="flex gap-3 flex-wrap justify-center">
+          {(estado === 'PAUSA' || estado === 'ENTRADA' || estado === 'VOLTA_PAUSA') && (
+            <Button
+              onClick={() => registrarPonto(estado === 'PAUSA' ? 'VOLTA_PAUSA' : 'PAUSA')}
+              disabled={loading || (estado === 'PAUSA' && !podeVoltarDaPausa())}
+              variant="secondary"
+              size="lg"
+            >
+              {estado === 'PAUSA' ? (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Volta da Pausa
+                </>
+              ) : (
+                <>
+                  <Pause className="mr-2 h-4 w-4" />
+                  Pausa
+                </>
+              )}
+            </Button>
+          )}
 
-          <Button
-            onClick={() => registrarPonto('PAUSA')}
-            disabled={estado !== 'ENTRADA' || loading}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
-            <Pause className="mr-2 h-4 w-4" />
-            Pausa
-          </Button>
-
-          <Button
-            onClick={() => registrarPonto('VOLTA_PAUSA')}
-            disabled={estado !== 'PAUSA' || !podeVoltarDaPausa() || loading}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            Volta da Pausa
-          </Button>
-
-          <Button
-            onClick={() => registrarPonto('SAIDA')}
-            disabled={(estado !== 'ENTRADA' && estado !== 'VOLTA_PAUSA') || loading}
-            variant="destructive"
-            className="w-full"
-            size="lg"
-          >
-            <StopCircle className="mr-2 h-4 w-4" />
-            Saída
-          </Button>
+          {(estado === 'ENTRADA' || estado === 'VOLTA_PAUSA') && (
+            <Button
+              onClick={() => registrarPonto('SAIDA')}
+              disabled={loading}
+              variant="destructive"
+              size="lg"
+            >
+              <StopCircle className="mr-2 h-4 w-4" />
+              Saída
+            </Button>
+          )}
         </div>
 
         {/* Informações da escala */}
