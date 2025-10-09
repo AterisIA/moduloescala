@@ -81,17 +81,19 @@ export function UserPunchDetails({ userId, userName, onClose }: UserPunchDetails
 
     const inicioEscala = parseISO(escala.dataescala);
     const fimEscala = parseISO(escala.finalescala);
+    
+    // Horas devidas por dia = diferença entre horário de saída e entrada
     const horasDevidasPorDia = differenceInMinutes(fimEscala, inicioEscala) / 60;
     
-    // Calcular dias trabalhados
-    const diasUnicos = new Set(
+    // Encontrar dias únicos em que houve ENTRADA (dias efetivamente trabalhados)
+    const diasTrabalhados = new Set(
       punches
         .filter(p => p.tipo === "ENTRADA")
         .map(p => format(parseISO(p.punched_at), "yyyy-MM-dd"))
     );
     
-    const diasTrabalhados = diasUnicos.size;
-    const horasDevidas = horasDevidasPorDia * diasTrabalhados;
+    // Horas devidas = horas por dia × dias que a pessoa trabalhou
+    const horasDevidas = horasDevidasPorDia * diasTrabalhados.size;
 
     // Somar horas trabalhadas (em segundos) e converter para horas
     const totalSegundosTrabalhados = punches.reduce(
@@ -110,7 +112,7 @@ export function UserPunchDetails({ userId, userName, onClose }: UserPunchDetails
       horasTrabalhadas,
       horasDevidas,
       bancoHorasMinutos: bancoHorasTotal,
-      diasTrabalhados,
+      diasTrabalhados: diasTrabalhados.size,
     };
   };
 
