@@ -545,6 +545,61 @@ serve(async (req) => {
 
     console.log('[punch] Dados de escala calculados:', scheduleData);
 
+    // Calcular banco de horas
+    let bancoHorasMinutos = 0;
+    
+    if (scheduleData.escala_id && tipo === 'SAÍDA') {
+      // Buscar escala para pegar horário completo
+      const { data: escalaCompleta } = await supabase
+        .from('escala')
+        .select('dataescala, finalescala, pausa_minutos')
+        .eq('idescala', scheduleData.escala_id)
+        .single();
+      
+      if (escalaCompleta) {
+        // Calcular horas devidas (fim - início)
+        const dataEscalaDate = new Date(escalaCompleta.dataescala);
+        const finalEscalaDate = new Date(escalaCompleta.finalescala);
+        
+        // Diferença em minutos entre início e fim da escala
+        const minutosTotaisEscala = Math.floor((finalEscalaDate.getTime() - dataEscalaDate.getTime()) / 60000);
+        
+        // Buscar ENTRADA e SAÍDA do dia de hoje
+        const hojeBRT = new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' });
+        const hoje = new Date(hojeBRT);
+        const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+        const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
+        
+        const { data: punchesHoje } = await supabase
+          .from('attendance_logs')
+          .select('tipo, punched_at, tempo_pausa_segundos')
+          .eq('face_user_id', face_user_id)
+          .gte('punched_at', inicioDia.toISOString())
+          .lte('punched_at', fimDia.toISOString())
+          .order('punched_at', { ascending: true });
+        
+        if (punchesHoje && punchesHoje.length > 0) {
+          const entrada = punchesHoje.find(p => p.tipo === 'ENTRADA');
+          
+          if (entrada) {
+            // Calcular minutos trabalhados (SAÍDA atual - ENTRADA)
+            const entradaDate = new Date(entrada.punched_at);
+            const saidaDate = new Date(); // agora
+            const minutosTrabalhadosTotal = Math.floor((saidaDate.getTime() - entradaDate.getTime()) / 60000);
+            
+            // Descontar pausa (já incluída na escala)
+            const pausaMinutos = escalaCompleta.pausa_minutos || 60;
+            const minutosTrabalhadosLiquido = minutosTrabalhadosTotal - pausaMinutos;
+            
+            // Banco de horas = trabalhado - devido
+            bancoHorasMinutos = minutosTrabalhadosLiquido - minutosTotaisEscala;
+            
+            console.log(`[punch] Cálculo banco de horas: trabalhado=${minutosTrabalhadosLiquido}min, devido=${minutosTotaisEscala}min, banco=${bancoHorasMinutos}min`);
+          }
+        }
+      }
+    }
+
     // Gravar log com geolocalização, reconhecimento facial, validação de horário e estado
     const { data: log, error: insertError } = await supabase
       .from("attendance_logs")
@@ -559,6 +614,7 @@ serve(async (req) => {
         estado_ponto: estadoPonto,
         tempo_trabalho_segundos: tempoTrabalho,
         tempo_pausa_segundos: tempoPausa,
+        banco_horas_minutos: bancoHorasMinutos,
         ...geoData,
         ...scheduleData,
       })

@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, User, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { UserPunchDetails } from "./UserPunchDetails";
 
 export function FaceUsersList() {
+  const [selectedUser, setSelectedUser] = useState<{ id: string; nome: string } | null>(null);
+  
   const { data: faceUsers, isLoading } = useQuery({
     queryKey: ["face-users"],
     queryFn: async () => {
@@ -53,45 +58,64 @@ export function FaceUsersList() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cadastros Faciais ({faceUsers.length})</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {faceUsers.map((user) => (
-            <div
-              key={user.id}
-              className="flex items-center gap-3 p-3 rounded-lg border bg-card"
-            >
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              
-              <div className="flex-1">
-                <p className="font-medium">{user.nome}</p>
-                {user.matricula && (
-                  <p className="text-sm text-muted-foreground">
-                    Matrícula: {user.matricula}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Cadastros Faciais ({faceUsers.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {faceUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                
+                <div className="flex-1">
+                  <p className="font-medium">{user.nome}</p>
+                  {user.matricula && (
+                    <p className="text-sm text-muted-foreground">
+                      Matrícula: {user.matricula}
+                    </p>
+                  )}
+                  {user.contato && (
+                    <p className="text-sm text-muted-foreground">
+                      Contato: {user.contato.name} ({user.contato.role})
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Cadastrado{" "}
+                    {formatDistanceToNow(new Date(user.created_at), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
                   </p>
-                )}
-                {user.contato && (
-                  <p className="text-sm text-muted-foreground">
-                    Contato: {user.contato.name} ({user.contato.role})
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Cadastrado{" "}
-                  {formatDistanceToNow(new Date(user.created_at), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedUser({ id: user.id, nome: user.nome })}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Detalhes
+                </Button>
               </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedUser && (
+        <UserPunchDetails
+          userId={selectedUser.id}
+          userName={selectedUser.nome}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
+    </>
   );
 }
