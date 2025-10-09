@@ -79,11 +79,21 @@ export function UserPunchDetails({ userId, userName, onClose }: UserPunchDetails
   const calcularTotais = () => {
     if (!punches || !escala) return null;
 
-    const inicioEscala = parseISO(escala.dataescala);
-    const fimEscala = parseISO(escala.finalescala);
+    // Extrair apenas os HORÁRIOS (não as datas completas) para calcular jornada diária
+    const inicioEscalaDate = parseISO(escala.dataescala);
+    const fimEscalaDate = parseISO(escala.finalescala);
     
-    // Horas devidas por dia = diferença entre horário de saída e entrada
-    const horasDevidasPorDia = differenceInMinutes(fimEscala, inicioEscala) / 60;
+    // Horários de entrada e saída (exemplo: 08:00 e 17:00)
+    const horaEntrada = inicioEscalaDate.getHours();
+    const minutoEntrada = inicioEscalaDate.getMinutes();
+    const horaSaida = fimEscalaDate.getHours();
+    const minutoSaida = fimEscalaDate.getMinutes();
+    
+    // Calcular jornada diária em minutos
+    const minutosEntrada = horaEntrada * 60 + minutoEntrada;
+    const minutosSaida = horaSaida * 60 + minutoSaida;
+    const jornadaDiariaMinutos = minutosSaida - minutosEntrada;
+    const horasDevidasPorDia = jornadaDiariaMinutos / 60;
     
     // Encontrar dias únicos em que houve ENTRADA (dias efetivamente trabalhados)
     const diasTrabalhados = new Set(
