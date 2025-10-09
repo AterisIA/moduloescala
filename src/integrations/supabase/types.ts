@@ -98,6 +98,7 @@ export type Database = {
         Row: {
           banco_horas_minutos: number | null
           created_at: string | null
+          data_registro: string | null
           device_info: Json | null
           escala_id: number | null
           estado_ponto: string | null
@@ -109,23 +110,26 @@ export type Database = {
           geo_provider: string | null
           geo_status: string | null
           geo_timestamp: string | null
+          hora_registro: string | null
           horario_esperado: string | null
           horario_previsto: string | null
           id: string
-          kiosk_id: string
+          kiosk_id: string | null
           minutos_atraso: number | null
           observacoes: string | null
           punched_at: string
           selfie_path: string | null
           status_horario: string | null
+          telefone: number | null
           tempo_pausa_segundos: number | null
           tempo_trabalho_segundos: number | null
           tipo: string
-          token_window: string
+          token_window: string | null
         }
         Insert: {
           banco_horas_minutos?: number | null
           created_at?: string | null
+          data_registro?: string | null
           device_info?: Json | null
           escala_id?: number | null
           estado_ponto?: string | null
@@ -137,23 +141,26 @@ export type Database = {
           geo_provider?: string | null
           geo_status?: string | null
           geo_timestamp?: string | null
+          hora_registro?: string | null
           horario_esperado?: string | null
           horario_previsto?: string | null
           id?: string
-          kiosk_id: string
+          kiosk_id?: string | null
           minutos_atraso?: number | null
           observacoes?: string | null
           punched_at?: string
           selfie_path?: string | null
           status_horario?: string | null
+          telefone?: number | null
           tempo_pausa_segundos?: number | null
           tempo_trabalho_segundos?: number | null
           tipo: string
-          token_window: string
+          token_window?: string | null
         }
         Update: {
           banco_horas_minutos?: number | null
           created_at?: string | null
+          data_registro?: string | null
           device_info?: Json | null
           escala_id?: number | null
           estado_ponto?: string | null
@@ -165,19 +172,21 @@ export type Database = {
           geo_provider?: string | null
           geo_status?: string | null
           geo_timestamp?: string | null
+          hora_registro?: string | null
           horario_esperado?: string | null
           horario_previsto?: string | null
           id?: string
-          kiosk_id?: string
+          kiosk_id?: string | null
           minutos_atraso?: number | null
           observacoes?: string | null
           punched_at?: string
           selfie_path?: string | null
           status_horario?: string | null
+          telefone?: number | null
           tempo_pausa_segundos?: number | null
           tempo_trabalho_segundos?: number | null
           tipo?: string
-          token_window?: string
+          token_window?: string | null
         }
         Relationships: [
           {
